@@ -1,5 +1,8 @@
 const Sample = require('./sampleModel')
+const Inventory = require('./inventoryModel')
+const Order = require('./orderModel')
+
 
 module.exports = {
-  Sample
+  Sample, Inventory, Order
 }

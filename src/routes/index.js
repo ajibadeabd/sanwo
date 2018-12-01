@@ -1,5 +1,6 @@
 const express = require('express')
-const sampleRoute = require('./sampleRoute')
+const inventoryRoute = require('./inventoryRoute')
+const orderRoute = require('./orderRoute')
 
 const router = express.Router()
 // All your parent route link should be in this file
@@ -9,6 +10,8 @@ const router = express.Router()
  *     router.use("/user", userRoute)
  */
 
-router.use('/api/v1/', sampleRoute)
+router.use('/inventory', inventoryRoute)
+router.use('/inventory/order', orderRoute)
+
 
 module.exports = router
