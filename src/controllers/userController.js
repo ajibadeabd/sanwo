@@ -1,6 +1,60 @@
 const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const helpers = require('./../functions/helpers')
+
+/**
+ * send a password reset mail to a user along with a validation token
+ * @param {Object} req
+ * @param {Object}res
+ * @param {function}next
+ * @param {Boolean}isNewUser used to check of the method was after a new user sign up
+ * @return {Object} response
+ */
+const forgotPassword = (req, res, next, isNewUser = false) => {
+  const query = { email: req.body.email }
+
+  const sendTokenEmail = (err, newUser) => {
+    if (err) throw err
+    helpers.sendPasswordResetEmail(newUser, req)
+  }
+
+  //  check if email exists
+  req.Models.User.valueExists(query)
+    .then((result) => {
+      if (result) {
+        //  yay! it does. let's generate a token
+        crypto.randomBytes(20, (error, buffer) => {
+          if (error) throw error
+          const token = buffer.toString('hex')
+          //  update to token to the user object in DB, and set expiry to 24hr
+          req.Models.User.findOneAndUpdate(query,
+            {
+              resetPasswordToken: token,
+              resetPasswordExpires: Date.now() + 86400000
+            },
+            {
+              upsert: true,
+              new: true
+            })
+            .exec(sendTokenEmail)
+          if (!isNewUser) {
+            res.json({
+              success: true,
+              message: 'Kindly check your email for further instructions',
+              data: null
+            })
+          }
+        })
+      } else {
+        return res.status(422)
+          .json({
+            success: false,
+            message: 'Email doesn\'t exist'
+          })
+      }
+    })
+}
 
 const _createBuyer = (req, res) => {
   req.Models.User.create({
@@ -27,27 +81,28 @@ const _createBuyer = (req, res) => {
   })
 }
 
-const _createSuperAdmin = (req, res) => {
+const _createSuperAdmin = (req, res, next) => {
   req.Models.User.create({
     firstName: req.body.firstName,
     email: req.body.email,
     accountType: req.body.accountType
   }, (err, result) => {
-    if (err) throw err
-    else {
-      //  TODO:: send password reset email for super admin
-      return res.send({
+    if (err) {
+      throw err
+    } else {
+      res.send({
         success: true,
         message: 'Your registration successful. Password reset link sent to your email.',
         data: result
       })
         .status(201)
+      forgotPassword(req, res, next, true)
     }
   })
 }
 
 
-const _createSeller = (req, res) => {
+const _createSeller = (req, res, next) => {
   req.Models.User.create({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
@@ -64,13 +119,13 @@ const _createSeller = (req, res) => {
     if (err) {
       throw err
     } else {
-      //  TODO:: send password reset link to seller
-      return res.send({
+      res.send({
         success: true,
         message: 'Your registration successful. Password reset link sent to your email.',
         data: result
       })
         .status(201)
+      forgotPassword(req, res, next, true)
     }
   })
 }
@@ -165,7 +220,44 @@ const login = (req, res) => {
   })
 }
 
+const passwordReset = (req, res) => {
+  // check if the sent token exists and hasn't expired
+
+  req.Models.User.findOne({
+    resetPasswordToken: req.query.token,
+    resetPasswordExpires: {
+      $gt: Date.now()
+    }
+  })
+    .exec((err, user) => {
+      if (err) throw err
+
+      //  if a user was found update password and reset forgotPasswordFields
+      if (user) {
+        user.password = req.body.password
+        user.resetPasswordToken = undefined
+        user.resetPasswordExpires = undefined
+        user.save((error) => {
+          if (error) throw error
+          return res.send({
+            success: true,
+            message: 'Password updated successfully.'
+          })
+        })
+      } else {
+        // if not return a proper message
+        return res.status(400)
+          .send({
+            success: false,
+            message: 'Password reset token is invalid or has expired.'
+          })
+      }
+    })
+}
+
 module.exports = {
   create,
-  login
+  login,
+  forgotPassword,
+  passwordReset
 }
