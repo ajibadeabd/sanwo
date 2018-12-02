@@ -158,8 +158,50 @@ const validateUserLogin = (req, res, next) => {
     .status(400))
 }
 
+const validateForgotPassword = (req, res, next) => {
+  const { body: reqBody } = req
+
+  const authValidation = new Validator(reqBody, { email: 'required|email' })
+  authValidation.passes(() => {
+    // Validation passed
+    next()
+  })
+
+  authValidation.fails(() => res.send({
+    success: false,
+    message: 'Validation failed',
+    data: authValidation.errors
+  })
+    .status(400))
+}
+
+const validatePasswordReset = (req, res, next) => {
+  const { body, query } = req
+  const bodyBody = { ...body, ...query }
+
+  const validationRule = {
+    token: 'required',
+    password: 'required|confirmed'
+  }
+
+  const authValidation = new Validator(bodyBody, validationRule)
+  authValidation.passes(() => {
+    // Validation passed
+    next()
+  })
+
+  authValidation.fails(() => res.send({
+    success: false,
+    message: 'Validation failed',
+    data: authValidation.errors
+  })
+    .status(400))
+}
+
 
 module.exports = {
   validateUserCreation,
-  validateUserLogin
+  validateUserLogin,
+  validateForgotPassword,
+  validatePasswordReset
 }

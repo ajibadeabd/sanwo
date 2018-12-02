@@ -22,12 +22,17 @@ const storage = multer.diskStorage({
 })
 
 const multiPart = multer({ storage })
-// TODO:: implement upload business document
 
 router.post('/register', multiPart.single('businessRegistrationDocument'),
   userValidationMiddleware.validateUserCreation, userController.create)
 
 router.post('/login',
   userValidationMiddleware.validateUserLogin, userController.login)
+
+router.post('/forgot-password',
+  userValidationMiddleware.validateForgotPassword, userController.forgotPassword)
+
+router.post('/password-reset',
+  userValidationMiddleware.validatePasswordReset, userController.passwordReset)
 
 module.exports = router
