@@ -1,5 +1,6 @@
 const express = require('express')
 const sampleRoute = require('./sampleRoute')
+const userRoute = require('./userRoute')
 
 const router = express.Router()
 // All your parent route link should be in this file
@@ -9,6 +10,7 @@ const router = express.Router()
  *     router.use("/user", userRoute)
  */
 
+router.use('/users', userRoute)
 router.use('/api/v1/', sampleRoute)
 
 module.exports = router
