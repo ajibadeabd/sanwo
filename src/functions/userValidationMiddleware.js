@@ -138,7 +138,28 @@ const validateUserCreation = (req, res, next) => {
   })
 }
 
+const validateUserLogin = (req, res, next) => {
+  const { body: reqBody } = req
+
+  const authValidation = new Validator(reqBody, {
+    email: 'required|email',
+    password: 'required'
+  })
+  authValidation.passes(() => {
+    // Validation passed
+    next()
+  })
+
+  authValidation.fails(() => res.send({
+    success: false,
+    message: 'Validation failed',
+    data: authValidation.errors
+  })
+    .status(400))
+}
+
 
 module.exports = {
-  validateUserCreation
+  validateUserCreation,
+  validateUserLogin
 }
