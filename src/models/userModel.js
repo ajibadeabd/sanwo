@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
+const uniqueValidator = require('mongoose-unique-validator')
 const helpers = require('./../functions/helpers')
 
 /**
@@ -78,6 +79,8 @@ const UserSchema = new Schema({
     trim: true,
   }
 })
+
+UserSchema.plugin(uniqueValidator)
 
 
 UserSchema.statics = {
