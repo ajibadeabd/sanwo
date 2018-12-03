@@ -27,4 +27,6 @@ const multiPart = multer({ storage })
 router.post('/register', multiPart.single('businessRegistrationDocument'),
   userValidationMiddleware.validateUserCreation, userController.create)
 
+router.get('/cooperatives', userController.getCooperatives)
+
 module.exports = router
