@@ -30,4 +30,6 @@ router.post('/register', multiPart.single('businessRegistrationDocument'),
 router.post('/login',
   userValidationMiddleware.validateUserLogin, userController.login)
 
+router.get('/cooperatives', userController.getCooperatives)
+
 module.exports = router

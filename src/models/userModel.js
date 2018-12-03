@@ -12,10 +12,13 @@ const helpers = require('./../functions/helpers')
  */
 const { Schema } = mongoose
 const UserSchema = new Schema({
+  name: {
+    type: String,
+    trim: true
+  },
   firstName: {
     type: String,
     trim: true,
-    required: [true, 'first name is required'],
   },
   lastName: {
     type: String,
@@ -52,7 +55,6 @@ const UserSchema = new Schema({
   },
   businessSellingInOtherWebsite: {
     type: Boolean,
-    default: false
   },
   accountType: {
     type: String,
@@ -62,7 +64,7 @@ const UserSchema = new Schema({
   },
   cooperative: {
     type: Schema.ObjectId,
-    ref: 'user'
+    ref: 'User'
   },
   status: {
     type: String,
@@ -80,7 +82,8 @@ const UserSchema = new Schema({
 
 UserSchema.statics = {
   valueExists (query) {
-    return this.findOne(query).then(result => result)
+    return this.findOne(query)
+      .then(result => result)
   }
 }
 
