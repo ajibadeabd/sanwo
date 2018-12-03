@@ -63,7 +63,8 @@ const _createBuyer = (req, res) => {
     phoneNumber: req.body.phoneNumber,
     email: req.body.email,
     password: req.body.password,
-    accountType: req.body.accountType
+    accountType: req.body.accountType,
+    cooperative: req.body.cooperative
   }, (err, result) => {
     if (err) {
       throw err
@@ -83,7 +84,7 @@ const _createBuyer = (req, res) => {
 
 const _createSuperAdmin = (req, res, next) => {
   req.Models.User.create({
-    firstName: req.body.firstName,
+    name: req.body.name,
     email: req.body.email,
     accountType: req.body.accountType
   }, (err, result) => {
@@ -255,9 +256,31 @@ const passwordReset = (req, res) => {
     })
 }
 
+const getCooperatives = (req, res) => {
+  req.Models.User.find(
+    {
+      accountType: helpers.constants.CORPORATE_ADMIN,
+      $and: [{ status: helpers.constants.ACCOUNT_STATUS.accepted }]
+    }
+  )
+    .select('firstName lastName _id')
+    .exec((err, results) => {
+      if (err) {
+        throw err
+      } else {
+        res.send({
+          success: true,
+          message: 'cooperatives',
+          data: results
+        })
+      }
+    })
+}
+
 module.exports = {
   create,
   login,
   forgotPassword,
-  passwordReset
+  passwordReset,
+  getCooperatives
 }
