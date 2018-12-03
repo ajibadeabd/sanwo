@@ -46,26 +46,27 @@ const validateUserCreation = (req, res, next) => {
     accountType: 'required',
     firstName: 'required',
     lastName: 'required',
-    email: 'email|exists',
+    email: 'email|exists:email',
     phoneNumber: [{
       required_if: ['email', ''],
       min: 11,
       max: 11,
-      exists: ''
+      exists: 'phoneNumber'
     }],
+    cooperative: [{ mongoId: '', exists: '_id' }],
     password: 'required|min:6'
   }
 
   const superAdminRules = {
     accountType: 'required',
-    firstName: 'required',
-    phoneNumber: 'exists'
+    name: 'required',
+    email: 'exists:email'
   }
 
   const sellerRules = {
     ...buyerRules,
-    businessName: 'required|exists',
-    businessRegistrationNumber: 'required|exists',
+    businessName: 'required|exists:businessName',
+    businessRegistrationNumber: 'required|exists:businessRegistrationNumber',
     businessRegistrationDocument: 'required',
     businessAddress: 'required',
     businessProductCategory: 'required',
@@ -75,19 +76,34 @@ const validateUserCreation = (req, res, next) => {
   delete sellerRules.password
 
   const customMessages = {
-    'required_if.phoneNumber': 'Please provide your email or phone number'
+    'required_if.phoneNumber': 'Please provide your email or phone number',
+    'exists.cooperative': 'Specified cooperative doesn\'t not exits'
   }
+
+  Validator.register('mongoId', value => /^[a-f\d]{24}$/i.test(value),
+    'Invalid data sent for :attribute')
 
   /**
    * Add a new validation rule 'exists' that checks
    * if a value of an attribute already exits in DB
    */
-
   Validator.registerAsync('exists', (value, requirement, attribute, passes) => {
-    req.Models.User.valueExists({ [attribute]: value })
+    let msg = ''
+    // if a column is specified user the column instead of the attribute
+
+    // let's check it the specified column is a valid mongodObject id
+    if (requirement === '_id' && !(/^[a-f\d]{24}$/i.test(value))) {
+      passes(false, msg)
+      return
+    }
+    // when id is specified as requirement, we are checking if the record exist
+    msg = (requirement === '_id')
+      ? `The ${attribute} does not exist` : `The ${attribute} is already in use.`
+
+    req.Models.User.valueExists({ [requirement]: value })
       .then((result) => {
         if (result) {
-          passes(false, `The ${attribute} is already in use.`)
+          passes(false, msg)
         } else {
           passes()
         }
