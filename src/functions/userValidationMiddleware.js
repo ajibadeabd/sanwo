@@ -1,4 +1,4 @@
-const Validator = require('validatorjs')
+const Validator = require('./../functions/Validator')
 const helpers = require('./../functions/helpers')
 
 /**
@@ -46,26 +46,30 @@ const validateUserCreation = (req, res, next) => {
     accountType: 'required',
     firstName: 'required',
     lastName: 'required',
-    email: 'email|exists',
+    email: 'email|exists:User,email',
     phoneNumber: [{
       required_if: ['email', ''],
       min: 11,
       max: 11,
-      exists: ''
+      exists: 'User,phoneNumber'
+    }],
+    cooperative: [{
+      mongoId: '',
+      exists: 'User,_id'
     }],
     password: 'required|min:6'
   }
 
   const superAdminRules = {
     accountType: 'required',
-    firstName: 'required',
-    phoneNumber: 'exists'
+    name: 'required',
+    email: 'exists:User,email'
   }
 
   const sellerRules = {
     ...buyerRules,
-    businessName: 'required|exists',
-    businessRegistrationNumber: 'required|exists',
+    businessName: 'required|exists:User,businessName',
+    businessRegistrationNumber: 'required|exists:User,businessRegistrationNumber',
     businessRegistrationDocument: 'required',
     businessAddress: 'required',
     businessProductCategory: 'required',
@@ -75,28 +79,9 @@ const validateUserCreation = (req, res, next) => {
   delete sellerRules.password
 
   const customMessages = {
-    'required_if.phoneNumber': 'Please provide your email or phone number'
+    'required_if.phoneNumber': 'Please provide your email or phone number',
+    'exists.cooperative': 'Specified cooperative doesn\'t not exits'
   }
-
-  /**
-   * Add a new validation rule 'exists' that checks
-   * if a value of an attribute already exits in DB
-   */
-
-  Validator.registerAsync('exists', (value, requirement, attribute, passes) => {
-    req.Models.User.valueExists({ [attribute]: value })
-      .then((result) => {
-        if (result) {
-          passes(false, `The ${attribute} is already in use.`)
-        } else {
-          passes()
-        }
-      })
-  }, '')
-
-  // return split field name before returning them in error message
-  Validator.setAttributeFormatter(attribute => attribute.replace(/([A-Z])/g, ' $1')
-    .toLocaleLowerCase())
 
   let validationRule
 
@@ -117,62 +102,55 @@ const validateUserCreation = (req, res, next) => {
   }
   reqBody.phoneNumber = null
   //  validation rule depends on the user registering
-  const validation = new Validator(reqBody, validationRule, customMessages)
-
-  validation.passes(() => {
-    // Validation passed
-    next()
-  })
-
-  validation.fails(() => {
-    res.send({
-      success: false,
-      message: 'Validation failed',
-      data: validation.errors
-    })
-      .status(400)
-    //  if validation fails remove file
-    if (req.body.businessRegistrationDocument) {
-      helpers.removeFile(req.body.businessRegistrationDocument)
+  Validator(reqBody, validationRule, customMessages, (error, status) => {
+    if (!status) {
+      res.send({
+        success: false,
+        message: 'Validation failed',
+        data: error
+      })
+        .status(400)
+    } else {
+      next()
     }
   })
 }
 
 const validateUserLogin = (req, res, next) => {
   const { body: reqBody } = req
-
-  const authValidation = new Validator(reqBody, {
+  const validationRule = {
     email: 'required|email',
     password: 'required'
+  }
+  Validator(reqBody, validationRule, {}, (error, status) => {
+    if (!status) {
+      res.send({
+        success: false,
+        message: 'Validation failed',
+        data: error
+      })
+        .status(400)
+    } else {
+      next()
+    }
   })
-  authValidation.passes(() => {
-    // Validation passed
-    next()
-  })
-
-  authValidation.fails(() => res.send({
-    success: false,
-    message: 'Validation failed',
-    data: authValidation.errors
-  })
-    .status(400))
 }
 
 const validateForgotPassword = (req, res, next) => {
   const { body: reqBody } = req
 
-  const authValidation = new Validator(reqBody, { email: 'required|email' })
-  authValidation.passes(() => {
-    // Validation passed
-    next()
+  Validator(reqBody, { email: 'required|email' }, {}, (error, status) => {
+    if (!status) {
+      res.send({
+        success: false,
+        message: 'Validation failed',
+        data: error
+      })
+        .status(400)
+    } else {
+      next()
+    }
   })
-
-  authValidation.fails(() => res.send({
-    success: false,
-    message: 'Validation failed',
-    data: authValidation.errors
-  })
-    .status(400))
 }
 
 const validatePasswordReset = (req, res, next) => {
@@ -184,18 +162,18 @@ const validatePasswordReset = (req, res, next) => {
     password: 'required|confirmed'
   }
 
-  const authValidation = new Validator(bodyBody, validationRule)
-  authValidation.passes(() => {
-    // Validation passed
-    next()
+  Validator(bodyBody, validationRule, {}, (error, status) => {
+    if (!status) {
+      res.send({
+        success: false,
+        message: 'Validation failed',
+        data: error
+      })
+        .status(400)
+    } else {
+      next()
+    }
   })
-
-  authValidation.fails(() => res.send({
-    success: false,
-    message: 'Validation failed',
-    data: authValidation.errors
-  })
-    .status(400))
 }
 
 

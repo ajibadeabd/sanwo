@@ -35,4 +35,6 @@ router.post('/forgot-password',
 router.post('/password-reset',
   userValidationMiddleware.validatePasswordReset, userController.passwordReset)
 
+router.get('/cooperatives', userController.getCooperatives)
+
 module.exports = router

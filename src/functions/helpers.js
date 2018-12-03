@@ -65,7 +65,7 @@ const sendWelcomeMail = (user, req) => {
 const sendPasswordResetEmail = (user, req) => {
   const { lastName, email, resetPasswordToken } = user
   const messageBody = `<p>Hello ${lastName || ','} here's your password reset link <br/>
-        <a href=${process.env.APP_URL}/user/password-reset?token=${resetPasswordToken}>
+        <a href=${process.env.APP_URL}/users/password-reset?token=${resetPasswordToken}>
         reset password
         </a></p>`
   const subject = `${process.env.APP_NAME}: Password Reset`
