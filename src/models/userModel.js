@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
+const uniqueValidator = require('mongoose-unique-validator')
 const helpers = require('./../functions/helpers')
 
 /**
@@ -76,8 +77,20 @@ const UserSchema = new Schema({
   password: {
     type: String,
     trim: true,
+  },
+  resetPasswordToken: {
+    type: String
+  },
+  resetPasswordExpires: {
+    type: Date
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 })
+
+UserSchema.plugin(uniqueValidator)
 
 
 UserSchema.statics = {

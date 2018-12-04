@@ -3,6 +3,10 @@ const inventoryRoute = require('./inventoryRoute')
 const orderRoute = require('./orderRoute')
 const sampleRoute = require('./sampleRoute')
 const userRoute = require('./userRoute')
+const adminRoute = require('./adminRoute')
+
+const authMiddleware = require('./../functions/authMiddleware')
+
 
 const router = express.Router()
 // All your parent route link should be in this file
@@ -16,6 +20,7 @@ router.use('/inventory', inventoryRoute)
 router.use('/inventory/order', orderRoute)
 
 router.use('/users', userRoute)
+router.use('/admin', authMiddleware.isAdmin, adminRoute)
 router.use('/api/v1/', sampleRoute)
 
 module.exports = router
