@@ -61,6 +61,27 @@ const sendWelcomeMail = (user, req) => {
   }, `${process.env.MAIL_FROM}`)
 }
 
+
+const sendPasswordResetEmail = (user, req) => {
+  const { lastName, email, resetPasswordToken } = user
+  const messageBody = `<p>Hello ${lastName || ','} here's your password reset link <br/>
+        <a href=${process.env.APP_URL}/users/password-reset?token=${resetPasswordToken}>
+        reset password
+        </a></p>`
+  const subject = `${process.env.APP_NAME}: Password Reset`
+
+  sendMail(email, subject, messageBody, (mailErr, mailRes) => {
+    if (mailErr) {
+      req.log(`${subject} MAIL not sent to ${email}`)
+    }
+
+    if (mailRes) {
+      req.log(`Message sent: %s ${mailRes.messageId}`)
+      req.log(`Preview URL: %s ${nodemailer.getTestMessageUrl(mailRes)}`)
+    }
+  }, `${process.env.MAIL_FROM}`)
+}
+
 const removeFile = (path) => {
   fs.unlink(path, (err) => {
     if (err) {
@@ -74,5 +95,6 @@ module.exports = {
   sendMail,
   sendWelcomeMail,
   removeFile,
+  sendPasswordResetEmail,
   constants
 }
