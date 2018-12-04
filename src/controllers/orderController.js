@@ -1,4 +1,4 @@
-const helpers = require('./../functions/helpers')
+const helpers = require('./../functions/mailhelpers')
 
 
 const create = (req, res) => {
@@ -18,7 +18,7 @@ const create = (req, res) => {
         message: 'Order Created Successfully',
         data: result
       }).status(201)
-      helpers.sendOrderMail(result,req)
+      helpers.sendOrderMail(result, req)
     }
   })
 }
@@ -133,18 +133,18 @@ const del = (req, res) => {
   )
 }
 
-const shippedItem = (req,res) => {
-    req.Models.Order.find({$and: [{orderStatus: 'Shipped'}, {trackOrder: 'Delivered'}]},(err,orderInfo) => {
-        if (err) throw err
-        else {
-            res.json({
-                status: 'success',
-                message: 'Transaction Complete',
-                data: orderInfo
-            }).status(201)
-            helpers.deliverMail(orderInfo,req)
-        }
-    })
+const shippedItem = (req, res) => {
+  req.Models.Order.find({ $and: [{ orderStatus: 'Shipped' }, { trackOrder: 'Delivered' }] }, (err, orderInfo) => {
+    if (err) throw err
+    else {
+      res.json({
+        status: 'success',
+        message: 'Transaction Complete',
+        data: orderInfo
+      }).status(201)
+      helpers.deliverMail(orderInfo, req)
+    }
+  })
 }
 
 

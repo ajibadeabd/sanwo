@@ -14,4 +14,4 @@ router.get('/inProcess', orderController.inProcess)
 router.get('/shipped', orderController.shipped)
 router.delete('/:OrderId', orderController.del)
 
-module.exports = router;
+module.exports = router
