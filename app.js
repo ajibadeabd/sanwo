@@ -1,6 +1,8 @@
 const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
+const io = require('socket.io')
+const IoEvents = require('./src/controllers/messageController')
 
 const db = require('./utils/db')
 const config = require('./config/index.js')
@@ -38,6 +40,8 @@ app.use((err, req, res, next) => {
 
 db.connect(config.dbUrl)
 
-app.listen(config.port)
+const server = app.listen(config.port)
+//  Start socketIo
+new IoEvents(io(server)).startSocket()
 
 logger.log(`Listening @ port ${config.port}`)
