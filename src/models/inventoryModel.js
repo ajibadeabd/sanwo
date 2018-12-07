@@ -28,7 +28,7 @@ const InventorySchema = new Schema({
   productImage: {
     type: String,
     required: true
-  }
+  },
 
 
 })

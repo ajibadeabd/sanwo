@@ -25,9 +25,10 @@ const router = express.Router()
 
 router.get('/', inventoryController.getAll)
 router.post('/create', upload.single('productImage'), inventoryController.create)
-router.delete('/:inventoryId', inventoryController.del)
+router.delete('/:inventoryid', inventoryController.del)
 router.put('/:inventoryId', inventoryController.update)
-router.get('/:inventoryId', inventoryController.getOne)
+// router.get('/:inventoryId', inventoryController.getOne)
+router.get('/search', inventoryController.buyerSearch)
 
 
 module.exports = router

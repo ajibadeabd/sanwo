@@ -6,7 +6,7 @@ const orderSchema = new Schema({
   orderDate: {
     type: Date,
     trim: true,
-    required: true
+
   },
   orderStatus: {
     type: String,
