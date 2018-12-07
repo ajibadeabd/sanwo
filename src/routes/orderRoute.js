@@ -8,10 +8,10 @@ const router = express.Router()
 router.post('/createOrder', orderController.create)
 router.get('/getOrder', orderController.getOrder)
 router.get('/getDisbursed', orderController.getDisbursedStock)
-router.put('/updateOrder', orderController.putOrder)
+router.put('/:orderid', orderController.putorder)
 router.get('/getPurchased', orderController.purchasedStock)
 router.get('/inProcess', orderController.inProcess)
 router.get('/shipped', orderController.shipped)
-router.delete('/:OrderId', orderController.del)
+router.delete('/:orderid', orderController.del)
 
 module.exports = router

@@ -1,8 +1,7 @@
 const express = require('express')
 const inventoryRoute = require('./inventoryRoute')
 const orderRoute = require('./orderRoute')
-const giftRoute = require('./giftRoute')
-const walletRoute = require('./walletRoute')
+
 
 const router = express.Router()
 // All your parent route link should be in this file
@@ -14,8 +13,7 @@ const router = express.Router()
 
 router.use('/inventory', inventoryRoute)
 router.use('/inventory/order', orderRoute)
-router.use('/giftCard', giftRoute)
-router.use('/wallet', walletRoute)
+
 
 
 module.exports = router
