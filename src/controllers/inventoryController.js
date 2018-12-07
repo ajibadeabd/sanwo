@@ -1,14 +1,7 @@
-<<<<<<< HEAD
 // const multer = require('multer')
 
 const create = (req, res) => {
   req.log(req.file)
-=======
-const multer = require('multer')
-
-const create = (req, res) => {
-  
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
   req.Models.Inventory.create({
     productImage: req.file.path,
     itemName: req.body.itemName,
