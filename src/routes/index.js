@@ -1,14 +1,6 @@
 const express = require('express')
 const inventoryRoute = require('./inventoryRoute')
 const orderRoute = require('./orderRoute')
-<<<<<<< HEAD
-=======
-const sampleRoute = require('./sampleRoute')
-const userRoute = require('./userRoute')
-const adminRoute = require('./adminRoute')
-
-const authMiddleware = require('./../functions/authMiddleware')
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
 
 
 const router = express.Router()
@@ -22,12 +14,5 @@ const router = express.Router()
 router.use('/inventory', inventoryRoute)
 router.use('/inventory/order', orderRoute)
 
-<<<<<<< HEAD
-
-=======
-router.use('/users', userRoute)
-router.use('/admin', authMiddleware.isAdmin, adminRoute)
-router.use('/api/v1/', sampleRoute)
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
 
 module.exports = router

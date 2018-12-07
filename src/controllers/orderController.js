@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 const helpers = require('./../functions/mailhelpers')
 
-=======
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
 
 const create = (req, res) => {
   req.Models.Order.create({
@@ -20,12 +17,8 @@ const create = (req, res) => {
         status: 'success',
         message: 'Order Created Successfully',
         data: result
-<<<<<<< HEAD
       }).status(201)
       helpers.sendOrderMail(result, req)
-=======
-      })
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
     }
   })
 }
@@ -43,7 +36,6 @@ const getOrder = (req, res) => {
   }).sort({ orderDate: -1 })
 }
 
-<<<<<<< HEAD
 const putorder = (req, res) => {
 req.Models.Order.findByIdAndUpdate(
   req.params.orderid, (err,orderInfo) => {
@@ -65,32 +57,6 @@ const getDisbursedStock = (req, res) => {
       // { orderPrice: req.body.orderPrice * req.body.quantity }
     ]
   }, (err, orderInfo) => {
-=======
-const putOrder = (req, res) => {
-  req.Models.Order.findByIdAndUpdate({
-    orderDate: req.body.orderDate,
-    orderStatus: req.body.orderStatus,
-    trackOrder: req.body.trackOrder,
-    quantity: req.body.quantity,
-    orderPrice: req.body.orderPrice * req.body.quantity,
-    product: req.body.product
-
-  }, (err, result) => {
-    if (err) throw err
-    else {
-      res.json({
-        status: 'success',
-        message: 'Order Added successfully',
-        data: result
-      })
-    }
-  })
-}
-
-const getDisbursedStock = (req, res) => {
-  req.Models.Order.find({ $and: [{ orderStatus: 'Shipped' }, 
-  { orderPrice: req.body.orderPrice * req.body.quantity }] }, (err, orderInfo) => {
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
     if (err) throw err
     else {
       res.json({
@@ -103,16 +69,11 @@ const getDisbursedStock = (req, res) => {
 }
 
 const purchasedStock = (req, res) => {
-<<<<<<< HEAD
   req.Models.Order.find({
     $and: [{ orderStatus: 'Awaiting' },
       // { orderPrice: req.body.orderPrice * req.body.quantity }
     ]
   }, (err, orderInfo) => {
-=======
-  req.Models.Order.find({ $and: [{ orderStatus: 'Awaiting' }, 
-  { orderPrice: req.body.orderPrice * req.body.quantity }] }, (err, orderInfo) => {
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
     if (err) throw err
     else {
       res.json({
@@ -124,7 +85,6 @@ const purchasedStock = (req, res) => {
   })
 }
 
-<<<<<<< HEAD
 //Brings out the list of orders shipped but not delivered
 const inProcess = (req, res) => {
   req.Models.Order.find({
@@ -132,11 +92,6 @@ const inProcess = (req, res) => {
       { trackOrder: 'Not Delivered' }
     ]
   }, (err, orderInfo) => {
-=======
-const inProcess = (req, res) => {
-  req.Models.Order.find({ $and: [{ orderStatus: 'Shipped' }, 
-  { trackOrder: 'Not Delivered' }] }, (err, orderInfo) => {
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
     if (err) throw err
     else {
       res.json({
@@ -148,10 +103,7 @@ const inProcess = (req, res) => {
   })
 }
 
-<<<<<<< HEAD
 // List of the shipped stock
-=======
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
 const shipped = (req, res) => {
   req.Models.Order.find({ $and: [{ orderStatus: 'Shipped' }] }, (err, orderInfo) => {
     if (err) throw err
@@ -167,11 +119,7 @@ const shipped = (req, res) => {
 
 const del = (req, res) => {
   req.Models.Order.findByIdAndDelete(
-<<<<<<< HEAD
     req.params.orderid, (err, orderInfo) => {
-=======
-    req.params.OrderId, (err, orderInfo) => {
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
       if (err) throw err
       else {
         res.json({
@@ -184,7 +132,6 @@ const del = (req, res) => {
   )
 }
 
-<<<<<<< HEAD
 const shippedItem = (req, res) => {
   req.Models.Order.find({ $and: [{ orderStatus: 'Shipped' }, { trackOrder: 'Delivered' }] }, (err, orderInfo) => {
     if (err) throw err
@@ -199,21 +146,15 @@ const shippedItem = (req, res) => {
   })
 }
 
-=======
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
 
 module.exports = {
   create,
   getOrder,
   getDisbursedStock,
-  putOrder,
+  putorder,
   purchasedStock,
   inProcess,
   shipped,
-<<<<<<< HEAD
   del,
   shippedItem
-=======
-  del
->>>>>>> 7e055b6c998483f2c3607422c0be90fd549a8194
 }
