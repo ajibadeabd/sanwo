@@ -19,10 +19,12 @@ function Socket (socket) {
  * WHERE toUserId = selectedUserId AND fromUserId = currentUserId
  * OR toUserId = selectedUserId AND fromUserId = currentUserId
  * @param {Object} users: should look like {fromUserId:currentUserId, toUserId:selectedUserId}
+ * @param {Number} offset
+ * @param {Number} limit
  * @param {function} callback
  * @return {function} callback
  */
-Socket.prototype.getConversation = function (users, callback) {
+Socket.prototype.getConversation = function (users, offset, limit, callback) {
   const query = {
     $or: [
       {
@@ -44,7 +46,11 @@ Socket.prototype.getConversation = function (users, callback) {
       }
     ]
   }
-  models.Message.find(query, callback)
+  models.Message.find(query)
+    .skip(offset)
+    .limit(limit)
+    .sort({ createdAt: 'desc' })
+    .exec(callback)
 }
 
 /**
@@ -64,7 +70,7 @@ Socket.prototype.sendMessage = function (socket, data, callback) {
       // let the user know message wasn't saved before throwing error
       callback({
         success: false,
-        message: data
+        message: result
       })
       throw err
     } else {
@@ -76,7 +82,7 @@ Socket.prototype.sendMessage = function (socket, data, callback) {
          * to the connected user.
          */
         socket.to(data.toSocketId)
-          .emit('new-message', data)
+          .emit('new-message', result)
       }
 
       callback({
@@ -123,16 +129,20 @@ Socket.prototype.ioEvents = function () {
      * Event name 'conversations': Fetches conversation between two users
      * The client emits this event along with the
      * userData to fetch conversations for and a callback.
-     * @param {Object} userData
+     * @param {Object} options
      * from ID is the current user, to ID is person being chatted
      * example {"fromUserId": {MongoId}, "toUserId": {MongoId}}
      */
-    socket.on('conversations', (usersData, callback) => {
+    socket.on('conversations', (options, callback) => {
       const users = {
-        fromUserId: usersData.fromUserId,
-        toUserId: usersData.toUserId
+        fromUserId: options.fromUserId,
+        toUserId: options.toUserId,
       }
-      this.getConversation(users, (err, conversations) => {
+      let limit = parseInt(options.limit)
+      let offset = parseInt(options.offset)
+      offset = offset || 0
+      limit = limit || 20
+      this.getConversation(users, offset, limit, (err, results) => {
         if (err) {
           callback({
             success: false,
@@ -143,7 +153,11 @@ Socket.prototype.ioEvents = function () {
         if (!err) {
           callback({
             success: true,
-            data: conversations
+            data: {
+              offset,
+              limit,
+              results
+            }
           })
         }
       })
