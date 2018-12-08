@@ -63,7 +63,7 @@ const validateUserCreation = (req, res, next) => {
   const superAdminRules = {
     accountType: 'required',
     name: 'required',
-    email: 'exists:User,email'
+    email: 'required|exists:User,email'
   }
 
   const sellerRules = {
@@ -73,7 +73,7 @@ const validateUserCreation = (req, res, next) => {
     businessRegistrationDocument: 'required',
     businessAddress: 'required',
     businessProductCategory: 'required',
-    businessSellingInOtherWebsite: 'required|boolean',
+    businessSellingOnOtherWebsite: 'required|boolean',
   }
   //  password is not required when signing up as a seller so we won't validate it
   delete sellerRules.password
@@ -159,7 +159,7 @@ const validatePasswordReset = (req, res, next) => {
 
   const validationRule = {
     token: 'required',
-    password: 'required|confirmed'
+    password: 'required|confirmed|min:6'
   }
 
   Validator(bodyBody, validationRule, {}, (error, status) => {
