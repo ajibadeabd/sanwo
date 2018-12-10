@@ -1,3 +1,5 @@
+const helpers = require('./../functions/mailhelpers')
+
 
 const create = (req, res) => {
   req.Models.Order.create({
@@ -15,7 +17,8 @@ const create = (req, res) => {
         status: 'success',
         message: 'Order Created Successfully',
         data: result
-      })
+      }).status(201)
+      helpers.sendOrderMail(result, req)
     }
   })
 }
@@ -33,30 +36,27 @@ const getOrder = (req, res) => {
   }).sort({ orderDate: -1 })
 }
 
-const putOrder = (req, res) => {
-  req.Models.Order.findByIdAndUpdate({
-    orderDate: req.body.orderDate,
-    orderStatus: req.body.orderStatus,
-    trackOrder: req.body.trackOrder,
-    quantity: req.body.quantity,
-    orderPrice: req.body.orderPrice * req.body.quantity,
-    product: req.body.product
-
-  }, (err, result) => {
-    if (err) throw err
+const putorder = (req, res) => {
+req.Models.Order.findByIdAndUpdate(
+  req.params.orderid, (err,orderInfo) => {
+    if(err) throw new Error('Update Failed')
     else {
       res.json({
         status: 'success',
-        message: 'Order Added successfully',
-        data: result
+        message: 'Update successful',
+        data: orderInfo
       })
     }
-  })
+  }
+)
 }
 
 const getDisbursedStock = (req, res) => {
-  req.Models.Order.find({ $and: [{ orderStatus: 'Shipped' }, 
-  { orderPrice: req.body.orderPrice * req.body.quantity }] }, (err, orderInfo) => {
+  req.Models.Order.find({
+    $and: [{ orderStatus: 'Shipped' },
+      // { orderPrice: req.body.orderPrice * req.body.quantity }
+    ]
+  }, (err, orderInfo) => {
     if (err) throw err
     else {
       res.json({
@@ -69,8 +69,11 @@ const getDisbursedStock = (req, res) => {
 }
 
 const purchasedStock = (req, res) => {
-  req.Models.Order.find({ $and: [{ orderStatus: 'Awaiting' }, 
-  { orderPrice: req.body.orderPrice * req.body.quantity }] }, (err, orderInfo) => {
+  req.Models.Order.find({
+    $and: [{ orderStatus: 'Awaiting' },
+      // { orderPrice: req.body.orderPrice * req.body.quantity }
+    ]
+  }, (err, orderInfo) => {
     if (err) throw err
     else {
       res.json({
@@ -82,9 +85,13 @@ const purchasedStock = (req, res) => {
   })
 }
 
+//Brings out the list of orders shipped but not delivered
 const inProcess = (req, res) => {
-  req.Models.Order.find({ $and: [{ orderStatus: 'Shipped' }, 
-  { trackOrder: 'Not Delivered' }] }, (err, orderInfo) => {
+  req.Models.Order.find({
+    $and: [{ orderStatus: 'Shipped' },
+      { trackOrder: 'Not Delivered' }
+    ]
+  }, (err, orderInfo) => {
     if (err) throw err
     else {
       res.json({
@@ -96,6 +103,7 @@ const inProcess = (req, res) => {
   })
 }
 
+// List of the shipped stock
 const shipped = (req, res) => {
   req.Models.Order.find({ $and: [{ orderStatus: 'Shipped' }] }, (err, orderInfo) => {
     if (err) throw err
@@ -111,7 +119,7 @@ const shipped = (req, res) => {
 
 const del = (req, res) => {
   req.Models.Order.findByIdAndDelete(
-    req.params.OrderId, (err, orderInfo) => {
+    req.params.orderid, (err, orderInfo) => {
       if (err) throw err
       else {
         res.json({
@@ -124,14 +132,29 @@ const del = (req, res) => {
   )
 }
 
+const shippedItem = (req, res) => {
+  req.Models.Order.find({ $and: [{ orderStatus: 'Shipped' }, { trackOrder: 'Delivered' }] }, (err, orderInfo) => {
+    if (err) throw err
+    else {
+      res.json({
+        status: 'success',
+        message: 'Transaction Complete',
+        data: orderInfo
+      }).status(201)
+      
+    }
+  })
+}
+
 
 module.exports = {
   create,
   getOrder,
   getDisbursedStock,
-  putOrder,
+  putorder,
   purchasedStock,
   inProcess,
   shipped,
-  del
+  del,
+  shippedItem
 }
