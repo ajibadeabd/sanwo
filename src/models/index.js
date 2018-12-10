@@ -4,6 +4,7 @@ const Order = require('./orderModel')
 const Gift = require('./giftCardModel')
 const Wallet = require('./walletModel')
 const User = require('./userModel')
+const Message = require('./messageModel')
 
 
 module.exports = {
@@ -12,5 +13,6 @@ module.exports = {
   Order, 
   Gift, 
   Wallet,
-  User
+  User,
+  Message
 }
