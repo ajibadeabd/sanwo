@@ -115,7 +115,7 @@ const _createSeller = (req, res, next) => {
     businessRegistrationDocument: req.body.businessRegistrationDocument,
     businessAddress: req.body.businessAddress,
     businessProductCategory: req.body.businessProductCategory,
-    businessSellingInOtherWebsite: req.body.businessSellingInOtherWebsite
+    businessSellingOnOtherWebsite: req.body.businessSellingOnOtherWebsite
   }, (err, result) => {
     if (err) {
       throw err
@@ -257,6 +257,10 @@ const passwordReset = (req, res) => {
 }
 
 const getCooperatives = (req, res) => {
+  let limit = parseInt(req.query.limit)
+  let offset = parseInt(req.query.offset)
+  offset = offset || 0
+  limit = limit || 10
   req.Models.User.find(
     {
       accountType: helpers.constants.CORPORATE_ADMIN,
@@ -264,6 +268,8 @@ const getCooperatives = (req, res) => {
     }
   )
     .select('firstName lastName _id')
+    .skip(offset)
+    .limit(limit)
     .exec((err, results) => {
       if (err) {
         throw err
@@ -271,7 +277,11 @@ const getCooperatives = (req, res) => {
         res.send({
           success: true,
           message: 'cooperatives',
-          data: results
+          data: {
+            offset,
+            limit,
+            results
+          }
         })
       }
     })
