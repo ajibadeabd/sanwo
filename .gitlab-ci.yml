@@ -9,10 +9,6 @@ image: node:latest
 
 # This folder is cached between builds
 # http://docs.gitlab.com/ce/ci/yaml/README.html#cache
-cache:
-  paths:
-  - node_modules/
-
 test_db:
   before_script:
     - apt-get update
@@ -26,7 +22,6 @@ test_db:
    - ssh-add <(echo "$SSH_PRIVATE_KEY")
    - mkdir -p ~/.ssh
    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-   - npm install 
   # - scp -r * root@178.128.42.16:/root/paysmosmo_backend
    - rsync -avrc --delete --exclude=.env "$PWD/" root@178.128.42.16:/root/paysmosmo_backend/
-   - ssh root@178.128.42.16 pm2 restart paysmosmo_backend
+   - ssh root@178.128.42.16 "node install; pm2 restart paysmosmo_backend"
