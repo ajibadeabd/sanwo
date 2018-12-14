@@ -31,12 +31,11 @@ const validateUserCreation = (req, res, next) => {
     if (req.body.businessRegistrationDocument) {
       helpers.removeFile(req.body.businessRegistrationDocument)
     }
-    return res.send({
+    return res.status(400).send({
       success: false,
       message: 'Validation failed',
       data: { errors: { accountType: ['Invalid account type'] } }
     })
-      .status(400)
   }
 
   //  if email is not defined set an empty string
@@ -104,12 +103,11 @@ const validateUserCreation = (req, res, next) => {
   //  validation rule depends on the user registering
   Validator(reqBody, validationRule, customMessages, (error, status) => {
     if (!status) {
-      res.send({
+      res.status(400).send({
         success: false,
         message: 'Validation failed',
         data: error
       })
-        .status(400)
     } else {
       next()
     }
@@ -124,12 +122,11 @@ const validateUserLogin = (req, res, next) => {
   }
   Validator(reqBody, validationRule, {}, (error, status) => {
     if (!status) {
-      res.send({
+      res.status(400).send({
         success: false,
         message: 'Validation failed',
         data: error
       })
-        .status(400)
     } else {
       next()
     }
@@ -141,12 +138,11 @@ const validateForgotPassword = (req, res, next) => {
 
   Validator(reqBody, { email: 'required|email' }, {}, (error, status) => {
     if (!status) {
-      res.send({
+      res.status(400).send({
         success: false,
         message: 'Validation failed',
         data: error
       })
-        .status(400)
     } else {
       next()
     }
@@ -164,12 +160,11 @@ const validatePasswordReset = (req, res, next) => {
 
   Validator(bodyBody, validationRule, {}, (error, status) => {
     if (!status) {
-      res.send({
+      res.status(400).send({
         success: false,
         message: 'Validation failed',
         data: error
       })
-        .status(400)
     } else {
       next()
     }

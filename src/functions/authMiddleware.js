@@ -55,7 +55,28 @@ const isSeller = (req, res, next) => {
   )
 }
 
+const isAuthenticated = (req, res, next) => {
+  jwt.verify(
+    req.headers['x-access-token'], process.env.TOKEN_SECRET,
+    (err, decoded) => {
+      if (err) {
+        res.status(401)
+          .send({
+            success: false,
+            message: 'Unauthorized',
+            data: err.message
+          })
+      } else {
+        req.body.accountType = decoded.accountType
+        req.body.userId = decoded._id
+        next()
+      }
+    }
+  )
+}
+
 module.exports = {
   isAdmin,
-  isSeller
+  isSeller,
+  isAuthenticated
 }
