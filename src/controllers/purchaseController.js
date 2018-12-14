@@ -151,8 +151,40 @@ const updateOrderStatus = (req, res) => {
     })
 }
 
+const getOrders = (req, res) => {
+  let limit = parseInt(req.query.limit)
+  let offset = parseInt(req.query.offset)
+  offset = offset || 0
+  limit = limit || 10
+
+  let filter = { buyer: req.body.userId }
+  if (req.query.orderStatus) filter = { ...filter, orderStatus: req.query.orderStatus }
+
+  const query = req.Models.Order.find(filter)
+  // .populate('buyer seller')
+  query.skip(offset)
+  query.limit(limit)
+  query.exec((err, results) => {
+    if (err) {
+      throw err
+    } else {
+      res.send({
+        success: true,
+        message: 'Successfully fetching orders',
+        data: {
+          offset,
+          limit,
+          resultCount: results.length,
+          results
+        }
+      })
+    }
+  })
+}
+
 module.exports = {
   create,
   updateApprovalStatus,
-  updateOrderStatus
+  updateOrderStatus,
+  getOrders
 }
