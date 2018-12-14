@@ -19,7 +19,11 @@ const InventorySchema = new Schema({
     trim: true,
     required: true
   },
-
+  seller: {
+    type: Schema.ObjectId,
+    ref: 'User',
+    required: true
+  },
   price: {
     type: Number,
     required: true,

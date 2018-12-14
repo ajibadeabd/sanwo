@@ -7,7 +7,8 @@ const create = (req, res) => {
     itemName: req.body.itemName,
     productCategory: req.body.productCategory,
     description: req.body.description,
-    price: req.body.price
+    price: req.body.price,
+    seller: req.body.seller,
   }, (err, result) => {
     if (err) throw err
     else {
