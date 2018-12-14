@@ -10,12 +10,11 @@ const updateAccountStatusValidation = (req, res, next) => {
 
   Validator(requestBody, validationRule, {}, (err, status) => {
     if (!status) {
-      res.send({
+      res.status(400).send({
         success: false,
         message: 'Validation failed',
         data: err
       })
-        .status(400)
     } else {
       next()
     }

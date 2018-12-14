@@ -8,6 +8,9 @@ const mongoRegex = /^[a-f\d]{24}$/i
 Validator.register('valid_status', value => (!!helpers.constants.ACCOUNT_STATUS[value]),
   'The specified status is invalid')
 
+Validator.register('valid_order_status', value => (!!helpers.constants.ORDER_STATUS[value]),
+  'The specified status is invalid')
+
 // validate MongoDB ObjectID
 Validator.register('mongoId', value => mongoRegex.test(value),
   'Invalid data sent for :attribute')

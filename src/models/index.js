@@ -7,10 +7,10 @@ const Message = require('./messageModel')
 
 
 module.exports = {
-  Sample, 
-  Inventory, 
-  Order, 
-  Gift, 
+  Sample,
+  Inventory,
+  Order,
+  Gift,
   User,
   Message
 }
