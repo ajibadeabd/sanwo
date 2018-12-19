@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
-const uniqueValidator = require('mongoose-unique-validator')
 const helpers = require('./../functions/helpers')
 
 /**
@@ -28,7 +27,6 @@ const UserSchema = new Schema({
   email: {
     type: String,
     trim: true,
-    unique: true,
   },
   phoneNumber: {
     type: String,
@@ -90,7 +88,6 @@ const UserSchema = new Schema({
   }
 })
 
-UserSchema.plugin(uniqueValidator)
 
 
 UserSchema.statics = {
