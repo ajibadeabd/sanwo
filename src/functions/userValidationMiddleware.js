@@ -39,8 +39,11 @@ const validateUserCreation = (req, res, next) => {
   }
 
   //  if email is not defined set an empty string
-  if (!reqBody.email) reqBody.email = ''
-
+  if (!reqBody.email) {
+    reqBody.email = ''
+  } else {
+    reqBody.email = reqBody.email.replace(/\s/g, '')
+  }
   const buyerRules = {
     accountType: 'required',
     firstName: 'required',
@@ -48,15 +51,14 @@ const validateUserCreation = (req, res, next) => {
     email: 'email|exists:User,email',
     phoneNumber: [{
       required_if: ['email', ''],
-      min: 11,
-      max: 11,
+      digits: 11,
       exists: 'User,phoneNumber'
     }],
     cooperative: [{
       mongoId: '',
       exists: 'User,_id'
     }],
-    password: 'required|min:6'
+    password: 'required|password_policy'
   }
 
   const superAdminRules = {
@@ -99,7 +101,6 @@ const validateUserCreation = (req, res, next) => {
     default:
       validationRule = {}
   }
-  reqBody.phoneNumber = null
   //  validation rule depends on the user registering
   Validator(reqBody, validationRule, customMessages, (error, status) => {
     if (!status) {

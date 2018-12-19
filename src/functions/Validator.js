@@ -5,6 +5,8 @@ const helpers = require('./../functions/helpers')
 // register validation rules
 const mongoRegex = /^[a-f\d]{24}$/i
 
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/
+
 Validator.register('valid_status', value => (!!helpers.constants.ACCOUNT_STATUS[value]),
   'The specified status is invalid')
 
@@ -14,6 +16,10 @@ Validator.register('valid_order_status', value => (!!helpers.constants.ORDER_STA
 // validate MongoDB ObjectID
 Validator.register('mongoId', value => mongoRegex.test(value),
   'Invalid data sent for :attribute')
+
+// validate Password policy
+Validator.register('password_policy', value => passwordRegex.test(value),
+  'Minimum six characters, at least one uppercase letter, one lowercase letter, one number and one special character')
 
 // checks if a the attribute value exists it the specified DB
 Validator.registerAsync('exists', (value, requirement, attribute, passes) => {
