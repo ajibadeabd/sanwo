@@ -8,4 +8,6 @@ const adminValidationMiddleware = require('../functions/adminValidationMiddlewar
 router.put('/update-account-status/:userId', adminValidationMiddleware.updateAccountStatusValidation,
   adminController.updateAccountStatus)
 
+router.get('/get-users', adminController.getUsers)
+
 module.exports = router
