@@ -73,7 +73,7 @@ const sendPasswordResetEmail = (user, req) => {
   const { lastName, email, resetPasswordToken } = user
   const messageBody = `<p>Hello ${lastName || ','} here's your password reset link <br/>
         <a href=${process.env.APP_URL}/users/password-reset?token=${resetPasswordToken}>
-        reset password
+        ${process.env.APP_URL}/users/password-reset?token=${resetPasswordToken}
         </a></p>`
   const subject = `${process.env.APP_NAME}: Password Reset`
 
@@ -139,8 +139,12 @@ const sendOrderNewOrderMail = async ({ order, product }, req) => {
     }, `${process.env.MAIL_FROM}`)
 
     const orderAction = `Your action is needed for this order 
-        <a href="${process.env.APP_URL}/purchase/update-approval-status/${token}/${req.body.userId}/approved">APPROVE</a> or 
-        <a href="${process.env.APP_URL}/purchase/update-approval-status/${token}/${req.body.userId}/declined">DECLINE</a>`
+        APPROVE : <a href="${process.env.APP_URL}/purchase/update-approval-status/${token}/${req.body.userId}/approved">
+        ${process.env.APP_URL}/purchase/update-approval-status/${token}/${req.body.userId}/approved
+        </a><br/>
+        <strong>Or</strong> <br/>
+        DECLINE: <a href="${process.env.APP_URL}/purchase/update-approval-status/${token}/${req.body.userId}/declined">
+        ${process.env.APP_URL}/purchase/update-approval-status/${token}/${req.body.userId}/declined</a>`
     // If a buyer is related to a cooperative and the order is being payed in installment,
     // send the cooperative-admin an email to accepted or decline order
     if (buyer.cooperative) {

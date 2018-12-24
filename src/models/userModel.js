@@ -89,7 +89,6 @@ const UserSchema = new Schema({
 })
 
 
-
 UserSchema.statics = {
   valueExists (query) {
     return this.findOne(query)
