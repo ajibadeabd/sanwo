@@ -11,8 +11,20 @@ const helpers = require('./../functions/helpers')
  * @return {*} object
  */
 const validateUserCreation = (req, res, next) => {
-  // check if businessRegistrationDocumentWas upload and update the document path
-  if (req.file) req.body.businessRegistrationDocument = req.file.path
+  const validFileTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
+
+  // check if businessRegistrationDocument was upload and update the document name
+  if (req.file && validFileTypes.includes(req.file.mimetype)) {
+    req.body.businessRegistrationDocument = req.file.filename
+  } else if (req.file && !validFileTypes.includes(req.file.mimetype)) {
+    // if file was upload but invalid type remove the file
+    helpers.removeFile(req.file.path)
+  }
+
+  // check if the accountType seller anc a file was uploaded
+  if (req.body.accountType === 'seller' && !req.file) {
+    req.body.businessRegistrationDocument = ''
+  }
 
   const { body: reqBody } = req
 
@@ -29,7 +41,7 @@ const validateUserCreation = (req, res, next) => {
   if (!accountType || (!accountTypes[accountType])) {
     //  if validation fails remove file
     if (req.body.businessRegistrationDocument) {
-      helpers.removeFile(req.body.businessRegistrationDocument)
+      helpers.removeFile(req.file.path)
     }
     return res.status(400).send({
       success: false,
@@ -81,7 +93,9 @@ const validateUserCreation = (req, res, next) => {
 
   const customMessages = {
     'required_if.phoneNumber': 'Please provide your email or phone number',
-    'exists.cooperative': 'Specified cooperative doesn\'t not exits'
+    'exists.cooperative': 'Specified cooperative doesn\'t not exits',
+    'required.businessRegistrationDocument':
+      'Image or PDF file is required for business registration document'
   }
 
   let validationRule
@@ -109,6 +123,7 @@ const validateUserCreation = (req, res, next) => {
         message: 'Validation failed',
         data: error
       })
+      if (req.file) helpers.removeFile(req.file.path)
     } else {
       next()
     }
