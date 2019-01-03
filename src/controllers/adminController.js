@@ -25,7 +25,7 @@ const getUsers = (req, res) => {
   const filter = {}
   if (queryKeys.length) {
     queryKeys.forEach((key) => {
-      filter[key] = query[key]
+      if (key !== 'limit' && key !== 'offset') filter[key] = query[key]
     })
   }
   const model = req.Models.User.find(filter)
