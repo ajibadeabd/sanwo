@@ -3,6 +3,7 @@ const path = require('path')
 const morgan = require('morgan')
 const io = require('socket.io')
 const IoEvents = require('./src/controllers/messageController')
+const SlackErrorNotificationBot = require('./src/functions/slack-bot')
 
 const db = require('./utils/db')
 const config = require('./config/index.js')
@@ -36,6 +37,13 @@ app.use('/', route)
 // Handle the error
 app.use((err, req, res, next) => {
   logger.error(err)
+  if (process.env.NOTIFY_SLACK) {
+    new SlackErrorNotificationBot(
+      {
+        username: 'BackEndBot', type: 'error', webHookUrl: process.env.SLACK_WEB_HOOK_URL, channel: '#paysmosmo'
+      }
+    ).sendMessage(err)
+  }
 })
 
 db.connect(config.dbUrl)
