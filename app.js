@@ -37,10 +37,11 @@ app.use('/', route)
 // Handle the error
 app.use((err, req, res, next) => {
   logger.error(err)
-  if (process.env.NOTIFY_SLACK) {
+  console.log(err)
+  if (process.env.NOTIFY_SLACK === 'true') {
     new SlackErrorNotificationBot(
       {
-        username: 'BackEndBot', type: 'error', webHookUrl: process.env.SLACK_WEB_HOOK_URL, channel: '#paysmosmo'
+        username: 'BackEndBot', type: 'error', webHookUrl: process.env.SLACK_WEB_HOOK_URL
       }
     ).sendMessage(err)
   }
