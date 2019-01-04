@@ -7,7 +7,11 @@ const create = (req, res, next) => {
   }
   const validationRule = {
     name: 'required|exists:Category,name',
+<<<<<<< HEAD
     slug: 'exists:Category,slug',
+=======
+    slug: 'sometimes|exists:Category,slug',
+>>>>>>> 66fb9b97fe894e6135cd893cdcefa1f55a4bc57c
     installmentPeriod: 'numeric|min:0',
     description: 'string',
   }
