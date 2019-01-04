@@ -55,7 +55,6 @@ const updateCategory = (req, res) => {
         throw err
       } else {
         category.name = req.body.name || category.name
-        category.slug = req.body.slug || req.body.name.toLowerCase().replace(/\s/ig,'-')
         category.description = req.body.description || category.description
         category.installmentPeriod = req.body.installmentPeriod || category.installmentPeriod
 
