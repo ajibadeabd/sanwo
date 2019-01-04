@@ -6,6 +6,7 @@ const userRoute = require('./userRoute')
 const adminRoute = require('./adminRoute')
 const sellerRoute = require('./sellerRoute')
 const purchaseRoute = require('./purchaseRoute')
+const categoryRoute = require('./categoryRoute')
 
 const authMiddleware = require('./../functions/authMiddleware')
 
@@ -25,6 +26,7 @@ router.use('/users', userRoute)
 router.use('/users/admin', authMiddleware.isAdmin, adminRoute)
 router.use('/users/seller', authMiddleware.isSeller, sellerRoute)
 router.use('/purchase', purchaseRoute)
+router.use('/categories', categoryRoute)
 router.use('/api/v1/', sampleRoute)
 
 module.exports = router
