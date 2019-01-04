@@ -171,7 +171,7 @@ const validatePasswordReset = (req, res, next) => {
 
   const validationRule = {
     token: 'required',
-    password: 'required|confirmed|min:6'
+    password: 'required|password_policy'
   }
 
   Validator(bodyBody, validationRule, {}, (error, status) => {

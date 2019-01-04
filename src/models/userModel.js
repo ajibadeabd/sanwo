@@ -97,6 +97,7 @@ UserSchema.statics = {
 }
 
 UserSchema.pre('save', function (next) {
+  if (!this.isModified('password')) return next()
   if (this.password) this.password = bcrypt.hashSync(this.password, 10)
   next()
 })
