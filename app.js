@@ -37,7 +37,6 @@ app.use('/', route)
 // Handle the error
 app.use((err, req, res, next) => {
   logger.error(err)
-  console.log(err)
   if (process.env.NOTIFY_SLACK === 'true') {
     new SlackErrorNotificationBot(
       {

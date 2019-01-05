@@ -6,7 +6,7 @@ const categoryController = require('../controllers/categoryController')
 
 const router = express.Router()
 
-router.get('/', categoryController.getCategories)
+router.get('/', categoryValidationMiddleware.get, categoryController.getCategories)
 
 router.use(authMiddleware.isAdmin)
 router.post('/', categoryValidationMiddleware.create, categoryController.createCategory)

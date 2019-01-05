@@ -1,8 +1,30 @@
 const Validator = require('./../functions/Validator')
 
-const create = (req, res, next) => {
+const get = (req, res, next) => {
 
-  if (!req.body.slug || req.body.slug.replace(/\s/,'') === ''){
+  const validationRule = {
+    _id: 'mongoId',
+    name: 'string',
+    slug: 'string',
+    installmentPeriod: 'numeric|min:0',
+  }
+
+  Validator(req.body, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
+
+const create = (req, res, next) => {
+  if (!req.body.slug || req.body.slug.replace(/\s/, '') === '') {
     req.body.slug = ''
   }
   const validationRule = {
@@ -27,8 +49,8 @@ const create = (req, res, next) => {
 }
 
 const update = (req, res, next) => {
-  const reqBody = {...req.body, ...req.params}
-  if (!req.body.slug || req.body.slug.replace(/\s/,'') === ''){
+  const reqBody = { ...req.body, ...req.params }
+  if (!req.body.slug || req.body.slug.replace(/\s/, '') === '') {
     req.body.slug = ''
   }
   const validationRule = {
@@ -69,6 +91,7 @@ const deleteCategory = (req, res, next) => {
 }
 
 module.exports = {
+  get,
   create,
   update,
   deleteCategory
