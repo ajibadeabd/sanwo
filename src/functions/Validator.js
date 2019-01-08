@@ -1,6 +1,7 @@
 const Validator = require('validatorjs')
 const Models = require('./../models')
 const helpers = require('./../functions/helpers')
+const utils = require('./../../utils/helper-functions')
 
 // register validation rules
 const mongoRegex = /^[a-f\d]{24}$/i
@@ -15,6 +16,10 @@ Validator.register('valid_order_status', value => (!!helpers.constants.ORDER_STA
 
 // validate MongoDB ObjectID
 Validator.register('mongoId', value => mongoRegex.test(value),
+  'Invalid data sent for :attribute')
+
+// validate isJson
+Validator.register('isJson', value => utils.isJson(value),
   'Invalid data sent for :attribute')
 
 // validate Password policy

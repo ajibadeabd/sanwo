@@ -47,8 +47,13 @@ const isSeller = (req, res, next) => {
             data: 'Access Unauthorized'
           })
       } else {
+        const authData = {
+          accountType: decoded.accountType,
+          userId: decoded._id,
+        }
         req.body.accountType = decoded.accountType
         req.body.userId = decoded._id
+        req.authData = authData
         next()
       }
     }
