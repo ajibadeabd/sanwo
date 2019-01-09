@@ -70,7 +70,7 @@ const validateUserCreation = (req, res, next) => {
       mongoId: '',
       exists: 'User,_id'
     }],
-    password: 'required|password_policy'
+    password: 'required|password_policy|confirmed'
   }
 
   const superAdminRules = {
@@ -171,7 +171,7 @@ const validatePasswordReset = (req, res, next) => {
 
   const validationRule = {
     token: 'required',
-    password: 'required|password_policy'
+    password: 'required|password_policy|confirmed'
   }
 
   Validator(bodyBody, validationRule, {}, (error, status) => {

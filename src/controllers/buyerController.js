@@ -7,7 +7,7 @@ const update = (req, res) => {
         user.firstName = req.body.firstName || user.firstName
         user.lastName = req.body.lastName || user.lastName
         user.email = req.body.email || user.email
-        user.businessAddress = req.body.businessAddress || user.businessAddress
+        user.phoneNumber = req.body.phoneNumber || user.phoneNumber
         user.password = req.body.password || user.password
         user.save((error) => {
           if (error) throw error
