@@ -25,6 +25,7 @@ const getWishList = (req, res) => {
   const model = req.Models.WishList.find({ user: req.body.userId })
   model.skip(offset)
   model.limit(limit)
+  model.populate('product')
   model.exec((err, results) => {
     if (err) {
       throw err

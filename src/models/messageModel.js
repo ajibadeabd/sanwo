@@ -1,17 +1,20 @@
 const mongoose = require('mongoose')
+const { Schema } = mongoose
 
-const Message = new mongoose.Schema({
+const Message = new Schema({
   message: {
     type: String,
     required: true
   },
   fromUserId: {
     type: String,
-    required: true
+    required: true,
+    ref: 'User',
   },
   toUserId: {
     type: String,
-    required: true
+    required: true,
+    ref: 'User',
   },
   meta: [],
   createdAt: {
