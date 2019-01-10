@@ -4,6 +4,8 @@ const Order = require('./orderModel')
 const Gift = require('./giftCardModel')
 const User = require('./userModel')
 const Message = require('./messageModel')
+const Category = require('./categoryModel')
+const WishList = require('./wishListModel')
 
 
 module.exports = {
@@ -12,5 +14,7 @@ module.exports = {
   Order,
   Gift,
   User,
-  Message
+  Message,
+  Category,
+  WishList
 }

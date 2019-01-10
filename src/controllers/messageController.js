@@ -49,6 +49,26 @@ Socket.prototype.getConversation = function (users, offset, limit, callback) {
   models.Message.find(query)
     .skip(offset)
     .limit(limit)
+    .populate('toUserId fromUserId', '_id firstName lastName email')
+    .sort({ createdAt: 'desc' })
+    .exec(callback)
+}
+
+Socket.prototype.getMessages = function (user, offset, limit, callback) {
+  const query = {
+    $or: [
+      {
+        toUserId: user.userId
+      },
+      {
+        fromUserId: user.userId
+      }
+    ]
+  }
+  models.Message.find(query)
+    // .populate('toUserId fromUserId', '_id firstName lastName email')
+    .skip(offset)
+    .limit(limit)
     .sort({ createdAt: 'desc' })
     .exec(callback)
 }
@@ -151,6 +171,38 @@ Socket.prototype.ioEvents = function () {
           throw err
         }
         if (!err) {
+          callback({
+            success: true,
+            data: {
+              offset,
+              limit,
+              results
+            }
+          })
+        }
+      })
+    })
+
+    /**
+     * Event name 'messages': Fetches recent messages for a particular user
+     * The client emits this event along with the
+     * userData to fetch messages for and a callback.
+     * @param {Object} options
+     * example {"userId": {MongoId}}
+     */
+    socket.on('messages', (options, callback) => {
+      let limit = parseInt(options.limit)
+      let offset = parseInt(options.offset)
+      offset = offset || 0
+      limit = limit || 20
+      this.getMessages({ userId: options.userId }, offset, limit, (err, results) => {
+        if (err) {
+          callback({
+            success: false,
+            data: null
+          })
+          throw err
+        } else {
           callback({
             success: true,
             data: {

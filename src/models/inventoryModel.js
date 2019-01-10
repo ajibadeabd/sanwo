@@ -4,20 +4,13 @@ const mongoose = require('mongoose')
 const { Schema } = mongoose
 
 const InventorySchema = new Schema({
-
-  itemName: {
+  name: {
     type: String,
-    required: true
-  },
-  productCategory: {
-    type: String,
-    trim: true,
     required: true
   },
   description: {
     type: String,
-    trim: true,
-    required: true
+    trim: true
   },
   seller: {
     type: Schema.ObjectId,
@@ -29,12 +22,32 @@ const InventorySchema = new Schema({
     required: true,
     default: 0
   },
-  productImage: {
-    type: String,
+  category: {
+    type: Schema.ObjectId,
+    ref: 'Category',
     required: true
+  },
+  installmentPeriod: {
+    type: Number,
+    default: 0
+  },
+  images: [String],
+  meta: {},
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-
-
 })
+
+InventorySchema.statics = {
+  valueExists (query) {
+    return this.findOne(query)
+      .then(result => result)
+  }
+}
 
 module.exports = mongoose.model('Inventory', InventorySchema)

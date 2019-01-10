@@ -1,3 +1,5 @@
+const utils = require('../../utils/helper-functions')
+
 const updateAccountStatus = (req, res) => {
   req.Models.User.findOneAndUpdate({ _id: req.params.userId },
     { status: req.body.status }, (err, user) => {
@@ -18,16 +20,7 @@ const getUsers = (req, res) => {
   let offset = parseInt(req.query.offset)
   offset = offset || 0
   limit = limit || 10
-
-  const { query } = req
-  const queryKeys = Object.keys(query)
-
-  const filter = {}
-  if (queryKeys.length) {
-    queryKeys.forEach((key) => {
-      if (key !== 'limit' && key !== 'offset') filter[key] = query[key]
-    })
-  }
+  const filter = utils.queryFilters(req)
   const model = req.Models.User.find(filter)
   model.skip(offset)
   model.limit(limit)

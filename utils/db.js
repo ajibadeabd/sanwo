@@ -13,10 +13,10 @@ exports.connect = function (url) {
     })
     .catch((err) => {
       console.error(`database connection failure: \n ${err.stack}`)
-      if (process.env.NOTIFY_SLACK) {
+      if (process.env.NOTIFY_SLACK === 'true') {
         new SlackErrorNotificationBot(
           {
-            username: 'BackEndBot', type: 'error', webHookUrl: process.env.SLACK_WEB_HOOK_URL, channel: '#paysmosmo'
+            username: 'BackEndBot', type: 'error', webHookUrl: process.env.SLACK_WEB_HOOK_URL
           }
         ).sendMessage(err)
       }

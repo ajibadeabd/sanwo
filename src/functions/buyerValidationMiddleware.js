@@ -7,6 +7,7 @@ const profileUpdate = (req, res, next) => {
     firstName: 'sometimes|required',
     lastName: 'sometimes|required',
     email: 'sometimes|email|exists:User,email',
+    phoneNumber: 'sometimes|digits:11|exists:User,phoneNumber',
     businessAddress: 'sometimes|required',
     password: 'sometimes|password_policy|confirmed'
   }
