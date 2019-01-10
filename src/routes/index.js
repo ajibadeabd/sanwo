@@ -7,8 +7,10 @@ const sampleRoute = require('./sampleRoute')
 const userRoute = require('./userRoute')
 const adminRoute = require('./adminRoute')
 const sellerRoute = require('./sellerRoute')
+const buyerRoute = require('./buyerRoute')
 const purchaseRoute = require('./purchaseRoute')
 const categoryRoute = require('./categoryRoute')
+const wishListRoute = require('./wishListRoute')
 
 
 const authMiddleware = require('./../functions/authMiddleware')
@@ -26,10 +28,12 @@ const router = express.Router()
 router.use('/users', userRoute)
 router.use('/users/admin', authMiddleware.isAdmin, adminRoute)
 router.use('/users/seller', authMiddleware.isSeller, sellerRoute)
+router.use('/users/buyer', authMiddleware.isBuyer, buyerRoute)
 router.use('/inventory', inventoryRoute)
 router.use('/inventory/order', orderRoute)
 router.use('/purchase', purchaseRoute)
 router.use('/categories', categoryRoute)
+router.use('/wish-list', authMiddleware.isAuthenticated, wishListRoute)
 
 // file download route
 router.get('/file/', (req, res) => {

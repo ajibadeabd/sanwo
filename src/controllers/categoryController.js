@@ -1,9 +1,10 @@
 const utils = require('../../utils/helper-functions')
-const createCategory = (req, res)=>{
-  const categoryName = req.body.name;
+
+const createCategory = (req, res) => {
+  const categoryName = req.body.name
   req.Models.Category.create({
     name: categoryName,
-    slug: req.body.slug || categoryName.toLowerCase().replace(/\s/ig,'-'),
+    slug: req.body.slug || categoryName.toLowerCase().replace(/\s/ig, '-'),
     installmentPeriod: req.body.installmentPeriod || 0,
     description: req.body.description,
     categoryImage: req.body.categoryImage,
@@ -83,7 +84,6 @@ const destroyCategory = (req, res) => {
       }
     }
   )
-
 }
 
 module.exports = {
