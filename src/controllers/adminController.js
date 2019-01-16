@@ -1,3 +1,5 @@
+const utils = require('../../utils/helper-functions')
+
 const updateAccountStatus = (req, res) => {
   req.Models.User.findOneAndUpdate({ _id: req.params.userId },
     { status: req.body.status }, (err, user) => {

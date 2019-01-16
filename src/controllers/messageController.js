@@ -19,12 +19,9 @@ function Socket (socket) {
  * WHERE toUserId = selectedUserId AND fromUserId = currentUserId
  * OR toUserId = selectedUserId AND fromUserId = currentUserId
  * @param {Object} users: should look like {fromUserId:currentUserId, toUserId:selectedUserId}
- * @param {Number} offset
- * @param {Number} limit
- * @param {function} callback
  * @return {function} callback
  */
-Socket.prototype.getConversation = function (users, offset, limit, callback) {
+Socket.prototype.getConversation = function (users) {
   const query = {
     $or: [
       {
@@ -46,31 +43,39 @@ Socket.prototype.getConversation = function (users, offset, limit, callback) {
       }
     ]
   }
-  models.Message.find(query)
-    .skip(offset)
-    .limit(limit)
-    .populate('toUserId fromUserId', '_id firstName lastName email')
-    .sort({ createdAt: 'desc' })
-    .exec(callback)
+  return models.Message.find(query)
 }
 
-Socket.prototype.getMessages = function (user, offset, limit, callback) {
-  const query = {
-    $or: [
-      {
-        toUserId: user.userId
-      },
-      {
-        fromUserId: user.userId
-      }
-    ]
+Socket.prototype.getMessages = async function (userId, callback) {
+  try {
+    const query = {
+      $or: [
+        {
+          toUserId: userId
+        },
+        {
+          fromUserId: userId
+        }
+      ]
+    }
+    const relationIds = await models.Message.find(query)
+      .distinct('fromUserId')
+    const results = await models.User.find({ _id: { $in: relationIds } })
+      .select('_id firstName lastName email')
+    if (results) {
+      const promises = results.filter(e => e.id !== userId)
+        .map(async result => ({
+          ...result._doc,
+          message: await this.getConversation({
+            fromUserId: userId,
+            toUserId: result._id
+          }).sort({ createdAt: 'desc' }).limit(2)
+        }))
+      Promise.all(promises).then((records) => { callback(null, records) })
+    }
+  } catch (e) {
+    throw e
   }
-  models.Message.find(query)
-    // .populate('toUserId fromUserId', '_id firstName lastName email')
-    .skip(offset)
-    .limit(limit)
-    .sort({ createdAt: 'desc' })
-    .exec(callback)
 }
 
 /**
@@ -162,25 +167,30 @@ Socket.prototype.ioEvents = function () {
       let offset = parseInt(options.offset)
       offset = offset || 0
       limit = limit || 20
-      this.getConversation(users, offset, limit, (err, results) => {
-        if (err) {
-          callback({
-            success: false,
-            data: null
-          })
-          throw err
-        }
-        if (!err) {
-          callback({
-            success: true,
-            data: {
-              offset,
-              limit,
-              results
-            }
-          })
-        }
-      })
+      this.getConversation(users)
+        .skip(offset)
+        .limit(limit)
+        .populate('toUserId fromUserId', '_id firstName lastName email')
+        .sort({ createdAt: 'desc' })
+        .exec((err, results) => {
+          if (err) {
+            callback({
+              success: false,
+              data: null
+            })
+            throw err
+          }
+          if (!err) {
+            callback({
+              success: true,
+              data: {
+                offset,
+                limit,
+                results
+              }
+            })
+          }
+        })
     })
 
     /**
@@ -191,11 +201,7 @@ Socket.prototype.ioEvents = function () {
      * example {"userId": {MongoId}}
      */
     socket.on('messages', (options, callback) => {
-      let limit = parseInt(options.limit)
-      let offset = parseInt(options.offset)
-      offset = offset || 0
-      limit = limit || 20
-      this.getMessages({ userId: options.userId }, offset, limit, (err, results) => {
+      this.getMessages(options.userId, (err, results) => {
         if (err) {
           callback({
             success: false,
@@ -205,11 +211,7 @@ Socket.prototype.ioEvents = function () {
         } else {
           callback({
             success: true,
-            data: {
-              offset,
-              limit,
-              results
-            }
+            data: results
           })
         }
       })
