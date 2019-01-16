@@ -11,7 +11,9 @@ const _validateFiles = (files) => {
        * If one of the files doesn't match our supported
        * files return validation error and remove all files
        */
-      for (let i = 0; i <= files.length; i += 1) helpers.removeFile(files[i].path)
+      for (let i = 0; i <= files.length; i += 1) {
+        if (files[i].path) helpers.removeFile(files[i].path)
+      }
       return false
     }
     return true
