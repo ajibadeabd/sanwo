@@ -12,7 +12,7 @@ const _validateFiles = (files) => {
        * files return validation error and remove all files
        */
       for (let i = 0; i <= files.length; i += 1) {
-        if (files[i].path) helpers.removeFile(files[i].path)
+        if (files[i] && files[i].path) helpers.removeFile(files[i].path)
       }
       return false
     }
