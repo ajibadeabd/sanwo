@@ -1,6 +1,7 @@
 const express = require('express')
 const multer = require('multer')
 
+const authMiddleware = require('./../functions/authMiddleware')
 const userController = require('../controllers/userController')
 const userValidationMiddleware = require('../functions/userValidationMiddleware')
 
@@ -14,10 +15,15 @@ const storage = multer.diskStorage({
     // file path depends on the route we visiting could be avatar upload
     if (path === 'register') {
       saveAt = `${parentPath}/registrationDocuments/`
+    } else if (path === 'avatar') {
+      saveAt = `${parentPath}avatars/`
     } else {
       saveAt = `${parentPath}/`
     }
     cb(null, saveAt)
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${new Date().toISOString()}_${file.originalname.replace(/\s/ig, '_')}`)
   }
 })
 
@@ -36,5 +42,10 @@ router.post('/password-reset',
   userValidationMiddleware.validatePasswordReset, userController.passwordReset)
 
 router.get('/cooperatives', userController.getCooperatives)
+
+router.use(authMiddleware.isAuthenticated)
+
+router.post('/avatar', multiPart.single('avatar'),
+  userValidationMiddleware.validateAvatar, userController.updateUserAvatar)
 
 module.exports = router

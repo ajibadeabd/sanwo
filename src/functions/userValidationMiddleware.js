@@ -187,10 +187,27 @@ const validatePasswordReset = (req, res, next) => {
   })
 }
 
+const validateAvatar = (req, res, next) => {
+  const validFileTypes = ['image/jpeg', 'image/png', 'image/jpg']
+  if (!req.file || !validFileTypes.includes(req.file.mimetype)) {
+    // if file was upload but invalid type remove the file
+    if (req.file) helpers.removeFile(req.file.path)
+    return res.status(400).send({
+      success: false,
+      message: 'Validation failed',
+      data: { errors: { images: ['Invalid file uploaded. jpeg, png and jpg only'] } }
+    })
+  }
+
+  req.body.avatar = req.file.filename
+  next()
+}
+
 
 module.exports = {
   validateUserCreation,
   validateUserLogin,
   validateForgotPassword,
-  validatePasswordReset
+  validatePasswordReset,
+  validateAvatar
 }
