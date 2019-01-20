@@ -1,27 +1,59 @@
 const utils = require('../../utils/helper-functions')
 const helpers = require('./../functions/helpers')
 
-const create = (req, res) => {
-  req.Models.Inventory.create({
-    name: req.body.name,
-    category: req.body.category,
-    description: req.body.description,
-    price: req.body.price,
-    seller: req.authData.userId,
-    images: req.body.images,
-    installmentPeriod: req.body.installmentPeriod,
-    meta: req.body.meta ? JSON.parse(req.body.meta) : {},
-  }, (err, result) => {
-    if (err) {
-      throw err
-    } else {
-      res.status(201)
-        .send({
-          success: true,
-          message: 'Created Successfully',
-          data: result
+const _checkValidInstallment = (req, res, callback) => {
+  req.Models.Category.findById(req.body.category, (err, category) => {
+    if (err) throw err
+    else if (category) {
+      let installmentCheckErrorMsg = ''
+      if (category.installmentPeriod === 0 && req.body.installmentPeriod > 0) {
+        installmentCheckErrorMsg = 'The product category does not support installment payment'
+      }
+      if (category.installmentPeriod !== 0
+        && (req.body.installmentPeriod > category.installmentPeriod)) {
+        installmentCheckErrorMsg = 'The installment period cannot be greater the category installment payment'
+      }
+      if (installmentCheckErrorMsg) {
+        return res.status(400).send({
+          success: false,
+          message: 'Validation failed',
+          data: {
+            errors: {
+              installmentPeriod: [installmentCheckErrorMsg]
+            }
+          }
         })
+      }
+      callback()
     }
+  })
+}
+const create = (req, res) => {
+  // first let's confirm that the installment period set(if any)
+  // is not greater than the product category requirement
+  _checkValidInstallment(req, res, () => {
+    // now let's create the product
+    req.Models.Inventory.create({
+      name: req.body.name,
+      category: req.body.category,
+      description: req.body.description,
+      price: req.body.price,
+      seller: req.authData.userId,
+      images: req.body.images,
+      installmentPeriod: req.body.installmentPeriod,
+      meta: req.body.meta ? JSON.parse(req.body.meta) : {},
+    }, (err, result) => {
+      if (err) {
+        throw err
+      } else {
+        return res.status(201)
+          .send({
+            success: true,
+            message: 'Created Successfully',
+            data: result
+          })
+      }
+    })
   })
 }
 
