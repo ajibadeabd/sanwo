@@ -11,7 +11,7 @@ const _checkValidInstallment = (req, res, callback) => {
       }
       if (category.installmentPeriod !== 0
         && (req.body.installmentPeriod > category.installmentPeriod)) {
-        installmentCheckErrorMsg = 'The installment period cannot be greater the category installment payment'
+        installmentCheckErrorMsg = 'The installment period cannot be greater than the category installment payment'
       }
       if (installmentCheckErrorMsg) {
         return res.status(400).send({

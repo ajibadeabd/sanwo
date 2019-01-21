@@ -6,7 +6,7 @@ const get = (req, res, next) => {
     _id: 'mongoId',
     name: 'string',
     slug: 'string',
-    installmentPeriod: 'numeric|min:0',
+    installmentPeriod: 'numeric|min:2',
   }
 
   Validator(req.body, validationRule, {}, (err, status) => {

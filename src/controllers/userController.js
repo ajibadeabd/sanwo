@@ -170,7 +170,7 @@ const create = (req, res, next) => {
 const login = (req, res) => {
   const { email, password } = req.body
   req.Models.User.findOne({ email })
-    .populate('cooperative')
+    .populate('cooperative', '-password -relatedUsers -status')
     .exec((err, user) => {
       if (err) throw err
 
@@ -205,7 +205,7 @@ const login = (req, res) => {
           _id,
           accountType,
           status
-        }, process.env.TOKEN_SECRET, { expiresIn: '24h' })
+        }, process.env.TOKEN_SECRET, { expiresIn: '7d' })
         return res.send({
           success: true,
           message: 'login successful',
