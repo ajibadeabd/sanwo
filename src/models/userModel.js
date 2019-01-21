@@ -71,6 +71,10 @@ const UserSchema = new Schema({
     lowercase: true,
     default: helpers.constants.ACCOUNT_STATUS.pending
   },
+  avatar: {
+    type: String,
+    default: 'avatar.png'
+  },
   relatedUsers: [new Schema({ _id: Schema.ObjectId })],
   password: {
     type: String,

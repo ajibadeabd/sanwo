@@ -170,7 +170,7 @@ const create = (req, res, next) => {
 const login = (req, res) => {
   const { email, password } = req.body
   req.Models.User.findOne({ email })
-    .populate('cooperative')
+    .populate('cooperative', '-password -relatedUsers -status')
     .exec((err, user) => {
       if (err) throw err
 
@@ -205,7 +205,7 @@ const login = (req, res) => {
           _id,
           accountType,
           status
-        }, process.env.TOKEN_SECRET, { expiresIn: '24h' })
+        }, process.env.TOKEN_SECRET, { expiresIn: '7d' })
         return res.send({
           success: true,
           message: 'login successful',
@@ -289,10 +289,36 @@ const getCooperatives = (req, res) => {
     })
 }
 
+const updateUserAvatar = (req, res) => {
+  req.Models.User.findOne({ _id: req.authData.userId })
+    .exec((err, user) => {
+      if (err) {
+        throw err
+      } else {
+        // let's remove the old avatar
+        if (user && user.avatar !== 'avatar.png') {
+          helpers.removeFile(`public/upload/avatars/${user.avatar}`)
+        }
+
+        user.avatar = req.body.avatar || user.avatar
+        user.save((error) => {
+          if (error) throw error
+          return res.send({
+            success: true,
+            message: 'Updated successfully',
+            data: user,
+            token: req.headers['x-access-token']
+          })
+        })
+      }
+    })
+}
+
 module.exports = {
   create,
   login,
   forgotPassword,
   passwordReset,
-  getCooperatives
+  getCooperatives,
+  updateUserAvatar
 }

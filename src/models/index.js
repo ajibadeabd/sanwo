@@ -6,6 +6,7 @@ const User = require('./userModel')
 const Message = require('./messageModel')
 const Category = require('./categoryModel')
 const WishList = require('./wishListModel')
+const Cart = require('./cartModel')
 
 
 module.exports = {
@@ -16,5 +17,6 @@ module.exports = {
   User,
   Message,
   Category,
-  WishList
+  WishList,
+  Cart
 }
