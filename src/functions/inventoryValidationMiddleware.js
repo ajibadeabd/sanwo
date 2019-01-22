@@ -166,10 +166,33 @@ const deleteImage = (req, res, next) => {
   })
 }
 
+const search = (req, res, next) => {
+  const validationRule = {
+    keyword: 'required|min:1'
+  }
+  const customMsg = {
+    'keyword.required': 'Please specify a keyword to search',
+    'keyword.min': 'Please enter at least 1 character',
+  }
+  Validator(req.params, validationRule, customMsg, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
+
 module.exports = {
   create,
   get,
   update,
   deleteInventory,
-  deleteImage
+  deleteImage,
+  search
 }

@@ -21,6 +21,7 @@ const inventoryController = require('../controllers/inventoryController')
 const router = express.Router()
 
 router.get('/', inventoryValidation.get, inventoryController.getInventories)
+router.get('/search/:keyword', inventoryValidation.search, inventoryController.searchInventories)
 
 // apply auth middleware
 router.use(authMiddleware.isSeller)

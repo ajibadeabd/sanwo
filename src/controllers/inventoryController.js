@@ -175,10 +175,39 @@ const deleteImage = (req, res) => {
   })
 }
 
+const searchInventories = async (req, res) => {
+  let limit = parseInt(req.query.limit)
+  let offset = parseInt(req.query.offset)
+  offset = offset || 0
+  limit = limit || 10
+  const { keyword } = req.params
+  const products = await req.Models.Inventory
+    .find({ name: { $regex: keyword, $options: 'i' } })
+    .skip(offset).limit(limit)
+
+  const categories = await req.Models.Category
+    .find({ name: { $regex: keyword, $options: 'i' } })
+    .skip(offset).limit(limit)
+
+  res.send({
+    success: true,
+    message: `Result for ${keyword}`,
+    data: {
+      offset,
+      limit,
+      results: {
+        products,
+        categories
+      }
+    }
+  })
+}
+
 module.exports = {
   create,
   deleteInventory,
   update,
   getInventories,
-  deleteImage
+  deleteImage,
+  searchInventories
 }
