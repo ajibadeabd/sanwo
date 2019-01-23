@@ -168,7 +168,8 @@ const create = (req, res, next) => {
 }
 
 const login = (req, res) => {
-  const { email, password } = req.body
+  let { email } = req.body
+  email = email.toLowerCase()
   req.Models.User.findOne({ email })
     .populate('cooperative', '-password -relatedUsers -status')
     .exec((err, user) => {
@@ -197,7 +198,7 @@ const login = (req, res) => {
           })
       }
 
-      if (user && bcrypt.compareSync(password, user.password)) {
+      if (user && bcrypt.compareSync(req.body.password, user.password)) {
         const {
           _id, accountType, status
         } = user
