@@ -137,11 +137,12 @@ const create = (req, res) => {
 const get = (req, res) => {
   const filter = { user: req.body.userId }
   const model = req.Models.Cart.find(filter)
+  const select = 'firstName lastName email avatar businessName'
   model.populate({
     path: 'product',
-    populate: { path: 'category' }
+    populate: { path: 'category seller', select }
   })
-  model.populate('user', 'firstName lastName email')
+  model.populate('user', select)
   model.exec((err, results) => {
     let totalQuantities = 0
     let subTotal = 0

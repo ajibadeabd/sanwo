@@ -23,9 +23,13 @@ const getWishList = (req, res) => {
   offset = offset || 0
   limit = limit || 10
   const model = req.Models.WishList.find({ user: req.body.userId })
+  const select = 'firstName lastName email avatar businessName'
   model.skip(offset)
   model.limit(limit)
-  model.populate('product')
+  model.populate({
+    path: 'product category',
+    populate: { path: 'category seller', select }
+  })
   model.exec((err, results) => {
     if (err) {
       throw err
