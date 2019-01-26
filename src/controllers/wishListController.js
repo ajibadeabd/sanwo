@@ -23,7 +23,7 @@ const getWishList = (req, res) => {
   offset = offset || 0
   limit = limit || 10
   const model = req.Models.WishList.find({ user: req.body.userId })
-  const select = 'firstName lastName email avatar businessName'
+  const select = 'name firstName lastName email avatar businessName'
   model.skip(offset)
   model.limit(limit)
   model.populate({
