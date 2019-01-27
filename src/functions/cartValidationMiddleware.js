@@ -21,6 +21,26 @@ const create = (req, res, next) => {
   })
 }
 
+const reduceCartQuantity = (req, res, next) => {
+  const validationRule = {
+    cart: 'required|mongoId|exists:Cart,_id',
+    quantity: 'required|numeric|min:1',
+  }
+
+  Validator({ ...req.body, ...req.params }, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
+
 const get = (req, res, next) => {
   const validationRule = {
     _id: 'mongoId',
@@ -62,5 +82,6 @@ const destroy = (req, res, next) => {
 module.exports = {
   get,
   create,
-  destroy
+  destroy,
+  reduceCartQuantity
 }

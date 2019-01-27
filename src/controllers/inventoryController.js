@@ -125,8 +125,11 @@ const getInventories = (req, res) => {
 }
 
 const deleteInventory = (req, res) => {
-  req.Models.Inventory.findByIdAndDelete(
-    req.params.inventoryId, (err, result) => {
+  req.Models.Inventory.findOneAndDelete(
+    {
+      _id: req.params.inventoryId,
+      seller: req.authData.userId
+    }, (err, result) => {
       if (err) {
         throw err
       } else {
@@ -135,6 +138,15 @@ const deleteInventory = (req, res) => {
           message: 'Deleted successfully',
           data: result
         })
+        // delete images related to the deleted product
+        const productImages = result.images
+        if (productImages.length) {
+          for (let i = 0; i <= productImages.length; i += 1) {
+            if (productImages[i]) {
+              helpers.removeFile(`public/upload/products/${productImages[i]}`)
+            }
+          }
+        }
       }
     }
   )
@@ -163,7 +175,7 @@ const deleteImage = (req, res) => {
       // since we are sure the image exists now let go ahead and delete ehm
       for (let i = 0; i <= images.length; i += 1) {
         // remove the images from file system
-        helpers.removeFile(`/public/upload/products/${images[i]}`)
+        helpers.removeFile(`public/upload/products/${images[i]}`)
       }
       // remove the image from product images.
       inventory.images = productImages.filter(image => !images.includes(image))

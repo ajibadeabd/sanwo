@@ -28,10 +28,14 @@ app.use(morgan('dev'))
 app.use((req, res, next) => {
   req.Models = Models
   req.log = logger.log
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
   res.header('Access-Control-Allow-Headers', 'Content-Type, x-access-token')
-  next()
+  if (req.method === 'OPTIONS') {
+    res.status(200).end()
+  } else {
+    next()
+  }
 })
 
 // All route should be added to the index.js file inside the route folder

@@ -134,14 +134,50 @@ const create = (req, res) => {
         })
     })
 }
+
+const reduceCartQuantity = (req, res) => {
+  const responsePayload = { success: false, message: 'Validation failed', data: { errors: {} } }
+  // A user can't decrement an item that has one quantity
+  req.Models.Cart.findOne({ _id: req.params.cart, user: req.body.userId })
+    .exec((err, cartItem) => {
+      if (err) throw err
+      if (!cartItem) {
+        responsePayload.data.errors.cart = ['The cart item you\'re trying to update does not belong to you']
+        return res.status(400).send(responsePayload)
+      }
+
+      if (cartItem.quantity === 1) {
+        responsePayload.data.errors.cart = ['You can\'t reduce a cart item with 1 quantity']
+        return res.status(400).send(responsePayload)
+      }
+
+      if (req.body.quantity > cartItem.quantity) {
+        responsePayload.data.errors.cart = ['Quantity exceed current cart quantity']
+        return res.status(400).send(responsePayload)
+      }
+
+      cartItem.quantity -= req.body.quantity
+      cartItem.subTotal -= cartItem.unitPrice * req.body.quantity
+      cartItem.save((error) => {
+        if (error) throw error
+        return res.send({
+          success: true,
+          message: 'Updated Successfully',
+          data: cartItem
+        }).status(200)
+      })
+    })
+}
+
 const get = (req, res) => {
   const filter = { user: req.body.userId }
   const model = req.Models.Cart.find(filter)
+  const select = 'name firstName lastName email avatar businessName'
   model.populate({
     path: 'product',
-    populate: { path: 'category' }
+    populate: { path: 'category seller', select }
   })
-  model.populate('user', 'firstName lastName email')
+  model.populate('user', select)
   model.exec((err, results) => {
     let totalQuantities = 0
     let subTotal = 0
@@ -188,5 +224,6 @@ const destroy = (req, res) => {
 module.exports = {
   create,
   get,
-  destroy
+  destroy,
+  reduceCartQuantity
 }
