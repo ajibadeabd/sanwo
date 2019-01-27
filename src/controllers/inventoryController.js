@@ -40,6 +40,7 @@ const create = (req, res) => {
       price: req.body.price,
       seller: req.authData.userId,
       images: req.body.images,
+      quantity: req.body.quantity,
       installmentPeriod: req.body.installmentPeriod,
       meta: req.body.meta ? JSON.parse(req.body.meta) : {},
     }, (err, result) => {
@@ -69,6 +70,7 @@ const update = (req, res) => {
       inventory.category = req.body.category || inventory.category
       inventory.description = req.body.description || inventory.description
       inventory.price = req.body.price || inventory.price
+      inventory.quantity = req.body.quantity || inventory.quantity
       inventory.images = req.body.images
         ? inventory.images.concat(req.body.images)
         : inventory.images

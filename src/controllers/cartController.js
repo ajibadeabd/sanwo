@@ -56,6 +56,13 @@ const _validateCartCreation = async (req) => {
     errorMessages.push('You already have this installment item in your cart, you can\'t add more quantity')
   }
 
+  /**
+   * assert that a user can't request quantity greater than product's quantity
+   */
+  if (req.body.quantity > product.quantity) {
+    errorMessages.push('The quantity you\'re requesting exceeds available quantity')
+  }
+
   return !errorMessages.length
     ? Promise.resolve({ product, currentUserCart }) : Promise.reject(errorMessages)
 }

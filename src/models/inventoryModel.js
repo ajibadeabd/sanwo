@@ -31,6 +31,10 @@ const InventorySchema = new Schema({
     type: Number,
     default: 0
   },
+  quantity: {
+    type: Number,
+    required: true
+  },
   images: [String],
   meta: {},
   updatedAt: {

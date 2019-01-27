@@ -44,6 +44,7 @@ const create = (req, res, next) => {
     installmentPeriod: 'numeric|min:2',
     images: 'max:5',
     meta: 'isJson',
+    quantity: 'required|numeric|min:1'
   }
 
   Validator(req.body, validationRule, { 'max.images': 'Maximum of 5 images' }, (err, status) => {
@@ -86,6 +87,7 @@ const update = (req, res, next) => {
     price: 'numeric|min:1000',
     category: 'mongoId|exists:Category,_id',
     installmentPeriod: 'numeric|min:1',
+    quantity: 'numeric|min:1',
     images: 'max:5',
     meta: 'isJson',
   }
