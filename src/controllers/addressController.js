@@ -1,20 +1,24 @@
 const utils = require('../../utils/helper-functions')
 
-const createCategory = (req, res) => {
-  const categoryName = req.body.name
-  req.Models.Category.create({
-    name: categoryName,
-    slug: req.body.slug || categoryName.toLowerCase().replace(/\s/ig, '-'),
-    installmentPeriod: req.body.installmentPeriod || 0,
-    description: req.body.description,
-    categoryImage: req.body.categoryImage,
-  }, (err, result) => {
+const create = async (req, res) => {
+  const currentUser = await req.Models.User.findOne({ _id: req.body.userId })
+  req.Models.AddressBook.create({
+    user: currentUser._id,
+    firstName: req.body.firstName || currentUser.firstName,
+    lastName: req.body.lastName || currentUser.lastName,
+    phoneNumber: req.body.phoneNumber || currentUser.phoneNumber,
+    address: req.body.address,
+    additionalInfo: req.body.additionalInfo,
+    region: req.body.region,
+    city: req.body.city,
+  },
+  (err, result) => {
     if (err) {
       throw err
     } else {
       res.send({
         success: true,
-        message: 'Created Successfully',
+        message: 'Address Created Successfully',
         data: result
       })
         .status(201)
@@ -22,13 +26,15 @@ const createCategory = (req, res) => {
   })
 }
 
-const getCategories = (req, res) => {
+const get = (req, res) => {
   let limit = parseInt(req.query.limit)
   let offset = parseInt(req.query.offset)
   offset = offset || 0
   limit = limit || 10
   const filter = utils.queryFilters(req)
-  const model = req.Models.Category.find(filter)
+  filter.user = req.body.userId
+  const model = req.Models.AddressBook.find(filter)
+  model.populate('user', 'avatar firstName lastName email phoneNumber')
   model.skip(offset)
   model.limit(limit)
   model.exec((err, results) => {
@@ -37,7 +43,7 @@ const getCategories = (req, res) => {
     } else {
       res.send({
         success: true,
-        message: 'Successfully fetching categories',
+        message: 'Successfully fetching addressBooks',
         data: {
           offset,
           limit,
@@ -49,46 +55,56 @@ const getCategories = (req, res) => {
   })
 }
 
-const updateCategory = (req, res) => {
-  req.Models.Category.findOne({ _id: req.params.category })
-    .exec((err, category) => {
+const update = (req, res) => {
+  req.Models.AddressBook.findOne({ user: req.body.userId, _id: req.params.id })
+    .exec((err, addressBook) => {
       if (err) {
         throw err
       } else {
-        category.name = req.body.name || category.name
-        category.description = req.body.description || category.description
-        category.installmentPeriod = req.body.installmentPeriod || category.installmentPeriod
+        if (!addressBook) {
+          return res.send({
+            success: true,
+            message: 'Unauthorized! you don\'t own this record',
+            data: addressBook
+          }).status(401)
+        }
+        addressBook.firstName = req.body.firstName || addressBook.firstName
+        addressBook.lastName = req.body.lastName || addressBook.lastName
+        addressBook.phoneNumber = req.body.phoneNumber || addressBook.phoneNumber
+        addressBook.address = req.body.address || addressBook.address
+        addressBook.additionalInfo = req.body.additionalInfo || addressBook.additionalInfo
+        addressBook.region = req.body.region || addressBook.region
+        addressBook.city = req.body.city || addressBook.city
 
-        category.save((error) => {
+        addressBook.save((error) => {
           if (error) throw error
           return res.send({
             success: true,
             message: 'Updated Successfully',
-            data: category
+            data: addressBook
           })
         })
       }
     })
 }
 
-const destroyCategory = (req, res) => {
-  req.Models.Category.findByIdAndDelete(
-    req.params.category, (err, Category) => {
+const destroy = (req, res) => {
+  req.Models.AddressBook.findOneAndDelete({ user: req.body.userId, _id: req.params.id },
+    (err, AddressBook) => {
       if (err) throw err
       else {
         res.send({
           status: true,
           message: 'Deleted successfully',
-          data: Category
+          data: AddressBook
         })
       }
-    }
-  )
+    })
 }
 
 module.exports = {
-  createCategory,
-  getCategories,
-  updateCategory,
-  destroyCategory
+  create,
+  get,
+  update,
+  destroy
 }

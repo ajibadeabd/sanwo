@@ -191,8 +191,8 @@ const get = (req, res) => {
     if (results.length) {
       for (let i = 0; i <= results.length; i += 1) {
         if (results[i]) {
-          totalQuantities += results[i].quantity
-          subTotal += results[i].subTotal
+          totalQuantities += results[i].installmentPeriod === 0 ? results[i].quantity : 0
+          subTotal += results[i].installmentPeriod === 0 ? results[i].subTotal : 0
         }
       }
     }

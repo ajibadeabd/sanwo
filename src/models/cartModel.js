@@ -50,5 +50,7 @@ CartSchema.statics = {
   }
 }
 
-
-module.exports = mongoose.model('Cart', CartSchema)
+module.exports = {
+  Model: mongoose.model('Cart', CartSchema),
+  CartSchema
+}

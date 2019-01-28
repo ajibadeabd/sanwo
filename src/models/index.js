@@ -6,7 +6,9 @@ const User = require('./userModel')
 const Message = require('./messageModel')
 const Category = require('./categoryModel')
 const WishList = require('./wishListModel')
-const Cart = require('./cartModel')
+const cart = require('./cartModel')
+const Payment = require('./paymentModel')
+const AddressBook = require('./addressBookModel')
 
 
 module.exports = {
@@ -18,5 +20,7 @@ module.exports = {
   Message,
   Category,
   WishList,
-  Cart
+  Cart: cart.Model,
+  Payment,
+  AddressBook
 }

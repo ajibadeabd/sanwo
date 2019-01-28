@@ -3,40 +3,50 @@ const mongoose = require('mongoose')
 
 const { Schema } = mongoose
 
-const CategorySchema = new Schema({
+const AddressBookSchema = new Schema({
 
-  name: {
-    type: String,
-    required: true,
-    unique: true,
+  user: {
+    type: Schema.ObjectId,
+    ref: 'User',
+    required: true
   },
-  slug: {
+  firstName: {
+    type: String,
+    trim: true,
+    required: true,
+  },
+  lastName: {
     type: String,
     trim: true,
     required: true,
-    unique: true,
   },
-  installmentPeriod: {
-    type: Number,
-    min: 0,
-    default: 0
-  },
-  description: {
+  phoneNumber: {
     type: String,
+  },
+  address: {
+    type: String,
+    required: true,
     trim: true,
   },
-  categoryImage: {
+  additionalInfo: {
     type: String,
+  },
+  region: {
+    type: String,
+    required: true
+  },
+  city: {
+    type: String,
+    required: true
   }
-
 
 })
 
-CategorySchema.statics = {
+AddressBookSchema.statics = {
   valueExists (query) {
     return this.findOne(query)
       .then(result => result)
   }
 }
 
-module.exports = mongoose.model('Category', CategorySchema)
+module.exports = mongoose.model('AddressBook', AddressBookSchema)

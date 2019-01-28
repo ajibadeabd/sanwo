@@ -113,10 +113,10 @@ const get = (req, res, next) => {
   const validationRule = {
     name: 'string',
     description: 'string',
-    price: 'numeric|min:1000',
+    price: 'numeric',
     category: 'mongoId',
     seller: 'mongoId',
-    installmentPeriod: 'numeric|min:1',
+    installmentPeriod: 'numeric',
   }
   Validator(req.query, validationRule, {}, (err, status) => {
     if (!status) {

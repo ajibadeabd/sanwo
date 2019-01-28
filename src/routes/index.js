@@ -12,6 +12,7 @@ const purchaseRoute = require('./purchaseRoute')
 const categoryRoute = require('./categoryRoute')
 const wishListRoute = require('./wishListRoute')
 const cartRoute = require('./cartRoute')
+const addressRoute = require('./addressRoute')
 
 
 const authMiddleware = require('./../functions/authMiddleware')
@@ -36,6 +37,7 @@ router.use('/purchase', purchaseRoute)
 router.use('/categories', categoryRoute)
 router.use('/wish-list', authMiddleware.isAuthenticated, wishListRoute)
 router.use('/cart', authMiddleware.isAuthenticated, cartRoute)
+router.use('/address', authMiddleware.isAuthenticated, addressRoute)
 
 // file download route
 router.get('/file/', (req, res) => {

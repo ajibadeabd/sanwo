@@ -1,13 +1,14 @@
 const express = require('express')
-const cartValidationMiddleware = require('./../functions/cartValidationMiddleware')
+const addressValidationMiddleware = require('./../functions/addressValidationMiddleware')
 
-const cartController = require('../controllers/cartController')
+const addressController = require('../controllers/addressController')
 
 const router = express.Router()
 
-router.get('/', cartValidationMiddleware.get, cartController.get)
-router.post('/', cartValidationMiddleware.create, cartController.create)
-router.put('/:cart', cartValidationMiddleware.reduceCartQuantity, cartController.reduceCartQuantity)
-router.delete('/:cart', cartValidationMiddleware.destroy, cartController.destroy)
+router.get('/', addressValidationMiddleware.get, addressController.get)
+router.post('/', addressValidationMiddleware.create, addressController.create)
+router.put('/:id', addressValidationMiddleware.update,
+  addressController.update)
+router.delete('/:id', addressValidationMiddleware.deleteAddressBook, addressController.destroy)
 
 module.exports = router
