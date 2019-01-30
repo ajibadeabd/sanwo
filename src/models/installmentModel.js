@@ -2,41 +2,41 @@ const mongoose = require('mongoose')
 
 
 const { Schema } = mongoose
-
-const CategorySchema = new Schema({
-
-  name: {
+const InstallmentSchema = new Schema({
+  installmentRef: {
     type: String,
-    required: true,
-    unique: true,
   },
-  slug: {
-    type: String,
-    trim: true,
-    required: true,
-    unique: true,
-  },
-  installmentPeriod: {
+  installmentPercentage: {
     type: Number,
-    min: 0,
-    default: 0
   },
-  description: {
-    type: String,
-    trim: true,
+  amount: {
+    type: Number,
   },
-  categoryImage: {
+  status: {
     type: String,
+    default: 'pending',
+  },
+  payment: {
+    type: Schema.ObjectId,
+    ref: 'Payment',
+  },
+  dueDate: {
+    type: Date,
+  },
+  datePaid: {
+    type: Date
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-
-
 })
 
-CategorySchema.statics = {
+InstallmentSchema.statics = {
   valueExists (query) {
     return this.findOne(query)
       .then(result => result)
   }
 }
 
-module.exports = mongoose.model('Category', CategorySchema)
+module.exports = { InstallmentSchema }

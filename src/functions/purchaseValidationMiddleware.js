@@ -4,9 +4,7 @@ const create = (req, res, next) => {
   const requestBody = { ...req.params, ...req.body }
 
   const validationRule = {
-    product: 'required|mongoId',
-    quantity: 'required|numeric|min:1',
-    instNumber: 'numeric'
+    address: 'required|mongoId|exists:AddressBook,_id'
   }
 
   Validator(requestBody, validationRule, {}, (err, status) => {

@@ -92,28 +92,12 @@ const sendPasswordResetEmail = (user, req) => {
 const sendOrderNewOrderMail = async ({ order, product }, req) => {
   // TODO implement email notification to buyer, seller, co-operative admin and super admin
   try {
-    let token = ''
-    crypto.randomBytes(20, (error, buffer) => {
-      if (error) throw error
-      token = buffer.toString('hex')
-      //  update to token
-      req.Models.Order.findOneAndUpdate({ orderNumber: order.orderNumber },
-        { token },
-        {
-          upsert: true,
-          new: true
-        })
-        .exec((err, result) => {
-          if (err) throw err
-        })
-    })
+    const token = ''
+
     const buyer = await req.Models.User.findOne({ _id: order.buyer })
       .populate('cooperative')
-      .then(user => user)
-
     let adminEmails = await req.Models.User.find({ accountType: constants.SUPER_ADMIN })
       .select('-_id email')
-      .then(user => user)
     adminEmails = adminEmails.map(adminUser => adminUser.email)
 
     const subject = `${process.env.APP_NAME}: New Order`
