@@ -33,6 +33,10 @@ const UserSchema = new Schema({
     type: String,
     trim: true,
   },
+  address: {
+    type: Schema.ObjectId,
+    ref: 'AddressBook',
+  },
   businessName: {
     type: String,
     trim: true,
