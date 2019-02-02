@@ -27,10 +27,7 @@ const InventorySchema = new Schema({
     ref: 'Category',
     required: true
   },
-  installmentPeriod: {
-    type: Number,
-    default: 0
-  },
+  installmentPercentagePerMonth: [],
   quantity: {
     type: Number,
     required: true
