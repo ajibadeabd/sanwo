@@ -39,7 +39,7 @@ const create = (req, res, next) => {
   const validationRule = {
     name: 'required',
     description: 'string',
-    price: 'required|numeric|min:1000',
+    price: 'required|numeric|min:100',
     category: 'required|mongoId|exists:Category,_id',
     installmentPercentagePerMonth: 'isJson',
     images: 'max:5',
@@ -84,7 +84,7 @@ const update = (req, res, next) => {
     inventoryId: 'required|mongoId|exists:Inventory,_id',
     name: 'string',
     description: 'string',
-    price: 'numeric|min:1000',
+    price: 'numeric|min:100',
     category: 'mongoId|exists:Category,_id',
     installmentPercentagePerMonth: 'isJson',
     quantity: 'numeric|min:1',
