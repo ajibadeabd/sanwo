@@ -6,7 +6,7 @@ const utils = require('./../../utils/helper-functions')
 // register validation rules
 const mongoRegex = /^[a-f\d]{24}$/i
 
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/
+const passwordRegex = /"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$"/
 
 Validator.register('valid_status', value => (!!helpers.constants.ACCOUNT_STATUS[value]),
   'The specified status is invalid')
@@ -24,7 +24,7 @@ Validator.register('isJson', value => utils.isJson(value),
 
 // validate Password policy
 Validator.register('password_policy', value => passwordRegex.test(value),
-  'Minimum six characters, at least one uppercase letter, one lowercase letter, one number and one special character')
+  'Minimum six characters, at least one uppercase letter, one lowercase letter and one number')
 
 // checks if a the attribute value exists it the specified DB
 Validator.registerAsync('exists', (value, requirement, attribute, passes) => {

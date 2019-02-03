@@ -1,36 +1,13 @@
 const Validator = require('./../functions/Validator')
 
-const create = (req, res, next) => {
-  const requestBody = { ...req.params, ...req.body }
-
+const update = (req, res, next) => {
   const validationRule = {
-    product: 'required|mongoId',
-    quantity: 'required|numeric|min:1',
-    instNumber: 'numeric'
+    purchaseId: 'mongoId|exists:Purchase,_id',
+    status: 'valid_order_status',
+    trackingDetails: 'string',
   }
 
-  Validator(requestBody, validationRule, {}, (err, status) => {
-    if (!status) {
-      res.status(400)
-        .send({
-          success: false,
-          message: 'Validation failed',
-          data: err
-        })
-    } else {
-      next()
-    }
-  })
-}
-
-const updateApprovalStatus = (req, res, next) => {
-  const validationRule = {
-    token: 'required',
-    adminId: 'required|mongoId',
-    status: 'required|valid_order_status'
-  }
-
-  Validator(req.params, validationRule, {}, (err, status) => {
+  Validator({ ...req.body, ...req.params }, validationRule, {}, (err, status) => {
     if (!status) {
       res.status(400)
         .send({
@@ -44,13 +21,13 @@ const updateApprovalStatus = (req, res, next) => {
   })
 }
 
-const updateOrderStatus = (req, res, next) => {
+const get = (req, res, next) => {
   const validationRule = {
-    orderId: 'required|mongoId',
-    status: 'required|valid_order_status'
+    startDate: 'date',
+    endDate: 'date'
   }
 
-  Validator(req.body, validationRule, {}, (err, status) => {
+  Validator(req.query, validationRule, {}, (err, status) => {
     if (!status) {
       res.status(400)
         .send({
@@ -65,7 +42,6 @@ const updateOrderStatus = (req, res, next) => {
 }
 
 module.exports = {
-  create,
-  updateApprovalStatus,
-  updateOrderStatus
+  get,
+  update
 }

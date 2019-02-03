@@ -3,15 +3,17 @@ const _validateCartCreation = async (req) => {
   const product = await req.Models.Inventory.findById(req.body.product)
   const currentUser = await req.Models.User.findById(req.body.userId).select('cooperative')
   const currentUserCart = await req.Models.Cart.find({ user: req.body.userId })
+  const productInstallmentMaxPeriod = product.installmentPercentagePerMonth
+    ? product.installmentPercentagePerMonth.length : 0
 
   /** Confirm that the product is valid for installment if a buyer sets installment. */
-  if (product.installmentPeriod === 0 && req.body.installmentPeriod > 0) {
+  if (productInstallmentMaxPeriod === 0 && req.body.installmentPeriod > 0) {
     errorMessages.push('This product doesn\'t support installment')
   }
 
   /** Make sure a user can't set installment greater than the products requirement */
-  if (product.installmentPeriod !== 0
-    && (req.body.installmentPeriod > product.installmentPeriod)) {
+  if (productInstallmentMaxPeriod !== 0
+    && (req.body.installmentPeriod - 1 > productInstallmentMaxPeriod)) {
     errorMessages.push('The installment period cannot be greater than the product installment requirement')
   }
 
@@ -19,7 +21,7 @@ const _validateCartCreation = async (req) => {
    * When a user set installment for a product,
    * make sure they can't add more than one quantity for that product.
    */
-  if (product.installmentPeriod !== 0
+  if (productInstallmentMaxPeriod !== 0
     && req.body.installmentPeriod && req.body.quantity > 1) {
     errorMessages.push('You can\'t add more than one quantity for product with installment')
   }
@@ -28,7 +30,7 @@ const _validateCartCreation = async (req) => {
    * When a user set installment period for a product make sure that
    * user has a cooperative before adding the item to cart
    */
-  if (product.installmentPeriod !== 0
+  if (productInstallmentMaxPeriod !== 0
     && req.body.installmentPeriod > 1 && !currentUser.cooperative) {
     errorMessages.push('You must belong to a cooperative before you can purchase a product on installment')
   }
@@ -52,8 +54,15 @@ const _validateCartCreation = async (req) => {
    */
   const previousItem = currentUserCart.filter(cartItem => cartItem.product.equals(req.body.product))
   if (previousItem.length
-    && product.installmentPeriod && previousItem[previousItem.length - 1].installmentPeriod) {
+    && productInstallmentMaxPeriod && previousItem[previousItem.length - 1].installmentPeriod) {
     errorMessages.push('You already have this installment item in your cart, you can\'t add more quantity')
+  }
+
+  /**
+   * assert that a user can't request quantity greater than product's quantity
+   */
+  if (req.body.quantity > product.quantity) {
+    errorMessages.push('The quantity you\'re requesting exceeds available quantity')
   }
 
   return !errorMessages.length
@@ -61,13 +70,16 @@ const _validateCartCreation = async (req) => {
 }
 const create = (req, res) => {
   _validateCartCreation(req)
-    .then((records) => {
-      const { product, currentUserCart } = records
+    .then(({ product, currentUserCart }) => {
       const subTotal = product.price * req.body.quantity
 
-      if (req.body.installmentPeriod > 1) {
-        // TODO:: make installmentPercentage dynamic i.e create a route for updating the value
-        req.body.installmentPercentage = 10
+      if (req.body.installmentPeriod && req.body.installmentPeriod > 1) {
+        // If the installment period set is 2 months take the value of the first index
+        /** our count start from 2 months,
+         * i.e percentage value on index 0 of the percentage array is for 2months
+         * */
+        req.body.installmentPercentage = product
+          .installmentPercentagePerMonth[req.body.installmentPeriod - 2]
       }
       /**
        * lets's check if the product already exist in cart,
@@ -96,17 +108,18 @@ const create = (req, res) => {
             }
           })
       } else {
-        const installmentPrice = req.body.installmentPeriod * product.price
+        const installmentInterest = product.price / 100 * req.body.installmentPercentage
         req.Models.Cart.create({
           product: req.body.product,
           user: req.body.userId,
           quantity: req.body.quantity,
-          installmentPeriod: req.body.installmentPeriod,
+          installmentPeriod: req.body.installmentPeriod || undefined,
           installmentPercentage: req.body.installmentPercentage,
           unitPrice: product.price,
           subTotal,
-          installmentTotal: req.body.installmentPeriod > 1
-            ? subTotal + installmentPrice / 100 * req.body.installmentPercentage : 0,
+          installmentInterest: installmentInterest || undefined,
+          installmentTotalRepayment: req.body.installmentPeriod > 1
+            ? installmentInterest + product.price : undefined,
         }, (err, result) => {
           if (err) {
             throw err
@@ -181,11 +194,14 @@ const get = (req, res) => {
   model.exec((err, results) => {
     let totalQuantities = 0
     let subTotal = 0
+    let installmentTotalRepayment = 0
     if (results.length) {
       for (let i = 0; i <= results.length; i += 1) {
         if (results[i]) {
-          totalQuantities += results[i].quantity
-          subTotal += results[i].subTotal
+          totalQuantities += !results[i].installmentPeriod ? results[i].quantity : 0
+          subTotal += !results[i].installmentPeriod ? results[i].subTotal : 0
+          installmentTotalRepayment += results[i].installmentPeriod > 0
+            ? results[i].installmentTotalRepayment : 0
         }
       }
     }
@@ -199,6 +215,7 @@ const get = (req, res) => {
           totalProduct: results.length,
           totalQuantities,
           subTotal,
+          installmentTotalRepayment,
           results
         }
       })

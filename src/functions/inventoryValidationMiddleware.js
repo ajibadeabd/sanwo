@@ -39,11 +39,12 @@ const create = (req, res, next) => {
   const validationRule = {
     name: 'required',
     description: 'string',
-    price: 'required|numeric|min:1000',
+    price: 'required|numeric|min:100',
     category: 'required|mongoId|exists:Category,_id',
-    installmentPeriod: 'numeric|min:2',
+    installmentPercentagePerMonth: 'isJson',
     images: 'max:5',
     meta: 'isJson',
+    quantity: 'required|numeric|min:1'
   }
 
   Validator(req.body, validationRule, { 'max.images': 'Maximum of 5 images' }, (err, status) => {
@@ -83,9 +84,10 @@ const update = (req, res, next) => {
     inventoryId: 'required|mongoId|exists:Inventory,_id',
     name: 'string',
     description: 'string',
-    price: 'numeric|min:1000',
+    price: 'numeric|min:100',
     category: 'mongoId|exists:Category,_id',
-    installmentPeriod: 'numeric|min:1',
+    installmentPercentagePerMonth: 'isJson',
+    quantity: 'numeric|min:1',
     images: 'max:5',
     meta: 'isJson',
   }
@@ -111,10 +113,10 @@ const get = (req, res, next) => {
   const validationRule = {
     name: 'string',
     description: 'string',
-    price: 'numeric|min:1000',
+    price: 'numeric',
     category: 'mongoId',
     seller: 'mongoId',
-    installmentPeriod: 'numeric|min:1',
+    installmentPeriod: 'numeric',
   }
   Validator(req.query, validationRule, {}, (err, status) => {
     if (!status) {

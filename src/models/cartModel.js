@@ -21,7 +21,6 @@ const CartSchema = new Schema({
   },
   installmentPeriod: {
     type: Number,
-    default: 0
   },
   installmentPercentage: {
     type: Number,
@@ -34,7 +33,10 @@ const CartSchema = new Schema({
     type: Number,
     required: true,
   },
-  installmentTotal: {
+  installmentInterest: {
+    type: Number,
+  },
+  installmentTotalRepayment: {
     type: Number,
   },
   createdAt: {
@@ -49,6 +51,5 @@ CartSchema.statics = {
       .then(result => result)
   }
 }
-
 
 module.exports = mongoose.model('Cart', CartSchema)

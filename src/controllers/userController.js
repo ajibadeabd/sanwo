@@ -171,7 +171,7 @@ const login = (req, res) => {
   let { email } = req.body
   email = email.toLowerCase()
   req.Models.User.findOne({ email })
-    .populate('cooperative', '-password -relatedUsers -status')
+    .populate('cooperative address', '-password -relatedUsers -status')
     .exec((err, user) => {
       if (err) throw err
 

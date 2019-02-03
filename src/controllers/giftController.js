@@ -3,7 +3,7 @@ const crypto = require('crypto')
 
 const createGift = (req, res) => {
   crypto.randomBytes(10, (err, buffer) => {
-      if (err) throw err
+    if (err) throw err
     const token = buffer.toString('hex')
     req.Models.Gift.create({
       cardHash: token,
@@ -23,7 +23,7 @@ const createGift = (req, res) => {
   })
 }
 
-// check if gift card is valid 
+// check if gift card is valid
 const auth = (req, res) => {
   const { cardHash } = req.body
   req.Models.Gift.findOne({ cardHash }, (err, order) => {
@@ -45,19 +45,19 @@ const auth = (req, res) => {
 }
 
 const del = (req, res) => {
-    req.Models.Gift.findByIdAndDelete(
-      req.params.GiftId, (err, giftCardInfo) => {
-        if (err) throw err
-        else {
-          res.json({
-            status: 'success',
-            message: 'Deleted successfully',
-            data: giftCardInfo
-          })
-        }
+  req.Models.Gift.findByIdAndDelete(
+    req.params.GiftId, (err, giftCardInfo) => {
+      if (err) throw err
+      else {
+        res.json({
+          status: 'success',
+          message: 'Deleted successfully',
+          data: giftCardInfo
+        })
       }
-    )
-  }
+    }
+  )
+}
 
 
 module.exports = {

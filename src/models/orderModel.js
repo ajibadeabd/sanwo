@@ -1,16 +1,29 @@
 const mongoose = require('mongoose')
 const autoIncrement = require('mongoose-auto-increment')
 const helpers = require('./../functions/helpers')
+const installmentModel = require('./installmentModel')
 
-
+/**
+ * @Description Field description
+ * @cart Array of the objects containing the user cart items i.e product,
+ * quantity, unitPrice, subTotal. This way when a seller remove or update
+ * a product it doesn't affect this order.
+ * @token used for approval by the cooperative or super admin to updated
+ * approval status of a purchase through email
+ * @installmentPaymentStatus status of the installment payment
+ * i.e maybe the customer has finished paying the installment
+ * @installmentPeriod derived from the cart, the number of month
+ * the customer is willing to installment
+ * @installmentPercentage The percentage used in calculating the total amount the user will be
+ * paying back
+ * @approvalStatusChangedBy UserId of the person who approved installment payment for an order
+ * @approvalStatusChangeDate the date which request to pay for installment was approved or reject
+ * @installments array of sub-documents(@InstallmentSchema)
+ * used to used in keeping track of installment payment
+ * @payment Reference to payment record for a particular order which is not paid on installment
+ */
 const { Schema } = mongoose
-
 const orderSchema = new Schema({
-  orderDate: {
-    type: Date,
-    trim: true,
-    required: true
-  },
   orderNumber: {
     type: Number,
     default: 1,
@@ -20,9 +33,8 @@ const orderSchema = new Schema({
     ref: 'User',
     required: true
   },
-  seller: {
-    type: Schema.ObjectId,
-    ref: 'User',
+  address: {
+    type: {},
     required: true
   },
   orderStatus: {
@@ -30,46 +42,62 @@ const orderSchema = new Schema({
     trim: true,
     default: helpers.constants.ORDER_STATUS.pending
   },
-  trackOrder: {
-    type: String,
-    trim: true,
-    default: 'Not Delivered'
-  },
-  product: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Inventory',
+  purchases: [{ type: Schema.ObjectId, ref: 'Purchase', required: true }],
+  totalProduct: {
+    type: Number,
     required: true
   },
-  orderPrice: {
+  totalQuantities: {
     type: Number,
-    trim: true,
+    required: true,
+    minimum: 1
+  },
+  subTotal: {
+    type: Number,
     required: true
   },
-  quantity: {
-    type: Number,
-    required: true,
-    default: 1
-  },
-  instNumber: {
-    type: Number,
-    required: true,
-    default: 1
-  },
-  approvedBy: {
+  approvalStatusChangedBy: {
     type: Schema.ObjectId,
     ref: 'User',
   },
-  approvalDate: {
+  approvalStatusChangeDate: {
     type: Date,
   },
   token: {
     type: String
   },
+  payment: {
+    type: Schema.ObjectId,
+    ref: 'Payment',
+  },
+  giftCard: {
+    type: Schema.ObjectId,
+    ref: 'GiftCard',
+  },
+  installmentPeriod: {
+    type: Number,
+  },
+  installmentInterest: {
+    type: Number,
+  },
+  installmentPercentage: {
+    type: Number,
+  },
+  installmentTotalRepayment: {
+    type: Number,
+  },
+  installmentsRepaymentSchedule: [{
+    type: installmentModel.InstallmentSchema,
+    default: undefined
+  }],
+  installmentPaymentStatus: {
+    type: String,
+    trim: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
-
 })
 
 orderSchema.statics = {

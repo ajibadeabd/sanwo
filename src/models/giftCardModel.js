@@ -27,4 +27,4 @@ giftSchema.methods.hasExpired = async () => {
   return await now - createDate > 0.1
 }
 
-module.exports = mongoose.model('Gift', giftSchema)
+module.exports = mongoose.model('GiftCard', giftSchema)

@@ -9,7 +9,6 @@ const update = (req, res) => {
         user.email = req.body.email || user.email
         user.phoneNumber = req.body.phoneNumber || user.phoneNumber
         user.password = req.body.password || user.password
-        user.address = req.body.address || user.address
         user.save((error) => {
           if (error) throw error
           return res.send({

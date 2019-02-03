@@ -58,11 +58,19 @@ Socket.prototype.getMessages = async function (userId, callback) {
         }
       ]
     }
-    const relationIds = await models.Message.find(query)
-      .distinct('fromUserId')
-    const results = await models.User.find({ _id: { $in: relationIds } })
-      .select('_id firstName lastName email')
+    const relationIds = await models.Message.aggregate([
+      // First we get all messages where toUserId = our user id or fromUserId = our userid
+      { $match: query },
+      // group by key
+      { $group: { _id: { toUserId: '$toUserId', fromUserId: '$fromUserId' } } },
+      // // Clean up the output
+      { $project: { _id: 0, key: ['$_id.toUserId', '$_id.fromUserId'] } }
+    ])
+    // get the users involved in the chat
+    const results = await models.User.find({ _id: { $in: relationIds[0].key } })
+      .select('_id firstName lastName email name')
     if (results) {
+      // get the 2 recent messages between the users
       const promises = results.filter(e => e.id !== userId)
         .map(async result => ({
           ...result._doc,
@@ -71,6 +79,7 @@ Socket.prototype.getMessages = async function (userId, callback) {
             toUserId: result._id
           }).sort({ createdAt: 'desc' }).limit(2)
         }))
+      // return the message via callback function
       Promise.all(promises).then((records) => { callback(null, records) })
     }
   } catch (e) {

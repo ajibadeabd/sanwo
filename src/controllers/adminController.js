@@ -42,7 +42,30 @@ const getUsers = (req, res) => {
   })
 }
 
+const profileUpdate = (req, res) => {
+  req.Models.User.findOne({ _id: req.body.userId })
+    .exec((err, user) => {
+      if (err) {
+        throw err
+      } else {
+        user.name = req.body.name || user.name
+        user.email = req.body.email || user.email
+        user.password = req.body.password || user.password
+        user.save((error) => {
+          if (error) throw error
+          return res.send({
+            success: true,
+            message: 'Updated successfully',
+            data: user,
+            token: req.headers['x-access-token']
+          })
+        })
+      }
+    })
+}
+
 module.exports = {
   updateAccountStatus,
-  getUsers
+  getUsers,
+  profileUpdate
 }

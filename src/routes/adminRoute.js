@@ -9,5 +9,7 @@ router.put('/update-account-status/:userId', adminValidationMiddleware.updateAcc
   adminController.updateAccountStatus)
 
 router.get('/get-users', adminController.getUsers)
+router.put('/', adminValidationMiddleware.profileUpdate,
+  adminController.profileUpdate)
 
 module.exports = router
