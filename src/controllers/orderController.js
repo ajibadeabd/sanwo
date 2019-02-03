@@ -275,7 +275,7 @@ const updateOrderStatus = (req, res) => {
         res.send({
           success: true,
           message: 'Order status updated successfully',
-          data: err
+          data: order
         })
 
         // notify the buyer and seller of the status change

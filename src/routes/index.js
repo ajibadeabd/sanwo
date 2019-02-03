@@ -13,6 +13,7 @@ const categoryRoute = require('./categoryRoute')
 const wishListRoute = require('./wishListRoute')
 const cartRoute = require('./cartRoute')
 const addressRoute = require('./addressRoute')
+const purchaseRoute = require('./purchaseRoute')
 
 
 const authMiddleware = require('./../functions/authMiddleware')
@@ -35,6 +36,7 @@ router.use('/users/cooperatives', authMiddleware.isCooperative, cooperativeRoute
 router.use('/inventory', inventoryRoute)
 router.use('/order', orderRoute)
 router.use('/categories', categoryRoute)
+router.use('/purchase', authMiddleware.isSeller, purchaseRoute)
 router.use('/wish-list', authMiddleware.isAuthenticated, wishListRoute)
 router.use('/cart', authMiddleware.isAuthenticated, cartRoute)
 router.use('/address', authMiddleware.isAuthenticated, addressRoute)

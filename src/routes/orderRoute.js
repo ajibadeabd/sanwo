@@ -16,6 +16,6 @@ router.post('/', orderValidationMiddleware.create, orderController.create)
 router.put('/update-order-status', orderValidationMiddleware.updateOrderStatus,
   orderController.updateOrderStatus)
 
-router.get('/', orderController.getOrders)
+router.get('/', orderValidationMiddleware.get, orderController.getOrders)
 
 module.exports = router

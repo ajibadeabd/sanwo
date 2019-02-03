@@ -47,6 +47,9 @@ const PurchaseSchema = new Schema({
     trim: true,
     required: true
   },
+  trackingDetails: {
+    type: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now
