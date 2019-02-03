@@ -323,6 +323,16 @@ const getOrders = (req, res) => {
     path: 'purchases',
     populate: { path: 'seller', select }
   })
+  // filter by date if any
+  if (req.query.startDate && req.query.endDate) {
+    const startDate = moment(new Date(req.query.startDate))
+      .add(1, 'day')
+      .format()
+    const endDate = moment(new Date(req.query.endDate))
+      .add(1, 'day')
+      .format()
+    query.where({ createdAt: { $gt: startDate, $lt: endDate } })
+  }
   query.select('-token')
   query.skip(offset)
   query.limit(limit)
