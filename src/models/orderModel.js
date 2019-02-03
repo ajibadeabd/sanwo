@@ -2,7 +2,6 @@ const mongoose = require('mongoose')
 const autoIncrement = require('mongoose-auto-increment')
 const helpers = require('./../functions/helpers')
 const installmentModel = require('./installmentModel')
-const cart = require('./cartModel')
 
 /**
  * @Description Field description
@@ -43,7 +42,7 @@ const orderSchema = new Schema({
     trim: true,
     default: helpers.constants.ORDER_STATUS.pending
   },
-  cart: [],
+  purchases: [{ type: Schema.ObjectId, ref: 'Purchase', required: true }],
   totalProduct: {
     type: Number,
     required: true
@@ -77,15 +76,17 @@ const orderSchema = new Schema({
   },
   installmentPeriod: {
     type: Number,
-    min: 2
+  },
+  installmentInterest: {
+    type: Number,
   },
   installmentPercentage: {
     type: Number,
   },
-  installmentTotal: {
+  installmentTotalRepayment: {
     type: Number,
   },
-  installments: [{
+  installmentsRepaymentSchedule: [{
     type: installmentModel.InstallmentSchema,
     default: undefined
   }],

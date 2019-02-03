@@ -8,30 +8,42 @@ const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
   const savedInstallmentOrder = await req.Models.Order.create({
     buyer: req.body.userId, // save the current user as the buyer
     address,
-    cart: installmentItemInCart.toObject(), // convert mongoDB object to actual object
     totalProduct: 1,
     totalQuantities: installmentItemInCart.quantity,
     subTotal: installmentItemInCart.subTotal,
     installmentPeriod: installmentItemInCart.installmentPeriod,
     installmentPercentage: installmentItemInCart.installmentPercentage,
-    installmentTotal: installmentItemInCart.installmentTotal,
+    installmentTotalRepayment: installmentItemInCart.installmentTotalRepayment,
     installmentPaymentStatus: 'pending',
     orderStatus: 'pending-approval',
   })
   if (savedInstallmentOrder) {
-    const installments = []
+    const installmentsRepaymentSchedule = []
     // create installment repayment schedule
     for (let i = 1; i <= installmentItemInCart.installmentPeriod; i += 1) {
-      installments.push({
+      installmentsRepaymentSchedule.push({
         installmentRef: `${savedInstallmentOrder.orderNumber}_${i}`, // concat with order number
         installmentPercentage: installmentItemInCart.installmentPercentage,
-        amount: installmentItemInCart.installmentTotal / installmentItemInCart.installmentPeriod,
+        amount:
+          installmentItemInCart.installmentTotalRepayment / installmentItemInCart.installmentPeriod,
         dueDate: moment()
           .add(i, 'month')
           .format()
       })
     }
-    savedInstallmentOrder.installments = installments
+    // create record for the purchased item
+    const createPurchaseRecord = await req.Models.Purchase.create({
+      product: installmentItemInCart.product.toObject(),
+      order: savedInstallmentOrder._id,
+      seller: installmentItemInCart.product.seller._id,
+      quantity: installmentItemInCart.quantity,
+      unitPrice: installmentItemInCart.unitPrice,
+      subTotal: installmentItemInCart.installmentTotalRepayment,
+      hasInstallment: true,
+      status: 'pending-approval'
+    })
+    savedInstallmentOrder.installmentsRepaymentSchedule = installmentsRepaymentSchedule
+    savedInstallmentOrder.purchases = [createPurchaseRecord._id]
     // generate token for order approval
     crypto.randomBytes(20, (error, buffer) => {
       if (error) throw error
@@ -65,14 +77,35 @@ const createOrdersWithoutInstallment = async (req, address, cartItemsWithoutInst
     }
   }
   // convert each cart item from mongoDB object to actual object
-  cartItemsWithoutInstallment = cartItemsWithoutInstallment.map(cart => cart.toObject())
   const order = await req.Models.Order.create({
     buyer: req.body.userId,
     address,
-    cart: cartItemsWithoutInstallment,
     totalProduct: cartItemsWithoutInstallment.length,
     totalQuantities,
     subTotal,
+  })
+
+  // create purchase record for each cart item
+  const promises = cartItemsWithoutInstallment.map(async (cartItem, x) => {
+    const purchaseRecord = await req.Models.Purchase.create({
+      product: cartItemsWithoutInstallment[x].product.toObject(),
+      order: order._id,
+      seller: cartItemsWithoutInstallment[x].product.seller._id,
+      quantity: cartItemsWithoutInstallment[x].quantity,
+      unitPrice: cartItemsWithoutInstallment[x].unitPrice,
+      subTotal: cartItemsWithoutInstallment[x].subTotal,
+      hasInstallment: true,
+      status: 'pending-approval'
+    })
+    return purchaseRecord
+  })
+  let purchaseIds = await Promise.all(promises)
+  // get the id of the created records
+  purchaseIds = purchaseIds.map(record => record._id)
+
+  order.purchases = purchaseIds
+  order.save((error) => {
+    if (error) throw new Error(error)
   })
   return order ? Promise.resolve(order) : Promise.reject(new Error('Order Could\'t not be created'))
 }
@@ -95,46 +128,47 @@ const create = async (req, res) => {
     return res.status(400).send(responsePayload)
   }
 
-  /** Get item to be paid for on installment(if any) */
+  /** Assert that the customer doesn't have a pending installmentPayment request */
+  // if (installmentItemInCart.length) {
+  //   const pendingRequest = await req.Models.Order
+  // .findOne({ buyer: req.body.userId, orderStatus: 'pending-approval' })
+  //   if (pendingRequest) {
+  //     responsePayload.data.errors.cart = ['You have a pending installment payment request.
+  // You can\'t make a new order on installment, please review your cart']
+  //     return res.status(400).send(responsePayload)
+  //   }
+  // }
+
+  /** Get cart item to be paid on installment(if any) */
   const installmentItemInCart = currentUserCart
     .filter(cartItem => cartItem.installmentPeriod > 1)
 
-  /** Assert that the customer doesn't have a pending installmentPayment request */
-  if (installmentItemInCart.length) {
-    const pendingRequest = await req.Models.Order.findOne({ buyer: req.body.userId, orderStatus: 'pending-approval' })
-    if (pendingRequest) {
-      responsePayload.data.errors.cart = ['You have a pending installment payment request. You can\'t make a new order on installment, please review your cart']
-      return res.status(400).send(responsePayload)
-    }
-  }
-
   /** Get items with no installment */
   const cartItemsWithoutInstallment = currentUserCart
-    .filter(cartItem => cartItem.installmentPeriod === 0)
+    .filter(cartItem => !cartItem.installmentPeriod || cartItem.installmentPeriod === 0)
 
   /** Get the user's shipping address */
   const address = await req.Models.AddressBook.findOne({ _id: req.body.address })
 
   /** Save installment Order if any */
-  let installmentOrder
+  let installmentOrder, approvalToken
   if (installmentItemInCart.length) {
     installmentOrder = await _createInstallmentOrder(req, address, installmentItemInCart[0])
       .catch((installmentOrderError) => {
         throw installmentOrderError
       })
+    approvalToken = installmentOrder.token
+    installmentOrder.token = null // remove the generated token as part of the return token
   }
 
   /** Save orders without installment */
   let ordersWithoutInstallment
-  let approvalToken
-  if (cartItemsWithoutInstallment) {
+  if (cartItemsWithoutInstallment.length) {
     ordersWithoutInstallment = await createOrdersWithoutInstallment(
       req, address, cartItemsWithoutInstallment
     ).catch((ordersWithoutInstallmentError) => {
       throw ordersWithoutInstallmentError
     })
-    approvalToken = installmentOrder.token
-    installmentOrder.token = null // remove the generated token as part of the return token
   }
 
   const msg = installmentItemInCart.length ? '. Your installment payment request has been sent to your cooperative for approval. You order status will be updated once approved or rejected' : ''
@@ -148,14 +182,23 @@ const create = async (req, res) => {
     message: `Successfully created order${msg}`,
     data: orderPayload
   })
-  await mailer.sendNewOrderMail(ordersWithoutInstallment, req)
-  await mailer.sendInstallmentOrderApprovalMail(approvalToken, installmentOrder, req)
+  // empty current user cart
+  await req.Models.Cart.deleteMany({ user: req.body.userId }).exec()
+  if (ordersWithoutInstallment) {
+    ordersWithoutInstallment.cart = installmentItemInCart
+    await mailer.sendNewOrderMail(ordersWithoutInstallment, req)
+  }
+  if (installmentOrder) {
+    installmentOrder.cart = installmentItemInCart
+    await mailer.sendInstallmentOrderApprovalMail(approvalToken, installmentOrder, req)
+  }
 }
 
-const updateApprovalStatus = async (req, res) => {
+
+const updateApprovalStatus = (req, res) => {
   const subject = `${process.env.APP_NAME}: Order`
   req.Models.Order.findOne({ token: req.params.token })
-    .populate('buyer')
+    .populate('buyer purchases')
     .exec((err, order) => {
       if (err) {
         throw err
@@ -165,17 +208,23 @@ const updateApprovalStatus = async (req, res) => {
         order.approvalStatusChangedBy = req.params.adminId
         order.approvalStatusChangeDate = Date.now()
         order.save()
+        // update the purchase status
+        order.purchases[0].status = req.params.status
+        order.purchases[0].save()
         res.send({
           success: true,
           message: `Order status has been updated to ${req.params.status}. The buyer has been notified.`
         })
+
         // if the purchase is declined add the quantity back to available products
         if (req.params.status === 'declined') {
           req.Models
-            .Inventory.findOne({ _id: order.cart[0].product._id }).then((result) => {
+            .Inventory.findOne({ _id: order.purchases[0].product._id }).then((result) => {
             // since we are sure buyers can't buy more than one installment product
-              result.quantity += 1
-              result.save()
+              if (result) {
+                result.quantity += 1
+                result.save()
+              }
             })
         }
 
@@ -190,7 +239,7 @@ const updateApprovalStatus = async (req, res) => {
             if (mailErr) req.log(`${subject} MAIL not sent to ${order.buyer.email}`)
             if (mailRes) req.log(`Preview URL: %s ${nodemailer.getTestMessageUrl(mailRes)}`)
           }, `${process.env.MAIL_FROM}`)
-        const { seller } = order.cart[0].product
+        const { seller } = order.purchases[0].product
         // Notify the seller of the new order
         const sellerMessage = `<div>
         Hi ${seller.lastName} ${seller.firstName}, request to buy your product on installment has been ${req.params.status}
@@ -267,8 +316,13 @@ const getOrders = (req, res) => {
   let filter = { buyer: req.body.userId }
   if (req.query.orderStatus) filter = { ...filter, orderStatus: req.query.orderStatus }
 
+  const select = 'email firstName lastName email'
   const query = req.Models.Order.find(filter)
-  query.populate('buyer', 'email firstName lastName email')
+  query.populate('buyer', select)
+  query.populate({
+    path: 'purchases',
+    populate: { path: 'seller', select }
+  })
   query.select('-token')
   query.skip(offset)
   query.limit(limit)

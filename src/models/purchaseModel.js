@@ -1,15 +1,23 @@
 const mongoose = require('mongoose')
-
+const autoIncrement = require('mongoose-auto-increment')
 
 const { Schema } = mongoose
 
-const CartSchema = new Schema({
+const PurchaseSchema = new Schema({
+  purchaseNumber: {
+    type: Number,
+    default: 1,
+  },
   product: {
-    type: Schema.ObjectId,
-    ref: 'Inventory',
+    type: {},
     required: true
   },
-  user: {
+  order: {
+    type: Schema.ObjectId,
+    ref: 'Order',
+    required: true,
+  },
+  seller: {
     type: Schema.ObjectId,
     ref: 'User',
     required: true,
@@ -19,12 +27,6 @@ const CartSchema = new Schema({
     required: true,
     minimum: 1,
   },
-  installmentPeriod: {
-    type: Number,
-  },
-  installmentPercentage: {
-    type: Number,
-  },
   unitPrice: {
     type: Number,
     required: true,
@@ -33,11 +35,17 @@ const CartSchema = new Schema({
     type: Number,
     required: true,
   },
-  installmentInterest: {
-    type: Number,
+  hasInstallment: {
+    type: Boolean
   },
-  installmentTotalRepayment: {
-    type: Number,
+  paymentDisbursed: {
+    type: Schema.ObjectId,
+    ref: 'Payment',
+  },
+  status: {
+    type: String,
+    trim: true,
+    required: true
   },
   createdAt: {
     type: Date,
@@ -45,14 +53,15 @@ const CartSchema = new Schema({
   }
 })
 
-CartSchema.statics = {
+PurchaseSchema.statics = {
   valueExists (query) {
     return this.findOne(query)
       .then(result => result)
   }
 }
 
-module.exports = {
-  Model: mongoose.model('Cart', CartSchema),
-  CartSchema
-}
+autoIncrement.initialize(mongoose.connection)
+PurchaseSchema.plugin(autoIncrement.plugin, {
+  model: 'Purchase', field: 'purchaseNumber', startAt: 1, incrementBy: 1
+})
+module.exports = mongoose.model('Purchase', PurchaseSchema)

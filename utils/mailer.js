@@ -157,7 +157,7 @@ const sendInstallmentOrderApprovalMail = async (approvalToken, order, req) => {
 
   const subject = `${process.env.APP_NAME}: New Order`
 
-  const { cart, installments } = order
+  const { cart, installmentsRepaymentSchedule } = order
   let productDetails = '<table border="1">'
   productDetails += '<tr>'
     + '<th>Product Name</th>'
@@ -183,13 +183,13 @@ const sendInstallmentOrderApprovalMail = async (approvalToken, order, req) => {
     + '<th>Installment Amount</th>'
     + '<th>Installment Due Date</th>'
     + '</tr>'
-  if (installments.length) {
-    for (let i = 0; i < installments.length; i += 1) {
+  if (installmentsRepaymentSchedule.length) {
+    for (let i = 0; i < installmentsRepaymentSchedule.length; i += 1) {
       repaymentDetails += `<tr>
-<td>${installments[i].installmentRef}</td>
-<td>${installments[i].installmentPercentage}%</td>
-<td>${installments[i].amount}</td>
-<td>${installments[i].dueDate}</td>
+<td>${installmentsRepaymentSchedule[i].installmentRef}</td>
+<td>${installmentsRepaymentSchedule[i].installmentPercentage}%</td>
+<td>${installmentsRepaymentSchedule[i].amount}</td>
+<td>${installmentsRepaymentSchedule[i].dueDate}</td>
 </tr>`
     }
   }
@@ -206,17 +206,17 @@ const sendInstallmentOrderApprovalMail = async (approvalToken, order, req) => {
         <tr><th>Installment Period</th><td>${order.installmentPeriod}</td></tr>
         <tr><th>Installment Percentage</th><td>${order.installmentPercentage}%</td></tr>
         <tr><th>Repayment Details</th><td>${repaymentDetails}</td></tr>
-        <tr><th>Installment Total</th><td>${order.installmentTotal}</td></tr>
+        <tr><th>Installment Total</th><td>${order.installmentTotalRepayment}</td></tr>
         </table>`
 
   // create item details
   const orderAction = `Your action is needed for this order
-        APPROVE : <a href="${process.env.APP_URL}/purchase/update-approval-status/${approvalToken}/${req.body.userId}/approved">
-        ${process.env.APP_URL}/purchase/update-approval-status/${approvalToken}/${req.body.userId}/approved
+        APPROVE : <a href="${process.env.APP_URL}/order/update-approval-status/${approvalToken}/${req.body.userId}/approved">
+        ${process.env.APP_URL}/order/update-approval-status/${approvalToken}/${req.body.userId}/approved
         </a><br/>
         <strong>Or</strong> <br/>
-        DECLINE: <a href="${process.env.APP_URL}/purchase/update-approval-status/${approvalToken}/${req.body.userId}/declined">
-        ${process.env.APP_URL}/purchase/update-approval-status/${approvalToken}/${req.body.userId}/declined</a>`
+        DECLINE: <a href="${process.env.APP_URL}/order/update-approval-status/${approvalToken}/${req.body.userId}/declined">
+        ${process.env.APP_URL}/order/update-approval-status/${approvalToken}/${req.body.userId}/declined</a>`
 
   // send the cooperative-admin an email to accepted or decline order
   if (buyer.cooperative) {
