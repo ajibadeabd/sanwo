@@ -40,7 +40,7 @@ const orderSchema = new Schema({
   orderStatus: {
     type: String,
     trim: true,
-    default: helpers.constants.ORDER_STATUS.pending
+    required: true
   },
   purchases: [{ type: Schema.ObjectId, ref: 'Purchase', required: true }],
   totalProduct: {
