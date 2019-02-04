@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer')
 const moment = require('moment')
 const crypto = require('crypto')
 const mailer = require('./../../utils/mailer')
+const { constants } = require('./../functions/helpers')
 
 const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
   // save the installment order
@@ -14,8 +15,8 @@ const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
     installmentPeriod: installmentItemInCart.installmentPeriod,
     installmentPercentage: installmentItemInCart.installmentPercentage,
     installmentTotalRepayment: installmentItemInCart.installmentTotalRepayment,
-    installmentPaymentStatus: 'pending',
-    orderStatus: 'pending-approval',
+    installmentPaymentStatus: constants.ORDER_STATUS.pending,
+    orderStatus: constants.ORDER_STATUS.pending_approval,
   })
   if (savedInstallmentOrder) {
     const installmentsRepaymentSchedule = []
@@ -40,7 +41,7 @@ const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
       unitPrice: installmentItemInCart.unitPrice,
       subTotal: installmentItemInCart.installmentTotalRepayment,
       hasInstallment: true,
-      status: 'pending-approval'
+      status: constants.ORDER_STATUS.pending_approval
     })
     savedInstallmentOrder.installmentsRepaymentSchedule = installmentsRepaymentSchedule
     savedInstallmentOrder.purchases = [createPurchaseRecord._id]
@@ -83,6 +84,7 @@ const createOrdersWithoutInstallment = async (req, address, cartItemsWithoutInst
     totalProduct: cartItemsWithoutInstallment.length,
     totalQuantities,
     subTotal,
+    orderStatus: constants.ORDER_STATUS.pending_payment
   })
 
   // create purchase record for each cart item
@@ -94,8 +96,8 @@ const createOrdersWithoutInstallment = async (req, address, cartItemsWithoutInst
       quantity: cartItemsWithoutInstallment[x].quantity,
       unitPrice: cartItemsWithoutInstallment[x].unitPrice,
       subTotal: cartItemsWithoutInstallment[x].subTotal,
-      hasInstallment: true,
-      status: 'pending-approval'
+      hasInstallment: false,
+      status: constants.ORDER_STATUS.pending_payment
     })
     return purchaseRecord
   })
@@ -131,7 +133,7 @@ const create = async (req, res) => {
   /** Assert that the customer doesn't have a pending installmentPayment request */
   // if (installmentItemInCart.length) {
   //   const pendingRequest = await req.Models.Order
-  // .findOne({ buyer: req.body.userId, orderStatus: 'pending-approval' })
+  // .findOne({ buyer: req.body.userId, orderStatus: constants.ORDER_STATUS.pending_approval })
   //   if (pendingRequest) {
   //     responsePayload.data.errors.cart = ['You have a pending installment payment request.
   // You can\'t make a new order on installment, please review your cart']

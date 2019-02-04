@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer')
 const moment = require('moment')
+const { constants } = require('./../functions/helpers')
 const mailer = require('./../../utils/mailer')
 
 const { queryFilters } = require('../../utils/helper-functions')
@@ -62,7 +63,7 @@ const update = (req, res) => {
         const { order } = purchase
 
         /** If order status is pending-approval return */
-        if (order.orderStatus === 'pending-approval') {
+        if (order.orderStatus === constants.ORDER_STATUS.pending_approval) {
           return res.status(400).send({
             success: false,
             message: 'The purchase order is pending approval',
