@@ -6,7 +6,7 @@ const utils = require('./../../utils/helper-functions')
 // register validation rules
 const mongoRegex = /^[a-f\d]{24}$/i
 
-const passwordRegex = /"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$"/
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/
 
 Validator.register('valid_status', value => (!!helpers.constants.ACCOUNT_STATUS[value]),
   'The specified status is invalid')
