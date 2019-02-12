@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 const autoIncrement = require('mongoose-auto-increment')
-const helpers = require('./../functions/helpers')
 const installmentModel = require('./installmentModel')
 
 /**

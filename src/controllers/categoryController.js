@@ -7,7 +7,7 @@ const createCategory = (req, res) => {
     slug: req.body.slug || categoryName.toLowerCase().replace(/\s/ig, '-'),
     installmentPeriod: req.body.installmentPeriod || 0,
     description: req.body.description,
-    categoryImage: req.body.categoryImage,
+    icon: req.body.icon,
   }, (err, result) => {
     if (err) {
       throw err
@@ -58,6 +58,7 @@ const updateCategory = (req, res) => {
         category.name = req.body.name || category.name
         category.description = req.body.description || category.description
         category.installmentPeriod = req.body.installmentPeriod || category.installmentPeriod
+        category.icon = req.body.icon || category.icon
 
         category.save((error) => {
           if (error) throw error

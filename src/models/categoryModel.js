@@ -25,7 +25,7 @@ const CategorySchema = new Schema({
     type: String,
     trim: true,
   },
-  categoryImage: {
+  icon: {
     type: String,
   }
 

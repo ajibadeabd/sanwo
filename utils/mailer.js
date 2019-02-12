@@ -144,7 +144,7 @@ ${sellers[sIndex].firstName}, you have a new Order on ${process.env.APP_NAME}
   }
 }
 
-const sendInstallmentOrderApprovalMail = async (approvalToken, order, req) => {
+const sendInstallmentOrderApprovalMail = async (order, req) => {
   // get all admin emails
   let adminEmails = await req.Models.User.find({ accountType: 'super_admin' })
     .select('-_id email')
@@ -211,12 +211,12 @@ const sendInstallmentOrderApprovalMail = async (approvalToken, order, req) => {
 
   // create item details
   const orderAction = `Your action is needed for this order
-        APPROVE : <a href="${process.env.APP_URL}/order/update-approval-status/${approvalToken}/${req.body.userId}/approved">
-        ${process.env.APP_URL}/order/update-approval-status/${approvalToken}/${req.body.userId}/approved
+        APPROVE : <a href="${process.env.APP_URL}/order/update-approval-status/${order.token}/${req.body.userId}/approved">
+        ${process.env.APP_URL}/order/update-approval-status/${order.token}/${req.body.userId}/approved
         </a><br/>
         <strong>Or</strong> <br/>
-        DECLINE: <a href="${process.env.APP_URL}/order/update-approval-status/${approvalToken}/${req.body.userId}/declined">
-        ${process.env.APP_URL}/order/update-approval-status/${approvalToken}/${req.body.userId}/declined</a>`
+        DECLINE: <a href="${process.env.APP_URL}/order/update-approval-status/${order.token}/${req.body.userId}/declined">
+        ${process.env.APP_URL}/order/update-approval-status/${order.token}/${req.body.userId}/declined</a>`
 
   // send the cooperative-admin an email to accepted or decline order
   if (buyer.cooperative) {

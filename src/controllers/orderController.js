@@ -153,14 +153,12 @@ const create = async (req, res) => {
   const address = await req.Models.AddressBook.findOne({ _id: req.body.address })
 
   /** Save installment Order if any */
-  let installmentOrder, approvalToken
+  let installmentOrder
   if (installmentItemInCart.length) {
     installmentOrder = await _createInstallmentOrder(req, address, installmentItemInCart[0])
       .catch((installmentOrderError) => {
         throw installmentOrderError
       })
-    approvalToken = installmentOrder.token
-    installmentOrder.token = null // remove the generated token as part of the return token
   }
 
   /** Save orders without installment */
@@ -185,14 +183,14 @@ const create = async (req, res) => {
     data: orderPayload
   })
   // empty current user cart
-  await req.Models.Cart.deleteMany({ user: req.body.userId }).exec()
+  // await req.Models.Cart.deleteMany({ user: req.body.userId }).exec()
   if (ordersWithoutInstallment) {
     ordersWithoutInstallment.cart = installmentItemInCart
     await mailer.sendNewOrderMail(ordersWithoutInstallment, req)
   }
   if (installmentOrder) {
     installmentOrder.cart = installmentItemInCart
-    await mailer.sendInstallmentOrderApprovalMail(approvalToken, installmentOrder, req)
+    await mailer.sendInstallmentOrderApprovalMail(installmentOrder, req)
   }
 }
 
