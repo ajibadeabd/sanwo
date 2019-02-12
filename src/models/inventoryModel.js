@@ -1,3 +1,4 @@
+const autoIncrement = require('mongoose-auto-increment')
 const mongoose = require('mongoose')
 
 
@@ -7,6 +8,10 @@ const InventorySchema = new Schema({
   name: {
     type: String,
     required: true
+  },
+  productNumber: {
+    type: Number,
+    default: 1,
   },
   description: {
     type: String,
@@ -50,5 +55,8 @@ InventorySchema.statics = {
       .then(result => result)
   }
 }
-
+autoIncrement.initialize(mongoose.connection)
+InventorySchema.plugin(autoIncrement.plugin, {
+  model: 'Order', field: 'productNumber', startAt: 1, incrementBy: 1
+})
 module.exports = mongoose.model('Inventory', InventorySchema)

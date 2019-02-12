@@ -114,7 +114,7 @@ const update = (req, res) => {
   })
 }
 
-const getInventories = (req, res) => {
+const _queryInventory = (req) => {
   let limit = parseInt(req.query.limit)
   let offset = parseInt(req.query.offset)
   offset = offset || 0
@@ -124,6 +124,12 @@ const getInventories = (req, res) => {
   model.skip(offset)
   model.limit(limit)
   model.populate('seller category', '-password -relatedUsers')
+  model.sort({ createdAt: 'desc' })
+  return { model, offset, limit }
+}
+
+const getInventories = (req, res) => {
+  const { model, offset, limit } = _queryInventory(req)
   model.exec((err, results) => {
     if (err) {
       throw err
@@ -233,11 +239,80 @@ const searchInventories = async (req, res) => {
   })
 }
 
+const getInventoryStat = async (req, res) => {
+  const bySeller = { seller: req.body.userId }
+  const totalProducts = await req.Models.Inventory
+    .countDocuments(bySeller)
+
+  const productsOutOfStock = await req.Models.Inventory
+    .countDocuments({ ...bySeller, quantity: { $lte: 0 } })
+
+  const productsInStock = await req.Models.Inventory
+    .countDocuments({ ...bySeller, quantity: { $gte: 1 } })
+
+  return res.send({
+    success: true,
+    message: 'Successfully fetching inventories',
+    data: {
+      totalProducts,
+      productsOutOfStock,
+      productsInStock
+    }
+  })
+}
+
+const getInventoryInStock = async (req, res) => {
+  const { model, offset, limit } = _queryInventory(req)
+  const filter = { seller: req.body.userId, quantity: { $gte: 1 } }
+  model.find(filter)
+  model.exec((err, results) => {
+    if (err) {
+      throw err
+    } else {
+      res.send({
+        success: true,
+        message: 'Successfully fetching inventories in stock',
+        data: {
+          offset,
+          limit,
+          resultCount: results.length,
+          results
+        }
+      })
+    }
+  })
+}
+
+const getInventoryOutStock = async (req, res) => {
+  const { model, offset, limit } = _queryInventory(req)
+  const filter = { seller: req.body.userId, quantity: { $lte: 0 } }
+  model.find(filter)
+  model.exec((err, results) => {
+    if (err) {
+      throw err
+    } else {
+      res.send({
+        success: true,
+        message: 'Successfully fetching inventories out of stock',
+        data: {
+          offset,
+          limit,
+          resultCount: results.length,
+          results
+        }
+      })
+    }
+  })
+}
+
 module.exports = {
   create,
   deleteInventory,
   update,
   getInventories,
   deleteImage,
-  searchInventories
+  searchInventories,
+  getInventoryStat,
+  getInventoryInStock,
+  getInventoryOutStock,
 }

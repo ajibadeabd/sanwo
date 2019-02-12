@@ -30,5 +30,7 @@ router.put('/:inventoryId', upload.array('images'), inventoryValidation.update, 
 router.delete('/:inventoryId', inventoryValidation.deleteInventory, inventoryController.deleteInventory)
 router.delete('/image/:inventoryId',
   inventoryValidation.deleteImage, inventoryController.deleteImage)
-
+router.get('/stats', inventoryController.getInventoryStat)
+router.get('/in-stock', inventoryController.getInventoryInStock)
+router.get('/out-of-stock', inventoryController.getInventoryOutStock)
 module.exports = router
