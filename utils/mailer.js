@@ -33,7 +33,7 @@ const sendMail = (to, subject, mailBody, callback, from = null) => {
 }
 
 
-const sendWelcomeMail = async (user, req) => {
+const sendWelcomeMail = (user, req) => {
   const { lastName, email } = user
   const messageBody = `<p>Hello ${lastName} we are happy to have you at ${process.env.APP_NAME}</p>
                     <p>Follow this link to learn more about us<br/><a href=${process.env.APP_URL}
@@ -52,8 +52,8 @@ const sendWelcomeMail = async (user, req) => {
 const sendPasswordResetEmail = (user, req) => {
   const { lastName, email, resetPasswordToken } = user
   const messageBody = `<p>Hello ${lastName || ','} here's your password reset link <br/>
-        <a href=${process.env.APP_URL}/users/password-reset?token=${resetPasswordToken}>
-        ${process.env.APP_URL}/users/password-reset?token=${resetPasswordToken}
+        <a href=${process.env.WEB_URL}/password?type=set&token=${resetPasswordToken}>
+        ${process.env.WEB_URL}/password?type=set&token=${resetPasswordToken}
         </a></p>`
   const subject = `${process.env.APP_NAME}: Password Reset`
 
