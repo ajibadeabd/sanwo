@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt')
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const helpers = require('./../functions/helpers')
+const mailer = require('./../../utils/mailer')
 
 /**
  * send a password reset mail to a user along with a validation token
@@ -16,7 +17,7 @@ const forgotPassword = (req, res, next, isNewUser = false) => {
 
   const sendTokenEmail = (err, newUser) => {
     if (err) throw err
-    helpers.sendPasswordResetEmail(newUser, req)
+    mailer.sendPasswordResetEmail(newUser, req)
   }
 
   //  check if email exists
@@ -77,7 +78,7 @@ const _createBuyer = (req, res) => {
       })
         .status(201)
       // send welcome email to buyer
-      helpers.sendWelcomeMail(result, req)
+      mailer.sendWelcomeMail(result, req)
     }
   })
 }
@@ -153,7 +154,7 @@ const _createCorporateAdmin = (req, res) => {
       })
         .status(201)
       // send welcome email
-      helpers.sendWelcomeMail(result, req)
+      mailer.sendWelcomeMail(result, req)
     }
   })
 }

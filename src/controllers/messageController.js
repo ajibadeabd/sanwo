@@ -66,6 +66,11 @@ Socket.prototype.getMessages = async function (userId, callback) {
       // // Clean up the output
       { $project: { _id: 0, key: ['$_id.toUserId', '$_id.fromUserId'] } }
     ])
+    // if not users return
+    if (!relationIds.length) {
+      callback(true, 'No messages found relating to this user')
+      return
+    }
     // get the users involved in the chat
     const results = await models.User.find({ _id: { $in: relationIds[0].key } })
       .select('_id firstName lastName email name')
@@ -210,11 +215,15 @@ Socket.prototype.ioEvents = function () {
      * example {"userId": {MongoId}}
      */
     socket.on('messages', (options, callback) => {
+      if (!options.userId) {
+        callback({ success: false, data: 'userId property not set' })
+        return
+      }
       this.getMessages(options.userId, (err, results) => {
         if (err) {
           callback({
             success: false,
-            data: null
+            data: results
           })
           throw err
         } else {
