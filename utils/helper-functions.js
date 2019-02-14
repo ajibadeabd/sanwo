@@ -21,3 +21,5 @@ module.exports.isJson = (item) => {
   }
   return typeof item === 'object' && item !== null
 }
+
+module.exports.flattenArray = arrays => arrays.reduce((acc, val) => acc.concat(val))

@@ -1,4 +1,5 @@
 const models = require('../models/')
+const { flattenArray } = require('../../utils/helper-functions')
 
 /**
  * SocketIo constructor
@@ -48,6 +49,13 @@ Socket.prototype.getConversation = function (users) {
 
 Socket.prototype.getMessages = async function (userId, callback) {
   try {
+    // First we check that the user exists
+    const currentUser = await models.User.findOne({ _id: userId })
+    if (!currentUser) {
+      callback(true, 'Could not find the user you are trying to get message for')
+      return
+    }
+
     const query = {
       $or: [
         {
@@ -58,35 +66,53 @@ Socket.prototype.getMessages = async function (userId, callback) {
         }
       ]
     }
+    // secondly we get the distinct users which our currentUser has chatted with
     const relationIds = await models.Message.aggregate([
-      // First we get all messages where toUserId = our user id or fromUserId = our userid
       { $match: query },
       // group by key
       { $group: { _id: { toUserId: '$toUserId', fromUserId: '$fromUserId' } } },
       // // Clean up the output
       { $project: { _id: 0, key: ['$_id.toUserId', '$_id.fromUserId'] } }
     ])
-    // if not users return
+    // if we can't find any it means our user has'nt chatted with anyone. So return
     if (!relationIds.length) {
       callback(true, 'No messages found relating to this user')
       return
     }
-    // get the users involved in the chat
-    const results = await models.User.find({ _id: { $in: relationIds[0].key } })
-      .select('_id firstName lastName email name')
-    if (results) {
-      // get the 2 recent messages between the users
-      const promises = results.filter(e => e.id !== userId)
-        .map(async result => ({
-          ...result._doc,
-          message: await this.getConversation({
-            fromUserId: userId,
-            toUserId: result._id
-          }).sort({ createdAt: 'desc' }).limit(2)
-        }))
-      // return the message via callback function
-      Promise.all(promises).then((records) => { callback(null, records) })
+    // Now, let's get the details of the users
+    const recentlyChattedUserPromises = relationIds.map(async (relation) => {
+      const results = await models.User.find({ _id: { $in: relation.key } })
+        .select('_id firstName lastName email name')
+      return results
+    })
+
+    // if empty array is returned, respond accordingly
+    if (!recentlyChattedUserPromises.length) {
+      callback(true, 'User records not found')
+      return
     }
+    // Resolve all promises of query
+    Promise.all(recentlyChattedUserPromises).then((recentlyChattedUsers) => {
+      // recentlyChattedUsers will be in nested array of objects, we flatten it to get each object
+      recentlyChattedUsers = flattenArray(recentlyChattedUsers)
+      if (recentlyChattedUsers.length) {
+        // get the 2 recent messages between the users, but first skipp our current user
+        const promises = recentlyChattedUsers.filter(e => e.id !== userId)
+          .map(async result => ({
+            ...result._doc,
+            message: await this.getConversation(
+              {
+                fromUserId: userId,
+                toUserId: result._id
+              }
+            ).sort({ createdAt: 'desc' }).limit(2)
+          }))
+        // return the message via callback function
+        Promise.all(promises).then((records) => {
+          callback(null, records)
+        })
+      }
+    })
   } catch (e) {
     throw e
   }
@@ -223,7 +249,8 @@ Socket.prototype.ioEvents = function () {
         if (err) {
           callback({
             success: false,
-            data: results
+            message: results,
+            data: [],
           })
           throw err
         } else {
