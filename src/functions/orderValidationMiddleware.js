@@ -64,6 +64,7 @@ const updateOrderStatus = (req, res, next) => {
 
 const get = (req, res, next) => {
   const validationRule = {
+    _id: 'mongoId',
     startDate: 'date',
     endDate: 'date'
   }

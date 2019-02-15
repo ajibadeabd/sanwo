@@ -3,6 +3,7 @@ const moment = require('moment')
 const crypto = require('crypto')
 const mailer = require('./../../utils/mailer')
 const { constants } = require('./../functions/helpers')
+const { queryFilters } = require('./../../utils/helper-functions')
 
 const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
   // save the installment order
@@ -313,8 +314,8 @@ const getOrders = (req, res) => {
   offset = offset || 0
   limit = limit || 10
 
-  let filter = { buyer: req.body.userId }
-  if (req.query.orderStatus) filter = { ...filter, orderStatus: req.query.orderStatus }
+  let filter = queryFilters(req)
+  filter = { buyer: req.body.userId, ...filter }
 
   const select = 'email firstName lastName email'
   const query = req.Models.Order.find(filter)
