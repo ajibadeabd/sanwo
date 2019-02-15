@@ -1,6 +1,7 @@
 const models = require('../models/')
 const { flattenArray } = require('../../utils/helper-functions')
 
+const mongoRegex = /^[a-f\d]{24}$/i // to validate mongoId
 /**
  * SocketIo constructor
  * @param {Socket} socket
@@ -49,6 +50,10 @@ Socket.prototype.getConversation = function (users) {
 
 Socket.prototype.getMessages = async function (userId, callback) {
   try {
+    if (!mongoRegex.test(userId)) {
+      callback(true, 'The userId sent is not a valid mongoId')
+      return
+    }
     // First we check that the user exists
     const currentUser = await models.User.findOne({ _id: userId })
     if (!currentUser) {
@@ -81,6 +86,8 @@ Socket.prototype.getMessages = async function (userId, callback) {
     }
     // Now, let's get the details of the users
     const recentlyChattedUserPromises = relationIds.map(async (relation) => {
+      // Here we're checking if our current user have'nt chatted with a user with invalidID
+      if (relation.key && !relation.key.every(id => mongoRegex.test(id))) return []
       const results = await models.User.find({ _id: { $in: relation.key } })
         .select('_id firstName lastName email name')
       return results
@@ -176,18 +183,22 @@ Socket.prototype.ioEvents = function () {
      * example { success: {Boolean}, message: {String}, data: {Object}}
      */
     socket.on('add-message', (data, callback) => {
-      if (data.fromUserId == null || data.toUserId == null) {
+      if (data.fromUserId == null || data.toUserId == null || !data.message) {
         callback({
           success: false,
-          message: 'Invalid data sent',
+          message: 'Invalid data sent. Send fromUserId, toUserId and message property',
           data
         })
-      } else {
-        if (this.clients[data.toUserId]) {
-          data.toSocketId = this.clients[data.toUserId]
-        }
-        this.sendMessage(socket, data, callback)
+        return
       }
+      if (!mongoRegex.test(data.fromUserId) || !mongoRegex.test(data.toUserId)) {
+        callback({ success: false, message: 'fromUserId or toUserId sent is not a valid mongoId', data })
+        return
+      }
+      if (this.clients[data.toUserId]) {
+        data.toSocketId = this.clients[data.toUserId]
+      }
+      this.sendMessage(socket, data, callback)
     })
 
     /**
@@ -199,6 +210,14 @@ Socket.prototype.ioEvents = function () {
      * example {"fromUserId": {MongoId}, "toUserId": {MongoId}}
      */
     socket.on('conversations', (options, callback) => {
+      if (!mongoRegex.test(options.fromUserId) || !mongoRegex.test(options.toUserId)) {
+        callback({
+          success: false,
+          message: 'fromUserId or toUserId sent is not a valid mongoId',
+          options
+        })
+        return
+      }
       const users = {
         fromUserId: options.fromUserId,
         toUserId: options.toUserId,
