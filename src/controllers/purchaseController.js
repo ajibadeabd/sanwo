@@ -68,6 +68,15 @@ const update = (req, res) => {
             data: []
           })
         }
+
+        /** If order status is declined return */
+        if (order.orderStatus === constants.ORDER_STATUS.declined) {
+          return res.status(400).send({
+            success: false,
+            message: 'The purchase order is declined',
+            data: []
+          })
+        }
         const oldStatus = purchase.status
         const oldTrackingDetails = purchase.trackingDetails
         purchase.status = req.body.status || purchase.status

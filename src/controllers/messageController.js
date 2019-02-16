@@ -58,7 +58,7 @@ const queryRecentChat = async (userId, callback) => {
       // group by key
       { $group: { _id: { toUserId: '$toUserId', fromUserId: '$fromUserId' } } },
       // // Clean up the output
-      { $project: { _id: 0, key: ['$_id.toUserId', '$_id.fromUserId'] } }
+      { $project: { _id: 0, key: { toUserId: '$_id.toUserId', fromUserId: '$_id.fromUserId' } } }
     ])
     // if we can't find any it means our user has'nt chatted with anyone. So return
     if (!relationIds.length) {
@@ -67,9 +67,10 @@ const queryRecentChat = async (userId, callback) => {
     }
     // Now, let's get the details of the users
     const recentlyChattedUserPromises = relationIds.map(async (relation) => {
+      relation = Object.values(relation.key)
       // Here we're checking if our current user have'nt chatted with a user with invalidID
-      if (relation.key && !relation.key.every(id => mongoRegex.test(id))) return []
-      const results = await models.User.find({ _id: { $in: relation.key } })
+      if (relation && !relation.every(id => mongoRegex.test(id))) return []
+      const results = await models.User.find({ _id: { $in: relation } })
         .select('_id firstName lastName email name')
       return results
     })
