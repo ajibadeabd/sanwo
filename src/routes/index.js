@@ -14,6 +14,7 @@ const wishListRoute = require('./wishListRoute')
 const cartRoute = require('./cartRoute')
 const addressRoute = require('./addressRoute')
 const purchaseRoute = require('./purchaseRoute')
+const messageRoute = require('./messageRoute')
 
 
 const authMiddleware = require('./../functions/authMiddleware')
@@ -40,6 +41,7 @@ router.use('/purchase', authMiddleware.isSeller, purchaseRoute)
 router.use('/wish-list', authMiddleware.isAuthenticated, wishListRoute)
 router.use('/cart', authMiddleware.isAuthenticated, cartRoute)
 router.use('/address', authMiddleware.isAuthenticated, addressRoute)
+router.use('/message', messageRoute)
 
 // file download route
 router.get('/file/', (req, res) => {

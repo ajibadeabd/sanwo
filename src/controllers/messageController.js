@@ -2,28 +2,8 @@ const models = require('../models/')
 const { flattenArray } = require('../../utils/helper-functions')
 
 const mongoRegex = /^[a-f\d]{24}$/i // to validate mongoId
-/**
- * SocketIo constructor
- * @param {Socket} socket
- * @constructor
- */
-function Socket (socket) {
-  this.io = socket
 
-  //  Object containing the userId as key and socketId as value
-  this.clients = {}
-}
-
-
-/**
- * @Description Gets conversation history between two users.
- * Query translation in SQL is SELECT * FROM messages
- * WHERE toUserId = selectedUserId AND fromUserId = currentUserId
- * OR toUserId = selectedUserId AND fromUserId = currentUserId
- * @param {Object} users: should look like {fromUserId:currentUserId, toUserId:selectedUserId}
- * @return {function} callback
- */
-Socket.prototype.getConversation = function (users) {
+const queryConversations = function (users) {
   const query = {
     $or: [
       {
@@ -48,7 +28,8 @@ Socket.prototype.getConversation = function (users) {
   return models.Message.find(query)
 }
 
-Socket.prototype.getMessages = async function (userId, callback) {
+
+const queryRecentChat = async (userId, callback) => {
   try {
     if (!mongoRegex.test(userId)) {
       callback(true, 'The userId sent is not a valid mongoId')
@@ -107,7 +88,7 @@ Socket.prototype.getMessages = async function (userId, callback) {
         const promises = recentlyChattedUsers.filter(e => e.id !== userId)
           .map(async result => ({
             ...result._doc,
-            message: await this.getConversation(
+            message: await queryConversations(
               {
                 fromUserId: userId,
                 toUserId: result._id
@@ -124,6 +105,29 @@ Socket.prototype.getMessages = async function (userId, callback) {
     throw e
   }
 }
+
+/**
+ * SocketIo constructor
+ * @param {Socket} socket
+ * @constructor
+ */
+function Socket (socket) {
+  this.io = socket
+
+  //  Object containing the userId as key and socketId as value
+  this.clients = {}
+}
+
+
+/**
+ * @Description Gets conversation history between two users.
+ * Query translation in SQL is SELECT * FROM messages
+ * WHERE toUserId = selectedUserId AND fromUserId = currentUserId
+ * OR toUserId = selectedUserId AND fromUserId = currentUserId
+ * @param {Object} users: should look like {fromUserId:currentUserId, toUserId:selectedUserId}
+ * @return {function} callback
+ */
+Socket.prototype.getConversation = queryConversations
 
 /**
  * Sends message to a user and save conversation in DB in cases where the users is offline
@@ -264,7 +268,7 @@ Socket.prototype.ioEvents = function () {
         callback({ success: false, data: 'userId property not set' })
         return
       }
-      this.getMessages(options.userId, (err, results) => {
+      queryRecentChat(options.userId, (err, results) => {
         if (err) {
           callback({
             success: false,
@@ -278,6 +282,8 @@ Socket.prototype.ioEvents = function () {
             data: results
           })
         }
+      }).catch((err) => {
+        throw err
       })
     })
 
@@ -298,5 +304,27 @@ Socket.prototype.startSocket = function () {
   this.ioEvents()
 }
 
+const getRecentChat = (req, res) => {
+  queryRecentChat(req.query.userId || req.body.userId, (err, results) => {
+    if (err) {
+      res.send({
+        success: false,
+        message: results,
+      }).status(400)
+    } else {
+      res.send({
+        success: true,
+        message: 'Successfully fetching recent messages',
+        data: {
+          results
+        }
+      })
+    }
+  })
+    .catch((err) => {
+      throw err
+    })
+}
 
 module.exports = Socket
+module.exports.getRecentChat = getRecentChat
