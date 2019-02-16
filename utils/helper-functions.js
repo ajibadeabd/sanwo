@@ -5,8 +5,16 @@ module.exports.queryFilters = (req) => {
 
   const filter = {}
   if (queryKeys.length) {
+    const ignore = [
+      'limit',
+      'offset',
+      'startDate',
+      'endDate',
+    ]
     queryKeys.forEach((key) => {
-      if (key !== 'limit' && key !== 'offset') filter[key] = query[key]
+      if (!ignore.includes(key)) {
+        filter[key] = query[key]
+      }
     })
   }
   return filter

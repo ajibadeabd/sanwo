@@ -12,9 +12,7 @@ const get = (req, res) => {
   limit = limit || 10
 
   let filter = { seller: req.body.userId }
-  filter = { ...queryFilters(req), ...filter }
-  if (req.query.orderStatus) filter = { ...filter, orderStatus: req.query.orderStatus }
-
+  filter = { ...filter, ...queryFilters(req) }
   const select = 'email firstName lastName email'
   const query = req.Models.Purchase.find(filter)
   query.populate('seller', select)
@@ -24,7 +22,7 @@ const get = (req, res) => {
   })
   // filter by date if any
   if (req.query.startDate && req.query.endDate) {
-    const startDate = moment(new Date(req.query.startDate)).add(1, 'day').format()
+    const startDate = moment(new Date(req.query.startDate)).format()
     const endDate = moment(new Date(req.query.endDate)).add(1, 'day').format()
     query.where({ createdAt: { $gt: startDate, $lt: endDate } })
   }
