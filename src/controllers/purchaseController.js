@@ -6,8 +6,8 @@ const mailer = require('./../../utils/mailer')
 const { queryFilters } = require('../../utils/helper-functions')
 
 const get = (req, res) => {
-  let limit = parseInt(req.query.limit)
-  let offset = parseInt(req.query.offset)
+  let limit = parseInt(req.query.limit, 10)
+  let offset = parseInt(req.query.offset, 10)
   offset = offset || 0
   limit = limit || 10
 

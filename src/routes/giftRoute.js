@@ -7,6 +7,6 @@ const router = express.Router()
 
 router.post('/createCard', giftController.createGift)
 router.post('/authCard', giftController.auth)
-router.delete('/:giftId',giftController.del)
+router.delete('/:giftId', giftController.del)
 
 module.exports = router

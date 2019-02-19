@@ -115,8 +115,8 @@ const update = (req, res) => {
 }
 
 const _queryInventory = (req) => {
-  let limit = parseInt(req.query.limit)
-  let offset = parseInt(req.query.offset)
+  let limit = parseInt(req.query.limit, 10)
+  let offset = parseInt(req.query.offset, 10)
   offset = offset || 0
   limit = limit || 10
   const filter = utils.queryFilters(req)
@@ -212,8 +212,8 @@ const deleteImage = (req, res) => {
 }
 
 const searchInventories = async (req, res) => {
-  let limit = parseInt(req.query.limit)
-  let offset = parseInt(req.query.offset)
+  let limit = parseInt(req.query.limit, 10)
+  let offset = parseInt(req.query.offset, 10)
   offset = offset || 0
   limit = limit || 10
   const { keyword } = req.params

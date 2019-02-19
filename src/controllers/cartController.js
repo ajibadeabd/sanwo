@@ -93,7 +93,7 @@ const create = (req, res) => {
           (err, cartItem) => {
             if (err) throw err
             else {
-              cartItem.quantity += parseInt(req.body.quantity)
+              cartItem.quantity += parseInt(req.body.quantity, 10)
               cartItem.subTotal += subTotal
               cartItem.save((error) => {
                 if (error) throw error

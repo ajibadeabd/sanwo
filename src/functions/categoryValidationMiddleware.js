@@ -2,7 +2,6 @@ const Validator = require('./../functions/Validator')
 const helpers = require('./../functions/helpers')
 
 const get = (req, res, next) => {
-
   const validationRule = {
     _id: 'mongoId',
     name: 'string',
