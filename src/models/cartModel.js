@@ -39,6 +39,7 @@ const CartSchema = new Schema({
   installmentTotalRepayment: {
     type: Number,
   },
+  meta: {},
   createdAt: {
     type: Date,
     default: Date.now

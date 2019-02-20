@@ -5,6 +5,7 @@ const create = (req, res, next) => {
     product: 'required|mongoId|exists:Inventory,_id',
     quantity: 'required|numeric|min:1',
     installmentPeriod: 'numeric|min:1',
+    meta: 'isJson',
   }
 
   Validator(req.body, validationRule, {}, (err, status) => {

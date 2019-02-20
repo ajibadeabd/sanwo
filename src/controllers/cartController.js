@@ -95,6 +95,9 @@ const create = (req, res) => {
             else {
               cartItem.quantity += parseInt(req.body.quantity, 10)
               cartItem.subTotal += subTotal
+              cartItem.meta = req.body.meta
+                ? { ...cartItem.meta, ...JSON.parse(req.body.meta) }
+                : cartItem.meta
               cartItem.save((error) => {
                 if (error) throw error
                 else {
@@ -120,6 +123,7 @@ const create = (req, res) => {
           installmentInterest: installmentInterest || undefined,
           installmentTotalRepayment: req.body.installmentPeriod > 0
             ? installmentInterest + product.price : undefined,
+          meta: req.body.meta ? JSON.parse(req.body.meta) : {},
         }, (err, result) => {
           if (err) {
             throw err

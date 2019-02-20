@@ -42,6 +42,7 @@ const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
       unitPrice: installmentItemInCart.unitPrice,
       subTotal: installmentItemInCart.installmentTotalRepayment,
       hasInstallment: true,
+      meta: installmentItemInCart.meta,
       status: constants.ORDER_STATUS.pending_approval
     })
     savedInstallmentOrder.installmentsRepaymentSchedule = installmentsRepaymentSchedule
@@ -98,6 +99,7 @@ const createOrdersWithoutInstallment = async (req, address, cartItemsWithoutInst
       unitPrice: cartItemsWithoutInstallment[x].unitPrice,
       subTotal: cartItemsWithoutInstallment[x].subTotal,
       hasInstallment: false,
+      meta: cartItemsWithoutInstallment[x].meta,
       status: constants.ORDER_STATUS.pending_payment
     })
     return purchaseRecord
