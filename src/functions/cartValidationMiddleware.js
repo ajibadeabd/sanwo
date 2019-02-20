@@ -4,7 +4,7 @@ const create = (req, res, next) => {
   const validationRule = {
     product: 'required|mongoId|exists:Inventory,_id',
     quantity: 'required|numeric|min:1',
-    installmentPeriod: 'numeric|min:2',
+    installmentPeriod: 'numeric|min:1',
   }
 
   Validator(req.body, validationRule, {}, (err, status) => {
@@ -44,11 +44,9 @@ const reduceCartQuantity = (req, res, next) => {
 const get = (req, res, next) => {
   const validationRule = {
     _id: 'mongoId',
-    name: 'string',
-    installmentPeriod: 'numeric|min:2',
   }
 
-  Validator(req.body, validationRule, {}, (err, status) => {
+  Validator(req.query, validationRule, {}, (err, status) => {
     if (!status) {
       res.status(400)
         .send({

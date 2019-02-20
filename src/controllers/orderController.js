@@ -144,7 +144,7 @@ const create = async (req, res) => {
 
   /** Get cart item to be paid on installment(if any) */
   const installmentItemInCart = currentUserCart
-    .filter(cartItem => cartItem.installmentPeriod > 1)
+    .filter(cartItem => cartItem.installmentPeriod > 0)
 
   /** Get items with no installment */
   const cartItemsWithoutInstallment = currentUserCart

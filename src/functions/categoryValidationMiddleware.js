@@ -6,10 +6,10 @@ const get = (req, res, next) => {
     _id: 'mongoId',
     name: 'string',
     slug: 'string',
-    installmentPeriod: 'numeric|min:2',
+    installmentPeriod: 'numeric|min:0',
   }
 
-  Validator(req.body, validationRule, {}, (err, status) => {
+  Validator(req.query, validationRule, {}, (err, status) => {
     if (!status) {
       res.status(400)
         .send({

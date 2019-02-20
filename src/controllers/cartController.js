@@ -13,7 +13,7 @@ const _validateCartCreation = async (req) => {
 
   /** Make sure a user can't set installment greater than the products requirement */
   if (productInstallmentMaxPeriod !== 0
-    && (req.body.installmentPeriod - 1 > productInstallmentMaxPeriod)) {
+    && (req.body.installmentPeriod > productInstallmentMaxPeriod)) {
     errorMessages.push('The installment period cannot be greater than the product installment requirement')
   }
 
@@ -31,7 +31,7 @@ const _validateCartCreation = async (req) => {
    * user has a cooperative before adding the item to cart
    */
   if (productInstallmentMaxPeriod !== 0
-    && req.body.installmentPeriod > 1 && !currentUser.cooperative) {
+    && req.body.installmentPeriod > 0 && !currentUser.cooperative) {
     errorMessages.push('You must belong to a cooperative before you can purchase a product on installment')
   }
 
@@ -39,7 +39,7 @@ const _validateCartCreation = async (req) => {
    * If a user already have an item with installment payment in their cart
    * make sure they can't add new items with installment.
    */
-  if (currentUserCart.length && req.body.installmentPeriod > 1) {
+  if (currentUserCart.length && req.body.installmentPeriod > 0) {
     if (currentUserCart.some(cartItem => cartItem.installmentPeriod > 0)) {
       errorMessages.push('You already have an item with installment in your cart')
     }
@@ -73,13 +73,13 @@ const create = (req, res) => {
     .then(({ product, currentUserCart }) => {
       const subTotal = product.price * req.body.quantity
 
-      if (req.body.installmentPeriod && req.body.installmentPeriod > 1) {
+      if (req.body.installmentPeriod && req.body.installmentPeriod > 0) {
         // If the installment period set is 2 months take the value of the first index
         /** our count start from 2 months,
          * i.e percentage value on index 0 of the percentage array is for 2months
          * */
         req.body.installmentPercentage = product
-          .installmentPercentagePerMonth[req.body.installmentPeriod - 2]
+          .installmentPercentagePerMonth[req.body.installmentPeriod - 1]
       }
       /**
        * lets's check if the product already exist in cart,
@@ -118,7 +118,7 @@ const create = (req, res) => {
           unitPrice: product.price,
           subTotal,
           installmentInterest: installmentInterest || undefined,
-          installmentTotalRepayment: req.body.installmentPeriod > 1
+          installmentTotalRepayment: req.body.installmentPeriod > 0
             ? installmentInterest + product.price : undefined,
         }, (err, result) => {
           if (err) {
