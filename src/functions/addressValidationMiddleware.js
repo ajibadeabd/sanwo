@@ -37,7 +37,7 @@ const update = (req, res, next) => {
     city: 'min:3',
   }
 
-  Validator({...req.body, ...req.params}, validationRule, {}, (err, status) => {
+  Validator({ ...req.body, ...req.params }, validationRule, {}, (err, status) => {
     if (!status) {
       res.status(400)
         .send({

@@ -42,6 +42,7 @@ const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
       unitPrice: installmentItemInCart.unitPrice,
       subTotal: installmentItemInCart.installmentTotalRepayment,
       hasInstallment: true,
+      meta: installmentItemInCart.meta,
       status: constants.ORDER_STATUS.pending_approval
     })
     savedInstallmentOrder.installmentsRepaymentSchedule = installmentsRepaymentSchedule
@@ -98,6 +99,7 @@ const createOrdersWithoutInstallment = async (req, address, cartItemsWithoutInst
       unitPrice: cartItemsWithoutInstallment[x].unitPrice,
       subTotal: cartItemsWithoutInstallment[x].subTotal,
       hasInstallment: false,
+      meta: cartItemsWithoutInstallment[x].meta,
       status: constants.ORDER_STATUS.pending_payment
     })
     return purchaseRecord
@@ -144,7 +146,7 @@ const create = async (req, res) => {
 
   /** Get cart item to be paid on installment(if any) */
   const installmentItemInCart = currentUserCart
-    .filter(cartItem => cartItem.installmentPeriod > 1)
+    .filter(cartItem => cartItem.installmentPeriod > 0)
 
   /** Get items with no installment */
   const cartItemsWithoutInstallment = currentUserCart
@@ -309,8 +311,8 @@ const updateOrderStatus = (req, res) => {
 }
 
 const getOrders = (req, res) => {
-  let limit = parseInt(req.query.limit)
-  let offset = parseInt(req.query.offset)
+  let limit = parseInt(req.query.limit, 10)
+  let offset = parseInt(req.query.offset, 10)
   offset = offset || 0
   limit = limit || 10
 

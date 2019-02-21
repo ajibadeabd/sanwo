@@ -18,8 +18,8 @@ const createWishList = (req, res) => {
 }
 
 const getWishList = (req, res) => {
-  let limit = parseInt(req.query.limit)
-  let offset = parseInt(req.query.offset)
+  let limit = parseInt(req.query.limit, 10)
+  let offset = parseInt(req.query.offset, 10)
   offset = offset || 0
   limit = limit || 10
   const model = req.Models.WishList.find({ user: req.body.userId })

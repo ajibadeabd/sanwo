@@ -227,8 +227,8 @@ Socket.prototype.ioEvents = function () {
         fromUserId: options.fromUserId,
         toUserId: options.toUserId,
       }
-      let limit = parseInt(options.limit)
-      let offset = parseInt(options.offset)
+      let limit = parseInt(options.limit, 10)
+      let offset = parseInt(options.offset, 10)
       offset = offset || 0
       limit = limit || 20
       this.getConversation(users)
