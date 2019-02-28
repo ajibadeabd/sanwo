@@ -3,6 +3,7 @@ const helpers = require('../../utils/helpers')
 const utils = require('../../utils/helper-functions')
 const { _generateRRR, _getRRRStatus } = require('../../utils/remitaServices')
 const events = require('./../../utils/events')
+const models = require('./../models')
 
 // TODO replace with correct valid credentials
 const remitaConfig = {
@@ -16,7 +17,6 @@ const remitaConfig = {
 
 const _getAndUpdatePaymentStatus = async (payment) => {
   try {
-
     const { merchantId, apiKey } = remitaConfig
     const { transactionRef } = payment
     const apiHash = sha512(`${transactionRef}${apiKey}${merchantId}`)
@@ -25,21 +25,46 @@ const _getAndUpdatePaymentStatus = async (payment) => {
     const oldStatus = payment.status
     const paymentConst = helpers.constants.PAYMENT_STATUS
     const payStatus = Object
-      .keys(paymentConst)[Object.values(paymentConst).indexOf(remitaResponse.status)]
+      .keys(paymentConst)[Object.values(paymentConst)
+        .indexOf(remitaResponse.status)]
 
+    // If the status as the old value don't continue process must have been done before
     if (payStatus && (oldStatus !== remitaResponse.status)) {
       payment.status = remitaResponse.status || '/unknown-status'
-      payment.meta = { ...payment.meta, ...remitaResponse }
+      payment.meta = { ...remitaResponse, ...payment.meta }
       payment.updatedAt = Date.now()
-      // payment.save()
+      payment.save()
 
+      let newOrderStatus = ''
+      // If a payment status is not 00(success), 01(approve) or 021(pending) then payment failed
+      switch (remitaResponse.status) {
+        case '00':
+          newOrderStatus = helpers.constants.ORDER_STATUS.payment_completed
+          break
+        case '01':
+          newOrderStatus = helpers.constants.ORDER_STATUS.payment_completed
+          break
+        case '021':
+          newOrderStatus = helpers.constants.ORDER_STATUS.pending_payment
+          break
+        default:
+          newOrderStatus = helpers.constants.ORDER_STATUS.payment_failed
+      }
       // update order status
-      payment.order.orderStatus = helpers.constants.ORDER_STATUS.payment_completed
+      payment.order.orderStatus = newOrderStatus
       payment.order.updatedAt = Date.now()
       payment.order.save()
 
-      events.emit('payment_status_changed', { order: payment.order, buyer: payment.user },
+      // Update status of all purchases and notify sellers
+      const { purchases } = payment.order
+      const purchaseIds = purchases.map(purchase => purchase._id)
+      const sellerEmails = purchases.map(purchase => purchase.seller.email)
+      await models.Purchase
+        .updateMany({ _id: { $in: purchaseIds } },
+          { status: newOrderStatus })
+      events.emit('payment_status_changed', { order: payment.order, buyer: payment.user, sellerEmails },
         payStatus.replace(/_/g, ' ').toUpperCase())
+      // TODO Split payment to sellers wallet accordingly once payment is complete
     }
     return Promise.resolve(payment)
   } catch (error) {
@@ -61,12 +86,16 @@ const generateOrderPaymentRRR = async (req, res) => {
         success: false,
         message: 'Order does not exist',
         data: {}
-      }).status(400)
+      })
+        .status(400)
     }
 
     // assert that the belongs to the current user
     const userOrder = await await req.Models.Order
-      .findOne({ orderNumber: req.body.orderNumber, buyer: req.body.userId })
+      .findOne({
+        orderNumber: req.body.orderNumber,
+        buyer: req.body.userId
+      })
       .populate('buyer purchases')
     if (!userOrder) {
       // if the record isn't found let the user know they don't own the order.
@@ -74,7 +103,8 @@ const generateOrderPaymentRRR = async (req, res) => {
         success: false,
         message: 'You don\'t own the order you\'re trying to make payment for, please login as the right user',
         data: {}
-      }).status(400)
+      })
+        .status(400)
     }
 
     if (userOrder.installmentPeriod) {
@@ -82,7 +112,8 @@ const generateOrderPaymentRRR = async (req, res) => {
         success: false,
         message: 'You can\'t generate RRR for an installment order.',
         data: {}
-      }).status(400)
+      })
+        .status(400)
     }
 
     const orderHasCompletedPayment = await req.Models.Payment
@@ -100,12 +131,14 @@ const generateOrderPaymentRRR = async (req, res) => {
         success: false,
         message: 'Payment has already been completed for this order',
         data: orderHasCompletedPayment
-      }).stat(400)
+      })
+        .stat(400)
     }
 
 
-    // If RRR code has been generated for this order return the RRR
-    if (order.payment && order.payment.transactionRef) {
+    // If RRR code has been generated for this order and payment is not failed return the RRR
+    if (order.payment && (order.payment.transactionRef
+      && order.orderStatus !== helpers.constants.ORDER_STATUS.payment_failed)) {
       order.payment.hash = sha512(`${remitaConfig.merchantId}${order.payment.transactionRef}${remitaConfig.apiKey}`)
       return res.send({
         success: true,
@@ -115,7 +148,7 @@ const generateOrderPaymentRRR = async (req, res) => {
     }
 
     // build remita payload
-    const { buyer, purchases } = order
+    const { buyer, purchases } = userOrder
     const rrrPayload = {
       amount: order.subTotal,
       orderId: order.orderNumber,
@@ -168,7 +201,8 @@ const generateOrderPaymentRRR = async (req, res) => {
       success: false,
       message: 'Oops! an error occurred. Please retry, if error persist contact admin',
       data: {}
-    }).status(500)
+    })
+      .status(500)
     req.log(err)
     throw new Error(err)
   }
@@ -182,7 +216,11 @@ const getOrderPayments = async (req, res) => {
   offset = offset || 0
   limit = limit || 10
   let filter = utils.queryFilters(req)
-  filter = { user: req.body.userId, order: order._id, ...filter }
+  filter = {
+    user: req.body.userId,
+    order: order._id,
+    ...filter
+  }
   const model = req.Models.Payment.find(filter)
   model.skip(offset)
   model.limit(limit)
@@ -210,11 +248,12 @@ const getPayment = async (req, res) => {
     const select = 'email firstName lastName email'
     const payment = await req.Models.Payment.findById(req.params.paymentId)
       .populate('user', select)
-      .populate('order')
-    console.log(JSON.stringify(payment))
+      .populate({ path: 'order', populate: { path: 'purchases', populate: { path: 'seller', select } } })
 
     // If the transaction status is completed return response
-    if (payment.status === helpers.constants.PAYMENT_STATUS.transaction_completed_successfully) {
+    const transactionCompleted = helpers.constants.PAYMENT_STATUS.transaction_completed_successfully
+    const transactionApproved = helpers.constants.PAYMENT_STATUS.transaction_approved
+    if (payment.status === transactionCompleted || payment.status === transactionApproved) {
       return res.send({
         success: true,
         message: 'Successfully fetching payment',
@@ -235,25 +274,51 @@ const getPayment = async (req, res) => {
       success: true,
       message: 'Oops! an error occurred. Please retry, if error persist contact admin',
       data: {}
-    }).status(500)
+    })
+      .status(500)
     throw new Error(err)
   }
 }
 
 const notification = async (req, res) => {
   try {
+    // if transaction already processed return payload as it is
+    if (req.query.statuscode === '027') {
+      return res.send({
+        success: true,
+        message: 'Transaction Already Processed ',
+        data: {}
+      })
+    }
+
     const payment = await req.Models.Payment.findOne({ transactionRef: req.query.RRR })
       .populate('user')
-      .populate('order', { populate: ['purchases'] })
+      .populate({ path: 'order', populate: { path: 'purchases' } })
+
+    const approved = helpers.constants.PAYMENT_STATUS.transaction_approved
+    const completed = helpers.constants.PAYMENT_STATUS.transaction_completed_successfully
+    if (payment.status === approved || payment.status === completed) {
+      return res.send({
+        success: true,
+        message: 'Transaction Already Processed ',
+        data: {}
+      })
+    }
+
     const updatedPayment = await _getAndUpdatePaymentStatus(payment)
-    res.json(updatedPayment)
+    res.send({
+      success: true,
+      message: 'Payment Processing Completed',
+      data: updatedPayment
+    })
     // do remaining payment status change operation
   } catch (err) {
     res.send({
       success: true,
       message: 'Oops! an error occurred. Please retry, if error persist contact admin',
       data: {}
-    }).status(500)
+    })
+      .status(500)
     throw new Error(err)
   }
 }

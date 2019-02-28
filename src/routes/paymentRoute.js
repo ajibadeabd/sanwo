@@ -6,7 +6,7 @@ const paymentController = require('../controllers/paymentController')
 
 const router = express.Router()
 
-router.get('/proccessed', paymentController.notification)
+router.get('/processed', paymentController.notification)
 router.use(authMiddleware.isAuthenticated)
 
 router.post('/order', paymentValidationMiddleware.generateOrderPaymentRRR,

@@ -41,11 +41,11 @@ class CoreEvents extends EventEmitter {
   }
 
   static mailSent (data) {
-    logger.log(data)
+    logger.log('Mail Sent')
   }
 
   static mailFailed (error) {
-    logger.error(error)
+    logger.error('Error Sending Email')
   }
 
   /**
@@ -70,12 +70,19 @@ class CoreEvents extends EventEmitter {
    * @param {Object} buyer
    * @return {Promise<void>} void
    */
-  async onPaymentStatusChanged ({ order, buyer }, status) {
+  async onPaymentStatusChanged ({ order, buyer, sellerEmails }, status) {
+    // Notify the buyer
     this.sendEmail('buyer_payment_status_mail', { to: buyer.email }, { status, buyer, order })
     let adminEmails = await models.User.find({ accountType: helper.constants.SUPER_ADMIN })
       .select('email -_id')
-    adminEmails = adminEmails.map( admin => admin.email)
+
+    // Notify all admin
+    adminEmails = adminEmails.map(admin => admin.email)
     this.sendEmail('admin_payment_status_mail', { to: adminEmails.join(',') }, {
+      status, buyer, adminEmails, order
+    })
+
+    this.sendEmail('seller_payment_status_mail', { to: sellerEmails.join(',') }, {
       status, buyer, adminEmails, order
     })
   }
