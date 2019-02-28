@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer')
 const moment = require('moment')
 const crypto = require('crypto')
 const mailer = require('./../../utils/mailer')
-const { constants } = require('./../functions/helpers')
+const { constants } = require('../../utils/helpers')
 const { queryFilters } = require('./../../utils/helper-functions')
 
 const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
@@ -231,7 +231,7 @@ const updateApprovalStatus = (req, res) => {
             })
         }
 
-        // Notify the buyer of the new satus update
+        // Notify the buyer of the new status update
         const buyerMessage = `<div>
         Hi ${order.buyer.lastName} ${order.buyer.firstName}, your order number <strong>#${order.orderNumber}</strong>
         Has been ${req.params.status}
@@ -322,6 +322,7 @@ const getOrders = (req, res) => {
   const select = 'email firstName lastName email'
   const query = req.Models.Order.find(filter)
   query.populate('buyer', select)
+  query.populate('payment')
   query.populate({
     path: 'purchases',
     populate: { path: 'seller', select }

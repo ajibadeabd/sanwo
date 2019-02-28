@@ -1,5 +1,5 @@
 const Validator = require('./../functions/Validator')
-const helpers = require('./../functions/helpers')
+const helpers = require('../../utils/helpers')
 
 /**
  * We'll be validating user body request before hitting our controller method using validatorjs

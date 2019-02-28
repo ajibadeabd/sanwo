@@ -38,7 +38,7 @@ const PurchaseSchema = new Schema({
   hasInstallment: {
     type: Boolean
   },
-  paymentDisbursed: {
+  payment: {
     type: Schema.ObjectId,
     ref: 'Payment',
   },

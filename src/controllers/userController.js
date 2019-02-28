@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt')
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
-const helpers = require('./../functions/helpers')
+const helpers = require('../../utils/helpers')
 const mailer = require('./../../utils/mailer')
 
 /**

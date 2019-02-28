@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer')
 const moment = require('moment')
-const { constants } = require('./../functions/helpers')
+const { constants } = require('../../utils/helpers')
 const mailer = require('./../../utils/mailer')
 
 const { queryFilters } = require('../../utils/helper-functions')

@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const helpers = require('./../functions/helpers')
+const helpers = require('../../utils/helpers')
 
 const isAdmin = (req, res, next) => {
   jwt.verify(

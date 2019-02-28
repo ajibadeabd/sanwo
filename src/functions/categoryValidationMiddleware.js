@@ -1,5 +1,5 @@
 const Validator = require('./../functions/Validator')
-const helpers = require('./../functions/helpers')
+const helpers = require('../../utils/helpers')
 
 const get = (req, res, next) => {
   const validationRule = {

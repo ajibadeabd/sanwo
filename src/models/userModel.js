@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
-const helpers = require('./../functions/helpers')
+const helpers = require('../../utils/helpers')
 
 /**
  * @cooperative References the cooperative a user belongs to
