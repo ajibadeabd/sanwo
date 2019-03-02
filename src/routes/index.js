@@ -16,6 +16,8 @@ const addressRoute = require('./addressRoute')
 const purchaseRoute = require('./purchaseRoute')
 const messageRoute = require('./messageRoute')
 const paymentRoute = require('./paymentRoute')
+const bankAccountRoute = require('./bankAccountRoute')
+const walletRoute = require('./walletRoute')
 
 
 const authMiddleware = require('./../functions/authMiddleware')
@@ -44,6 +46,8 @@ router.use('/cart', authMiddleware.isAuthenticated, cartRoute)
 router.use('/address', authMiddleware.isAuthenticated, addressRoute)
 router.use('/message', messageRoute)
 router.use('/payment', paymentRoute)
+router.use('/bank-account', authMiddleware.isSeller, bankAccountRoute)
+router.use('/wallet', authMiddleware.isSeller, walletRoute)
 
 // file download route
 router.get('/file/', (req, res) => {

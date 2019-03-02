@@ -41,6 +41,12 @@ const constants = {
     initial_request_ok: '040',
     unknown_error: '999',
     pending_payment: 'pending_payment',
+  },
+  WALLET_STATUS: {
+    payment_confirmed: 'payment_confirmed',
+    withdrawal_in_progress: 'withdrawal_in_progress',
+    payment_withdrawal_successful: 'payment_withdrawal_successful',
+    reversed_payment: 'reversed_payment',
   }
 }
 

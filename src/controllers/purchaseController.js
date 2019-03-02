@@ -48,6 +48,7 @@ const get = (req, res) => {
 }
 
 const update = (req, res) => {
+  // TODO validate account type and status update
   req.Models.Purchase.findOne({ _id: req.params.purchaseId, seller: req.body.userId })
     .populate('seller')
     .populate({

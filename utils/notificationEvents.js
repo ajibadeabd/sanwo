@@ -38,6 +38,7 @@ class CoreEvents extends EventEmitter {
 
     // Listen for system events
     this.on('payment_status_changed', this.onPaymentStatusChanged)
+    this.on('wallet_status_changed', this.onWalletStatusChanged)
   }
 
   static mailSent (data) {
@@ -51,12 +52,12 @@ class CoreEvents extends EventEmitter {
   /**
    * sendEmail
    * @param {String} template
-   * @param {Object} message
+   * @param {Object} destination
    * @param {Object} locals
    * @return {VoidFunction} void
    */
-  sendEmail (template, message, locals) {
-    this.email.send({ template, message, locals })
+  sendEmail (template, destination, locals) {
+    this.email.send({ template, destination, locals })
       .then(CoreEvents.mailSent).catch(CoreEvents.mailFailed)
   }
 
@@ -85,6 +86,18 @@ class CoreEvents extends EventEmitter {
     this.sendEmail('seller_payment_status_mail', { to: sellerEmails.join(',') }, {
       status, buyer, adminEmails, order
     })
+  }
+
+  async onWalletStatusChanged ({ wallet }, status) {
+    const { purchase, seller } = wallet
+    this.sendEmail('seller_wallet_status_mail', { to: seller.email }, { seller, purchase, status })
+
+    let adminEmails = await models.User.find({ accountType: helper.constants.SUPER_ADMIN })
+      .select('email -_id')
+
+    // Notify all admin
+    adminEmails = adminEmails.map(admin => admin.email)
+    this.sendEmail('admin_wallet_status_mail', { to: adminEmails.join(',') }, { seller, purchase, status })
   }
 }
 

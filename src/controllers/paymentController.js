@@ -2,8 +2,9 @@ const sha512 = require('crypto-js/sha512')
 const helpers = require('../../utils/helpers')
 const utils = require('../../utils/helper-functions')
 const { _generateRRR, _getRRRStatus } = require('../../utils/remitaServices')
-const events = require('./../../utils/events')
+const events = require('../../utils/notificationEvents')
 const models = require('./../models')
+const { createWalletRecord } = require('../controllers/walletController')
 
 // TODO replace with correct valid credentials
 const remitaConfig = {
@@ -59,12 +60,28 @@ const _getAndUpdatePaymentStatus = async (payment) => {
       const { purchases } = payment.order
       const purchaseIds = purchases.map(purchase => purchase._id)
       const sellerEmails = purchases.map(purchase => purchase.seller.email)
-      await models.Purchase
-        .updateMany({ _id: { $in: purchaseIds } },
-          { status: newOrderStatus })
-      events.emit('payment_status_changed', { order: payment.order, buyer: payment.user, sellerEmails },
-        payStatus.replace(/_/g, ' ').toUpperCase())
-      // TODO Split payment to sellers wallet accordingly once payment is complete
+      await models.Purchase.updateMany({ _id: { $in: purchaseIds } }, { status: newOrderStatus })
+
+      // If the payment completed successfully, credit the sellers wallet
+      if (newOrderStatus === helpers.constants.ORDER_STATUS.payment_completed) {
+        const walletRecords = purchases.map(purchase => ({
+          seller: purchase.seller._id,
+          order: payment.order._id,
+          paymentRecord: payment._id,
+          purchase: purchase._id,
+          status: helpers.constants.WALLET_STATUS.payment_confirmed,
+          amount: purchase.subTotal
+        }))
+        await createWalletRecord(walletRecords)
+      }
+
+      // If payment is still pending no need notifying the user that their payment is pending
+      if (newOrderStatus !== helpers.constants.ORDER_STATUS.pending_payment) {
+        events.emit('payment_status_changed', { order: payment.order, buyer: payment.user, sellerEmails },
+          payStatus.replace(/_/g, ' ').toUpperCase())
+      }
+
+    // TODO Split payment to sellers wallet accordingly once payment is complete
     }
     return Promise.resolve(payment)
   } catch (error) {

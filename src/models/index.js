@@ -10,6 +10,8 @@ const Cart = require('./cartModel')
 const Payment = require('./paymentModel')
 const AddressBook = require('./addressBookModel')
 const Purchase = require('./purchaseModel')
+const BankAccount = require('./bankAccountModel')
+const Wallet = require('./walletModel')
 
 
 module.exports = {
@@ -24,5 +26,7 @@ module.exports = {
   Cart,
   Payment,
   AddressBook,
-  Purchase
+  Purchase,
+  BankAccount,
+  Wallet,
 }
