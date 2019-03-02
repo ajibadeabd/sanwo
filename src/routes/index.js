@@ -21,8 +21,6 @@ const walletRoute = require('./walletRoute')
 
 
 const authMiddleware = require('./../functions/authMiddleware')
-
-
 const router = express.Router()
 // All your parent route link should be in this file
 // Create your route file in the routes folder and link your file here
@@ -40,7 +38,7 @@ router.use('/users/cooperatives', authMiddleware.isCooperative, cooperativeRoute
 router.use('/inventory', inventoryRoute)
 router.use('/order', orderRoute)
 router.use('/categories', categoryRoute)
-router.use('/purchase', authMiddleware.isSeller, purchaseRoute)
+router.use('/purchase', purchaseRoute)
 router.use('/wish-list', authMiddleware.isAuthenticated, wishListRoute)
 router.use('/cart', authMiddleware.isAuthenticated, cartRoute)
 router.use('/address', authMiddleware.isAuthenticated, addressRoute)

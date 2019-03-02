@@ -39,6 +39,8 @@ class CoreEvents extends EventEmitter {
     // Listen for system events
     this.on('payment_status_changed', this.onPaymentStatusChanged)
     this.on('wallet_status_changed', this.onWalletStatusChanged)
+    this.on('purchase_status_changed', this.onPurchaseStatusChanged)
+    this.on('tracking_details_added', this.onTrackingDetailsAdded)
   }
 
   static mailSent (data) {
@@ -98,6 +100,15 @@ class CoreEvents extends EventEmitter {
     // Notify all admin
     adminEmails = adminEmails.map(admin => admin.email)
     this.sendEmail('admin_wallet_status_mail', { to: adminEmails.join(',') }, { seller, purchase, status })
+  }
+
+  async onPurchaseStatusChanged ({ order, status, purchase }) {
+    this.sendEmail('buyer_purchase_status_mail', { to: order.buyer.email }, { order, status, purchase })
+    this.sendEmail('seller_purchase_status_mail', { to: purchase.seller.email }, { order, status, purchase })
+  }
+
+  async onTrackingDetailsAdded ({ order, trackingDetails }) {
+    this.sendEmail('buyer_purchase_status_mail', { to: order.buyer.email }, { order, trackingDetails })
   }
 }
 
