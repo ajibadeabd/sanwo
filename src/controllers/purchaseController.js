@@ -185,6 +185,8 @@ const buyerStatusUpdate = async (req, res) => {
     purchase
   })
   if (allPurchaseItemConfirmed) {
+    purchase.order.status = constants.ORDER_STATUS.confirmed
+    purchase.order.save()
     notificationEvents.emit('completed_order_mail', {
       order,
       status: req.body.status,
