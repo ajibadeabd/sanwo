@@ -1,5 +1,5 @@
 const utils = require('../../utils/helper-functions')
-const helpers = require('./../functions/helpers')
+const helpers = require('../../utils/helpers')
 
 const _checkValidInstallment = (installmentPercentagePerMonth, catId, req, res, callback) => {
   req.Models.Category.findById(catId, (err, category) => {

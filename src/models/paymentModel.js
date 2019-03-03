@@ -9,17 +9,16 @@ const PaymentSchema = new Schema({
     ref: 'User',
     required: true,
   },
-  seller: {
+  order: {
     type: Schema.ObjectId,
-    ref: 'User',
+    ref: 'Order',
+    required: true,
   },
   module: {
     type: String,
-    required: true,
   },
   moduleId: {
     type: String,
-    required: true,
   },
   amount: {
     type: Number,
@@ -32,16 +31,12 @@ const PaymentSchema = new Schema({
   },
   transactionID: {
     type: String,
-    trim: true,
-    required: true
   },
   ipAddress: {
     type: String,
-    required: true
   },
   authCode: {
     type: String,
-    required: true
   },
   status: {
     type: String,
@@ -50,15 +45,16 @@ const PaymentSchema = new Schema({
   channel: {
     type: String
   },
-  paymentDate: {
+  meta: {
+    type: {},
+    default: undefined
+  },
+  hash: String,
+  createdAt: {
     type: Date,
     default: Date.now
   },
-  meta: {
-    type: [],
-    default: undefined
-  },
-  createdAt: {
+  updatedAt: {
     type: Date,
     default: Date.now
   }

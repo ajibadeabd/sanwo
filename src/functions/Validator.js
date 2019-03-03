@@ -1,6 +1,6 @@
 const Validator = require('validatorjs')
 const Models = require('./../models')
-const helpers = require('./../functions/helpers')
+const helpers = require('../../utils/helpers')
 const utils = require('./../../utils/helper-functions')
 
 // register validation rules

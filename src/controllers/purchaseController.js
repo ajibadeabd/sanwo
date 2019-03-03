@@ -1,7 +1,6 @@
-const nodemailer = require('nodemailer')
 const moment = require('moment')
-const { constants } = require('./../functions/helpers')
-const mailer = require('./../../utils/mailer')
+const { constants } = require('../../utils/helpers')
+const notificationEvents = require('./../../utils/notificationEvents')
 
 const { queryFilters } = require('../../utils/helper-functions')
 
@@ -48,6 +47,16 @@ const get = (req, res) => {
 }
 
 const update = (req, res) => {
+  // check that this seller is trying to change status to either in_route or delivered
+  if (req.body.status && (req.body.status !== constants.ORDER_STATUS.in_route
+    || req.body.status === constants.ORDER_STATUS.delivered)) {
+    return res.status(403).send({
+      success: false,
+      message: 'A seller can only update purchase status to delivered or in_route',
+      data: []
+    })
+  }
+
   req.Models.Purchase.findOne({ _id: req.params.purchaseId, seller: req.body.userId })
     .populate('seller')
     .populate({
@@ -62,26 +71,28 @@ const update = (req, res) => {
 
         /** If order status is pending-approval return */
         if (order.orderStatus === constants.ORDER_STATUS.pending_approval) {
-          return res.status(400).send({
-            success: false,
-            message: 'The purchase order is pending approval',
-            data: []
-          })
+          return res.status(400)
+            .send({
+              success: false,
+              message: 'The purchase order is pending approval',
+              data: []
+            })
         }
 
         /** If order status is declined return */
         if (order.orderStatus === constants.ORDER_STATUS.declined) {
-          return res.status(400).send({
-            success: false,
-            message: 'The purchase order is declined',
-            data: []
-          })
+          return res.status(400)
+            .send({
+              success: false,
+              message: 'The purchase order is declined',
+              data: []
+            })
         }
         const oldStatus = purchase.status
         const oldTrackingDetails = purchase.trackingDetails
         purchase.status = req.body.status || purchase.status
         purchase.trackingDetails = req.body.trackingDetails || purchase.trackingDetails
-        purchase.save()
+        // purchase.save()
         res.send({
           success: true,
           message: 'Order status updated successfully',
@@ -89,61 +100,103 @@ const update = (req, res) => {
         })
 
         // send email if status changed
-        if (oldStatus !== req.body.status) {
+        if (req.body.status && oldStatus !== req.body.status) {
           // notify the buyer and seller of the status change
-          const subject = `Order Status: #${order.orderNumber}`
-          const buyerMessage = `<div>
-        Hi ${order.buyer.lastName} ${order.buyer.firstName},
-        your order number <strong>#${order.orderNumber}</strong>
-        status changed to ${req.body.status}
-        <p>Login to your account to see more details</p>
-        </div>`
-          mailer.sendMail(order.buyer.email, subject,
-            buyerMessage, (mailErr, mailRes) => {
-              if (mailErr) req.log(`${subject} MAIL not sent to ${order.buyer.email}`)
-              if (mailRes) req.log(`Preview URL: %s ${nodemailer.getTestMessageUrl(mailRes)}`)
-            }, `${process.env.MAIL_FROM}`)
 
-          const sellerMessage = `<div>
-        Hi ${purchase.seller.lastName} ${purchase.seller.firstName},
-        Order number <strong>#${order.orderNumber}</strong>
-        status changed to ${req.body.status}
-        <p>Login to your account to see more details</p>
-        </div>`
-          mailer.sendMail(purchase.seller.email, subject,
-            sellerMessage, (mailErr, mailRes) => {
-              if (mailErr) req.log(`${subject} MAIL not sent to ${purchase.seller.email}`)
-              if (mailRes) req.log(`Preview URL: %s ${nodemailer.getTestMessageUrl(mailRes)}`)
-            }, `${process.env.MAIL_FROM}`)
+          notificationEvents.emit('purchase_status_changed', {
+            order,
+            status: req.body.status,
+            purchase
+          })
         }
-
         // Send email if tracking details changed
-        if (oldTrackingDetails !== req.body.trackingDetails) {
-          const subject = `Tracking Details Added For Order: #${order.orderNumber}`
-
-          const trackingMessage = `<div>
-        Hi ${order.buyer.lastName} ${order.buyer.firstName},
-        Tracking details has been added for your order number <strong>#${order.orderNumber}</strong>
-        <p> <strong>Tracking Details</strong><br/>${req.body.trackingDetails}</p>
-        <p>Login to your account to see more details</p>
-        </div>`
-          mailer.sendMail(order.buyer.email, subject,
-            trackingMessage, (mailErr, mailRes) => {
-              if (mailErr) req.log(`${subject} MAIL not sent to ${order.buyer.email}`)
-              if (mailRes) req.log(`Preview URL: %s ${nodemailer.getTestMessageUrl(mailRes)}`)
-            }, `${process.env.MAIL_FROM}`)
+        if (req.body.trackingDetails && (oldTrackingDetails !== req.body.trackingDetails)) {
+          const { trackingDetails } = req.body
+          notificationEvents.emit('tracking_details_added', { order, trackingDetails })
         }
       } else {
-        res.status(404).send({
-          success: false,
-          message: 'Purchase record not found',
-          data: []
-        })
+        res.status(404)
+          .send({
+            success: false,
+            message: 'Purchase record not found',
+            data: []
+          })
       }
     })
 }
 
+const buyerStatusUpdate = async (req, res) => {
+  if (req.body.status !== constants.ORDER_STATUS.confirmed
+    && req.body.status !== constants.ORDER_STATUS.declined) {
+    return res.status(403).send({
+      success: false,
+      message: 'A buyer can only confirm or decline a purchase',
+      data: []
+    })
+  }
+
+  const purchase = await req.Models.Purchase
+    .findOne({ _id: req.params.purchaseId })
+    .populate('seller')
+    .populate({
+      path: 'order',
+      populate: { path: 'buyer', select: 'email firstName lastName email' }
+    })
+    .populate({
+      path: 'order',
+      populate: { path: 'purchases' }
+    })
+
+  if (purchase.order.buyer._id.toString() !== req.body.userId) {
+    return res.status(403).send({
+      success: false,
+      message: 'The purchase record doesn\'t belong to you',
+      data: []
+    })
+  }
+
+  // A user must have paid for a purchase before the can decline
+  // if (purchase.status === constants.ORDER_STATUS.declined
+  //   && (purchase.status !== constants.ORDER_STATUS.payment_completed)) {
+  //   return res.status(403).send({
+  //     success: false,
+  //     message: 'You must complete payment before you can decline an other',
+  //     data: []
+  //   })
+  // }
+
+  purchase.status = req.body.status
+  purchase.save()
+
+  res.send({
+    success: true,
+    message: 'Purchase updated successfully',
+    data: purchase
+  })
+
+  const { purchases } = purchase.order
+  const allPurchaseItemConfirmed = purchases
+    .every(purchaseItem => purchaseItem.status === constants.ORDER_STATUS.confirmed)
+
+  const { order } = purchase
+  notificationEvents.emit('purchase_status_changed', {
+    order,
+    status: req.body.status,
+    purchase
+  })
+  if (allPurchaseItemConfirmed) {
+    purchase.order.status = constants.ORDER_STATUS.confirmed
+    purchase.order.save()
+    notificationEvents.emit('completed_order_mail', {
+      order,
+      status: req.body.status,
+      purchase
+    })
+  }
+}
+
 module.exports = {
   get,
-  update
+  update,
+  buyerStatusUpdate
 }

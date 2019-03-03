@@ -15,11 +15,12 @@ const cartRoute = require('./cartRoute')
 const addressRoute = require('./addressRoute')
 const purchaseRoute = require('./purchaseRoute')
 const messageRoute = require('./messageRoute')
+const paymentRoute = require('./paymentRoute')
+const bankAccountRoute = require('./bankAccountRoute')
+const walletRoute = require('./walletRoute')
 
 
 const authMiddleware = require('./../functions/authMiddleware')
-
-
 const router = express.Router()
 // All your parent route link should be in this file
 // Create your route file in the routes folder and link your file here
@@ -37,11 +38,14 @@ router.use('/users/cooperatives', authMiddleware.isCooperative, cooperativeRoute
 router.use('/inventory', inventoryRoute)
 router.use('/order', orderRoute)
 router.use('/categories', categoryRoute)
-router.use('/purchase', authMiddleware.isSeller, purchaseRoute)
+router.use('/purchase', purchaseRoute)
 router.use('/wish-list', authMiddleware.isAuthenticated, wishListRoute)
 router.use('/cart', authMiddleware.isAuthenticated, cartRoute)
 router.use('/address', authMiddleware.isAuthenticated, addressRoute)
 router.use('/message', messageRoute)
+router.use('/payment', paymentRoute)
+router.use('/bank-account', authMiddleware.isSeller, bankAccountRoute)
+router.use('/wallet', authMiddleware.isSeller, walletRoute)
 
 // file download route
 router.get('/file/', (req, res) => {
