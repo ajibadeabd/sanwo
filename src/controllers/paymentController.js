@@ -288,7 +288,7 @@ const getPayment = async (req, res) => {
     })
   } catch (err) {
     res.send({
-      success: true,
+      success: false,
       message: 'Oops! an error occurred. Please retry, if error persist contact admin',
       data: {}
     })
@@ -331,7 +331,7 @@ const notification = async (req, res) => {
     // do remaining payment status change operation
   } catch (err) {
     res.send({
-      success: true,
+      success: false,
       message: 'Oops! an error occurred. Please retry, if error persist contact admin',
       data: {}
     })
