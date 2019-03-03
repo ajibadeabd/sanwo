@@ -41,6 +41,7 @@ class CoreEvents extends EventEmitter {
     this.on('wallet_status_changed', this.onWalletStatusChanged)
     this.on('purchase_status_changed', this.onPurchaseStatusChanged)
     this.on('tracking_details_added', this.onTrackingDetailsAdded)
+    this.on('completed_order_mail', this.onCompletedOrderMail)
   }
 
   static mailSent (data) {
@@ -109,6 +110,10 @@ class CoreEvents extends EventEmitter {
 
   async onTrackingDetailsAdded ({ order, trackingDetails }) {
     this.sendEmail('buyer_purchase_status_mail', { to: order.buyer.email }, { order, trackingDetails })
+  }
+
+  async onCompletedOrderMail ({ order, status, purchase }) {
+    this.sendEmail('completed_order_mail', { to: order.buyer.email }, { order, status, purchase })
   }
 }
 

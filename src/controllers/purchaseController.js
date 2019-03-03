@@ -142,6 +142,10 @@ const buyerStatusUpdate = async (req, res) => {
       path: 'order',
       populate: { path: 'buyer', select: 'email firstName lastName email' }
     })
+    .populate({
+      path: 'order',
+      populate: { path: 'purchases' }
+    })
 
   if (purchase.order.buyer._id.toString() !== req.body.userId) {
     return res.status(403).send({
@@ -170,12 +174,23 @@ const buyerStatusUpdate = async (req, res) => {
     data: purchase
   })
 
+  const { purchases } = purchase.order
+  const allPurchaseItemConfirmed = purchases
+    .every(purchaseItem => purchaseItem.status === constants.ORDER_STATUS.confirmed)
+
   const { order } = purchase
   notificationEvents.emit('purchase_status_changed', {
     order,
     status: req.body.status,
     purchase
   })
+  if (allPurchaseItemConfirmed) {
+    notificationEvents.emit('completed_order_mail', {
+      order,
+      status: req.body.status,
+      purchase
+    })
+  }
 }
 
 module.exports = {
