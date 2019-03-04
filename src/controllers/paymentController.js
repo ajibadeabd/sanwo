@@ -190,29 +190,35 @@ const generateOrderPaymentRRR = async (req, res) => {
     // generate the RRR code and return response accordingly
     const remitaResponse = await _generateRRR(rrrPayload, apiHash)
 
-    // Create payment record
-    const paymentRecord = await req.Models.Payment.create({
-      user: buyer._id,
-      order: order._id,
-      amount: order.subTotal,
-      transactionRef: remitaResponse.RRR,
-      status: helpers.constants.PAYMENT_STATUS.pending_payment,
-      channel: 'remita.net',
-      meta: remitaResponse,
-      hash: sha512(`${remitaConfig.merchantId}${remitaResponse.RRR}${remitaConfig.apiKey}`),
-    })
+    if (remitaResponse.RRR) {
+      // Create payment record
+      const paymentRecord = await req.Models.Payment.create({
+        user: buyer._id,
+        order: order._id,
+        amount: order.subTotal,
+        transactionRef: remitaResponse.RRR,
+        status: helpers.constants.PAYMENT_STATUS.pending_payment,
+        channel: 'remita.net',
+        meta: remitaResponse,
+        hash: sha512(`${remitaConfig.merchantId}${remitaResponse.RRR}${remitaConfig.apiKey}`),
+      })
 
-    // Update the order record with the related payment _id
-    order.payment = paymentRecord._id
-    order.save((orderSaveError) => {
-      if (orderSaveError) throw orderSaveError
-    })
-
+      // Update the order record with the related payment _id
+      order.payment = paymentRecord._id
+      order.save((orderSaveError) => {
+        if (orderSaveError) throw orderSaveError
+      })
+      return res.send({
+        success: true,
+        message: 'Successfully generated RRR',
+        data: paymentRecord
+      })
+    }
     res.send({
-      success: true,
-      message: 'Successfully generated RRR',
-      data: paymentRecord
-    })
+      success: false,
+      message: 'Oops! an error occurred. Please retry, if error persist contact admin',
+      data: remitaResponse
+    }).status(500)
   } catch (err) {
     res.send({
       success: false,
@@ -300,6 +306,14 @@ const getPayment = async (req, res) => {
 const notification = async (req, res) => {
   try {
     // if transaction already processed return payload as it is
+    if (!req.query.RRR || !req.query.statuscode) {
+      return res.send({
+        success: false,
+        message: 'Invalid RRR/transactionRef and status code',
+        data: {}
+      })
+    }
+
     if (req.query.statuscode === '027') {
       return res.send({
         success: true,

@@ -6,6 +6,7 @@ const updateAccountStatus = (req, res) => {
       if (err) {
         throw err
       } else {
+        // TODO notify use of account status change
         return res.send({
           success: true,
           message: 'Account status updated',

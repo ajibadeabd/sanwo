@@ -115,6 +115,12 @@ const validateUserCreation = (req, res, next) => {
     default:
       validationRule = {}
   }
+
+  // When account type is co-orporate admin don't require password
+  if (accountType === helpers.constants.CORPORATE_ADMIN) {
+    validationRule.password = 'password_policy|confirmed'
+  }
+
   //  validation rule depends on the user registering
   Validator(reqBody, validationRule, customMessages, (error, status) => {
     if (!status) {
