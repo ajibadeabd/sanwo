@@ -133,13 +133,13 @@ const _createSeller = (req, res, next) => {
 }
 
 
-const _createCorporateAdmin = (req, res) => {
+const _createCorporateAdmin = (req, res, next) => {
   req.Models.User.create({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
     phoneNumber: req.body.phoneNumber,
     email: req.body.email,
-    password: req.body.password,
+    password: req.body.password ? req.body.password : null,
     accountType: req.body.accountType
   }, (err, result) => {
     if (err) {
@@ -155,6 +155,7 @@ const _createCorporateAdmin = (req, res) => {
         .status(201)
       // send welcome email
       mailer.sendWelcomeMail(result, req)
+      if (!req.body.password) forgotPassword(req, res, next, true)
     }
   })
 }
@@ -175,6 +176,16 @@ const login = (req, res) => {
     .populate('cooperative address', '-password -relatedUsers -status')
     .exec((err, user) => {
       if (err) throw err
+
+      if (user
+        && (user.status === helpers.constants.ACCOUNT_STATUS.suspended)) {
+        return res.send({
+          success: false,
+          message: 'Your account is suspended, contact admin for more details.',
+          data: null
+        })
+          .status(401)
+      }
 
       // If the users account type is seller or corporate admin and the user status is pending
       if (user
