@@ -168,7 +168,7 @@ const generateOrderPaymentRRR = async (req, res) => {
     const { buyer, purchases } = userOrder
     const rrrPayload = {
       amount: order.subTotal,
-      orderId: order.orderNumber,
+      orderId: `##${order.orderNumber}`,
       payerName: `${buyer.firstName} ${buyer.lastName}`,
       payerEmail: buyer.email,
       payerPhone: buyer.phoneNumber,
@@ -185,7 +185,7 @@ const generateOrderPaymentRRR = async (req, res) => {
     const { merchantId, serviceTypeId, apiKey } = remitaConfig
 
     // Generate remita apiHash
-    const apiHash = sha512(`${merchantId}${serviceTypeId}NO::${rrrPayload.orderId}${rrrPayload.amount}${apiKey}`)
+    const apiHash = sha512(`${merchantId}${serviceTypeId}${rrrPayload.orderId}${rrrPayload.amount}${apiKey}`)
 
     // generate the RRR code and return response accordingly
     const remitaResponse = await _generateRRR(rrrPayload, apiHash)
@@ -214,18 +214,17 @@ const generateOrderPaymentRRR = async (req, res) => {
         data: paymentRecord
       })
     }
-    res.send({
+    res.status(500).send({
       success: false,
       message: 'Oops! an error occurred. Please retry, if error persist contact admin',
       data: remitaResponse
-    }).status(500)
+    })
   } catch (err) {
-    res.send({
+    res.status(500).send({
       success: false,
       message: 'Oops! an error occurred. Please retry, if error persist contact admin',
       data: {}
     })
-      .status(500)
     req.log(err)
     throw new Error(err)
   }
@@ -293,12 +292,11 @@ const getPayment = async (req, res) => {
       data: updatedPayment
     })
   } catch (err) {
-    res.send({
+    res.status(500).send({
       success: false,
       message: 'Oops! an error occurred. Please retry, if error persist contact admin',
       data: {}
     })
-      .status(500)
     throw new Error(err)
   }
 }
