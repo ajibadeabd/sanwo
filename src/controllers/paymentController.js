@@ -185,7 +185,7 @@ const generateOrderPaymentRRR = async (req, res) => {
     const { merchantId, serviceTypeId, apiKey } = remitaConfig
 
     // Generate remita apiHash
-    const apiHash = sha512(`${merchantId}${serviceTypeId}${rrrPayload.orderId}${rrrPayload.amount}${apiKey}`)
+    const apiHash = sha512(`${merchantId}${serviceTypeId}NO::${rrrPayload.orderId}${rrrPayload.amount}${apiKey}`)
 
     // generate the RRR code and return response accordingly
     const remitaResponse = await _generateRRR(rrrPayload, apiHash)
@@ -200,7 +200,7 @@ const generateOrderPaymentRRR = async (req, res) => {
         status: helpers.constants.PAYMENT_STATUS.pending_payment,
         channel: 'remita.net',
         meta: remitaResponse,
-        hash: sha512(`${remitaConfig.merchantId}${remitaResponse.RRR}${remitaConfig.apiKey}`),
+        hash: sha512(`${merchantId}${remitaResponse.RRR}${apiKey}`),
       })
 
       // Update the order record with the related payment _id
