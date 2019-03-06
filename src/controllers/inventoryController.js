@@ -9,7 +9,8 @@ const _checkValidInstallment = (installmentPercentagePerMonth, catId, req, res, 
       * minimum period is 2(months).
       */
 
-      const installmentPercentagePerMonthLength = installmentPercentagePerMonth
+      const installmentPercentagePerMonthLength = (installmentPercentagePerMonth
+        && installmentPercentagePerMonth.length)
         ? JSON.parse(installmentPercentagePerMonth).length : 0
       let installmentCheckErrorMsg = ''
       if (category.installmentPeriod === 0 && installmentPercentagePerMonthLength > 0) {
@@ -83,17 +84,16 @@ const update = (req, res) => {
       inventory.images = req.body.images
         ? inventory.images.concat(req.body.images)
         : inventory.images
-      inventory.installmentPercentagePerMonth = req.body.installmentPercentagePerMonth
-        || inventory.installmentPercentagePerMonth
       inventory.meta = req.body.meta
         ? { ...inventory.meta, ...JSON.parse(req.body.meta) }
         : inventory.meta
 
       // lets validate installment before saving
-      _checkValidInstallment(inventory.installmentPercentagePerMonth,
+      _checkValidInstallment(req.body.installmentPercentagePerMonth,
         inventory.category, req, res, () => {
           inventory.installmentPercentagePerMonth = req.body.installmentPercentagePerMonth
-            ? JSON.parse(req.body.installmentPercentagePerMonth) : []
+            ? JSON.parse(req.body.installmentPercentagePerMonth)
+            : inventory.installmentPercentagePerMonth
           inventory.save((error) => {
             if (error) throw error
             res.send({
@@ -114,7 +114,7 @@ const update = (req, res) => {
   })
 }
 
-const _queryInventory = (req) => {
+const _queryInventory = async (req) => {
   let limit = parseInt(req.query.limit, 10)
   let offset = parseInt(req.query.offset, 10)
   offset = offset || 0
@@ -125,25 +125,25 @@ const _queryInventory = (req) => {
   model.limit(limit)
   model.populate('seller category', '-password -relatedUsers')
   model.sort({ createdAt: 'desc' })
-  return { model, offset, limit }
+  const resultCount = await req.Models.Inventory.countDocuments(filter)
+  return Promise.resolve({
+    model, offset, limit, resultCount
+  })
 }
 
-const getInventories = (req, res) => {
-  const { model, offset, limit } = _queryInventory(req)
-  model.exec((err, results) => {
-    if (err) {
-      throw err
-    } else {
-      res.send({
-        success: true,
-        message: 'Successfully fetching inventories',
-        data: {
-          offset,
-          limit,
-          resultCount: results.length,
-          results
-        }
-      })
+const getInventories = async (req, res) => {
+  const {
+    model, offset, limit, resultCount
+  } = await _queryInventory(req)
+  const results = await model
+  res.send({
+    success: true,
+    message: 'Successfully fetching inventories',
+    data: {
+      offset,
+      limit,
+      resultCount,
+      results
     }
   })
 }
@@ -262,7 +262,9 @@ const getInventoryStat = async (req, res) => {
 }
 
 const getInventoryInStock = async (req, res) => {
-  const { model, offset, limit } = _queryInventory(req)
+  const {
+    model, offset, limit, resultCount
+  } = await _queryInventory(req)
   const filter = { seller: req.body.userId, quantity: { $gte: 1 } }
   model.find(filter)
   model.exec((err, results) => {
@@ -275,7 +277,7 @@ const getInventoryInStock = async (req, res) => {
         data: {
           offset,
           limit,
-          resultCount: results.length,
+          resultCount,
           results
         }
       })
@@ -284,7 +286,9 @@ const getInventoryInStock = async (req, res) => {
 }
 
 const getInventoryOutStock = async (req, res) => {
-  const { model, offset, limit } = _queryInventory(req)
+  const {
+    model, offset, limit, resultCount
+  } = await _queryInventory(req)
   const filter = { seller: req.body.userId, quantity: { $lte: 0 } }
   model.find(filter)
   model.exec((err, results) => {
@@ -297,7 +301,7 @@ const getInventoryOutStock = async (req, res) => {
         data: {
           offset,
           limit,
-          resultCount: results.length,
+          resultCount,
           results
         }
       })
