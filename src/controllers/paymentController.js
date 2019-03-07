@@ -168,7 +168,7 @@ const generateOrderPaymentRRR = async (req, res) => {
     const { buyer, purchases } = userOrder
     const rrrPayload = {
       amount: order.subTotal,
-      orderId: `##${order.orderNumber}`,
+      orderId: `No_${order.orderNumber}`,
       payerName: `${buyer.firstName} ${buyer.lastName}`,
       payerEmail: buyer.email,
       payerPhone: buyer.phoneNumber,
@@ -326,7 +326,7 @@ const notification = async (req, res) => {
 
     const approved = helpers.constants.PAYMENT_STATUS.transaction_approved
     const completed = helpers.constants.PAYMENT_STATUS.transaction_completed_successfully
-    if (payment.status === approved || payment.status === completed) {
+    if (payment && (payment.status === approved || payment.status === completed)) {
       return res.send({
         success: true,
         message: 'Transaction Already Processed ',
