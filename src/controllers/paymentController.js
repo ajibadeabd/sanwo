@@ -304,10 +304,10 @@ const getPayment = async (req, res) => {
 const notification = async (req, res) => {
   try {
     // if transaction already processed return payload as it is
-    if (!req.query.RRR || !req.query.statuscode) {
+    if (!req.query.RRR) {
       return res.send({
         success: false,
-        message: 'Invalid RRR/transactionRef and status code',
+        message: 'Invalid RRR/transactionRef',
         data: {}
       })
     }
