@@ -52,8 +52,28 @@ const getPayment = (req, res, next) => {
   })
 }
 
+const installmentMandateStatus = (req, res, next) => {
+  const validationRule = {
+    orderId: 'required|mongoId|exists:Order,_id'
+  }
+
+  Validator(req.params, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation Failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
+
 module.exports = {
   generateOrderPaymentRRR,
   getOrderPayments,
-  getPayment
+  getPayment,
+  installmentMandateStatus
 }

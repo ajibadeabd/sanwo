@@ -26,6 +26,7 @@ const InstallmentSchema = new Schema({
   datePaid: {
     type: Date
   },
+  meta: { },
   createdAt: {
     type: Date,
     default: Date.now

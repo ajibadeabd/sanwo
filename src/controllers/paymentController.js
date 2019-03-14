@@ -1,18 +1,16 @@
 const sha512 = require('crypto-js/sha512')
+const moment = require('moment')
 const helpers = require('../../utils/helpers')
 const utils = require('../../utils/helper-functions')
 const { _generateRRR, _getRRRStatus } = require('../../utils/remitaServices')
 const events = require('../../utils/notificationEvents')
 const models = require('./../models')
 const { createWalletRecord } = require('../controllers/walletController')
+const remitaServices = require('../../utils/remitaServices')
+const notificationEvents = require('../../utils/notificationEvents')
 
 // TODO replace with correct valid credentials
-const remitaConfig = {
-  baseUrl: 'https://www.remitademo.net/remita',
-  serviceTypeId: '4430731',
-  apiKey: '1946',
-  merchantId: '2547916',
-}
+const { remitaConfig, constants } = helpers
 // const theApiHash = sha512(`${remitaConfig.merchantId}230007734065${remitaConfig.apiKey}`)
 // console.log(theApiHash.toString())
 
@@ -352,9 +350,107 @@ const notification = async (req, res) => {
   }
 }
 
+const installmentMandateStatus = async (req, res) => {
+  try {
+    const select = 'email firstName lastName email'
+    const order = await req.Models.Order.findById(req.params.orderId)
+      .populate('buyer')
+      .populate({ path: 'purchases', populate: { path: 'seller', select } })
+
+
+    const mandateStatus = await remitaServices._mandateStatus(order.orderNumber)
+    mandateStatus.isActive = true
+    res.send({
+      success: true,
+      message: 'Mandate Status',
+      data: mandateStatus
+    })
+    // order.installmentPaymentMandate.status = mandateStatus.isActive
+    // order.save()
+
+    // If the mandate status changes update DB
+    if (mandateStatus.isActive
+      && (mandateStatus.isActive !== order.installmentPaymentMandate.status)) {
+      const purchase = order.purchases[0]
+      order.installmentPaymentMandate.status = mandateStatus.isActive
+      order.installmentPaymentMandate.statusChangeDate = Date.now()
+      // order.save()
+
+      const status = constants.ORDER_STATUS.approved
+      purchase.status = status
+      purchase.save()
+      // send mail to seller and customer
+      notificationEvents.emit('purchase_status_changed', { order, status, purchase })
+    }
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message: e.message,
+    })
+  }
+}
+
+const installmentPaymentHistory = async (req, res) => {
+  try {
+    const order = await req.Models.Order.findById(req.params.orderId)
+
+    const body = {
+      merchantId: remitaConfig.merchantId,
+      mandateId: order.installmentPaymentMandate.mandateId,
+      requestId: order.installmentPaymentMandate.requestId
+    }
+    const history = await remitaServices._mandatePaymentHistory(body)
+    res.send({
+      success: true,
+      message: 'Mandate Payment History',
+      data: history
+    })
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message: e.message,
+    })
+  }
+}
+
+const debitNotification = async (req, res) => {
+  try {
+    const responseBody = req.body
+    if (!responseBody.length) return res.status(400).send({ status: false, message: 'Empty request body' })
+    const debitItem = responseBody.lineItems[0]
+    const select = 'email firstName lastName email'
+    const order = await req.Models.Order
+      .findOne({ orderNumber: debitItem.requestId })
+      .populate({ path: 'buyer', populate: { path: 'cooperative', select } })
+      .populate('purchases')
+    const pendingPayments = order.installmentsRepaymentSchedule
+      .filter(paymentSchedule => paymentSchedule.status === 'pending')
+
+    res.send({ status: true, message: 'OK' })
+
+    if (pendingPayments.length) {
+      pendingPayments[0].status = 'transaction_completed_successfully'
+      pendingPayments[0].datePaid = debitItem.debitDate
+      pendingPayments[0].meta = responseBody
+      order.save()
+      notificationEvents.emit('installment_payment_debit', { order, payment: debitItem })
+    }
+    if (pendingPayments.length === 0 || pendingPayments.length === 1) {
+      order.installmentPaymentStatus = 'completed'
+      order.save()
+      notificationEvents.emit('installment_payment_completed', { order, payment: debitItem })
+    }
+  } catch (error) {
+    throw error
+  }
+}
+
 module.exports = {
   generateOrderPaymentRRR,
   getOrderPayments,
   getPayment,
-  notification
+  notification,
+  installmentMandateStatus,
+  installmentPaymentHistory,
+  debitNotification
 }

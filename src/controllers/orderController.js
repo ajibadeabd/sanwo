@@ -1,11 +1,14 @@
-const nodemailer = require('nodemailer')
+/* eslint-disable no-inner-declarations,require-jsdoc */
 const moment = require('moment')
 const crypto = require('crypto')
-const mailer = require('./../../utils/mailer')
-const { constants } = require('../../utils/helpers')
-const { queryFilters } = require('./../../utils/helper-functions')
+const sha512 = require('crypto-js/sha512')
 
-const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
+const { constants, remitaConfig } = require('../../utils/helpers')
+const { queryFilters } = require('./../../utils/helper-functions')
+const notificationEvents = require('../../utils/notificationEvents')
+const remitaServices = require('../../utils/remitaServices')
+
+const _createInstallmentOrder = async (req, address, installmentItemInCart, bankAccount) => {
   // save the installment order
   const savedInstallmentOrder = await req.Models.Order.create({
     buyer: req.body.userId, // save the current user as the buyer
@@ -18,21 +21,9 @@ const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
     installmentTotalRepayment: installmentItemInCart.installmentTotalRepayment,
     installmentPaymentStatus: constants.ORDER_STATUS.pending,
     orderStatus: constants.ORDER_STATUS.pending_approval,
+    installmentPaymentMandate: { bankAccount: bankAccount.toObject() }
   })
   if (savedInstallmentOrder) {
-    const installmentsRepaymentSchedule = []
-    // create installment repayment schedule
-    for (let i = 1; i <= installmentItemInCart.installmentPeriod; i += 1) {
-      installmentsRepaymentSchedule.push({
-        installmentRef: `${savedInstallmentOrder.orderNumber}_${i}`, // concat with order number
-        installmentPercentage: installmentItemInCart.installmentPercentage,
-        amount:
-          installmentItemInCart.installmentTotalRepayment / installmentItemInCart.installmentPeriod,
-        dueDate: moment()
-          .add(i, 'month')
-          .format()
-      })
-    }
     // create record for the purchased item
     const createPurchaseRecord = await req.Models.Purchase.create({
       product: installmentItemInCart.product.toObject(),
@@ -45,7 +36,7 @@ const _createInstallmentOrder = async (req, address, installmentItemInCart) => {
       meta: installmentItemInCart.meta,
       status: constants.ORDER_STATUS.pending_approval
     })
-    savedInstallmentOrder.installmentsRepaymentSchedule = installmentsRepaymentSchedule
+    // savedInstallmentOrder.installmentsRepaymentSchedule = installmentsRepaymentSchedule
     savedInstallmentOrder.purchases = [createPurchaseRecord._id]
     // generate token for order approval
     crypto.randomBytes(20, (error, buffer) => {
@@ -158,7 +149,23 @@ const create = async (req, res) => {
   /** Save installment Order if any */
   let installmentOrder
   if (installmentItemInCart.length) {
-    installmentOrder = await _createInstallmentOrder(req, address, installmentItemInCart[0])
+    const mongoIdRegex = /^[a-f\d]{24}$/i
+    // check that the customer supplied bankAccount
+    if (!req.body.bankAccountId || !mongoIdRegex.test(req.body.bankAccountId)) {
+      responsePayload.data.errors.bankAccountId = ['Please specify Bank Account which Installment payment will be charged from.']
+      return res.status(400).send(responsePayload)
+    }
+
+    const bankAccountDetails = await req.Models.BankAccount
+      .findOne({ _id: req.body.bankAccountId, user: req.body.userId })
+    // assert that the bankAccount is valid
+    if (!bankAccountDetails) {
+      responsePayload.data.errors.bankAccountId = ['Invalid bank account record supplied']
+      return res.status(400).send(responsePayload)
+    }
+
+    installmentOrder = await _createInstallmentOrder(req,
+      address, installmentItemInCart[0], bankAccountDetails)
       .catch((installmentOrderError) => {
         throw installmentOrderError
       })
@@ -189,86 +196,154 @@ const create = async (req, res) => {
   // await req.Models.Cart.deleteMany({ user: req.body.userId }).exec()
   if (ordersWithoutInstallment) {
     ordersWithoutInstallment.cart = installmentItemInCart
-    await mailer.sendNewOrderMail(ordersWithoutInstallment, req)
+    notificationEvents.emit('new_order', ordersWithoutInstallment)
   }
   if (installmentOrder) {
     installmentOrder.cart = installmentItemInCart
-    await mailer.sendInstallmentOrderApprovalMail(installmentOrder, req)
+    // await mailer.sendInstallmentOrderApprovalMail(installmentOrder, req)
+    notificationEvents.emit('installment_order_approval_mail', installmentOrder)
   }
 }
 
 
-const updateApprovalStatus = (req, res) => {
-  const subject = `${process.env.APP_NAME}: Order`
-  req.Models.Order.findOne({ token: req.params.token })
-    .populate('buyer purchases')
-    .exec((err, order) => {
-      if (err) {
-        throw err
-      } else if (order) {
-        order.orderStatus = req.params.status
-        order.token = undefined
-        order.approvalStatusChangedBy = req.params.adminId
-        order.approvalStatusChangeDate = Date.now()
-        order.save()
-        // update the purchase status
-        order.purchases[0].status = req.params.status
-        order.purchases[0].save()
-        res.send({
-          success: true,
-          message: `Order status has been updated to ${req.params.status}. The buyer has been notified.`
+const updateApprovalStatus = async (req, res) => {
+  try {
+    const order = await req.Models.Order.findOne({ token: req.params.token })
+      .populate('buyer purchases')
+
+    if (!order) {
+      return res.status(400)
+        .send({
+          success: false,
+          message: 'The token does not exist or has already been used',
+          data: []
         })
+    }
 
-        // if the purchase is declined add the quantity back to available products
-        if (req.params.status === 'declined') {
-          req.Models
-            .Inventory.findOne({ _id: order.purchases[0].product._id }).then((result) => {
-            // since we are sure buyers can't buy more than one installment product
-              if (result) {
-                result.quantity += 1
-                result.save()
-              }
-            })
-        }
+    if (order.orderStatus === constants.ORDER_STATUS.approved) {
+      return res.status(403)
+        .send({
+          success: false,
+          message: 'Order Already Approved',
+          data: order
+        })
+    }
 
-        // Notify the buyer of the new status update
-        const buyerMessage = `<div>
-        Hi ${order.buyer.lastName} ${order.buyer.firstName}, your order number <strong>#${order.orderNumber}</strong>
-        Has been ${req.params.status}
-        <p>Login to your account to see more details</p>
-        </div>`
-        mailer.sendMail(order.buyer.email, `Order Status: #${order.orderNumber}`,
-          buyerMessage, (mailErr, mailRes) => {
-            if (mailErr) req.log(`${subject} MAIL not sent to ${order.buyer.email}`)
-            if (mailRes) req.log(`Preview URL: %s ${nodemailer.getTestMessageUrl(mailRes)}`)
-          }, `${process.env.MAIL_FROM}`)
-        const { seller } = order.purchases[0].product
-        // Notify the seller of the new order
-        const sellerMessage = `<div>
-        Hi ${seller.lastName} ${seller.firstName}, request to buy your product on installment has been ${req.params.status}
-        below is the order details
-        <p>Customer Name: <strong>${order.buyer.lastName} ${order.buyer.firstName}</strong></p>
-        <p>Order Number <strong>#${order.orderNumber}</strong></p>
-        <p>Login to take action</p>
-        </div>`
-        mailer.sendMail(seller.email, subject, sellerMessage, (mailErr, mailRes) => {
-          if (mailErr) req.log(`${subject} MAIL not sent to ${seller.email}`)
-          if (mailRes) req.log(`Preview URL: %s ${nodemailer.getTestMessageUrl(mailRes)}`)
-        }, `${process.env.MAIL_FROM}`)
-      } else {
-        res.status(400)
-          .send({
-            success: false,
-            message: 'The token does not exist or has already been used',
-            data: err
-          })
+    if (order.orderStatus === constants.ORDER_STATUS.declined) {
+      return res.status(403)
+        .send({
+          success: false,
+          message: 'Order Already Declined',
+          data: []
+        })
+    }
+
+    const adminUser = await req.Models.User.findById(req.params.adminId)
+    if (!adminUser) {
+      return res.status(403)
+        .send({
+          success: false,
+          message: 'User does not exist',
+          data: []
+        })
+    }
+
+    if (adminUser.accountType !== constants.SUPER_ADMIN
+      && adminUser.accountType !== constants.CORPORATE_ADMIN) {
+      return res.status(403)
+        .send({
+          success: false,
+          message: 'Unauthorized account',
+          data: []
+        })
+    }
+
+    order.orderStatus = req.params.status
+    order.token = undefined
+    order.approvalStatusChangedBy = req.params.adminId
+    order.approvalStatusChangeDate = Date.now()
+
+    // If the order is approved, generate a mandate
+    if (req.params.status === constants.ORDER_STATUS.approved) {
+      const { bankAccount } = order.installmentPaymentMandate
+      const payload = {
+        payerName: `${order.installmentPaymentMandate.bankAccount.accountName}`,
+        payerEmail: `${order.buyer.email}`,
+        payerPhone: `${order.buyer.phoneNumber}`,
+        payerBankCode: `${order.installmentPaymentMandate.bankAccount.bankCode}`,
+        payerAccount: `${order.installmentPaymentMandate.bankAccount.accountNumber}`,
+        requestId: `${order.orderNumber}`,
+        amount: `${order.installmentTotalRepayment}`,
+        startDate: `${moment()
+          .format('D/MM/Y')}`,
+        endDate: `${moment()
+          .add(order.installmentPeriod, 'months')
+          .format('D/MM/Y')}`,
+        mandateType: 'SO',
+        frequency: 'Month'
       }
+
+      const mandateResponse = await remitaServices._setUpMandate(payload)
+      const { merchantId, apiKey, baseUrlHttp } = remitaConfig
+      const hash = sha512(`${merchantId}${apiKey}${order.orderNumber}`)
+        .toString()
+      order.installmentPaymentMandate = {
+        bankAccount,
+        status: false,
+        hash,
+        formUrl: `${baseUrlHttp}/ecomm/mandate/form/${merchantId}/${hash}/${mandateResponse.mandateId}/${mandateResponse.requestId}/rest.reg`,
+        mandateId: mandateResponse.mandateId,
+        requestId: mandateResponse.requestId,
+        merchantId,
+      }
+    }
+
+    const installmentsRepaymentSchedule = []
+    // create installment repayment schedule
+    for (let i = 1; i <= order.installmentPeriod; i += 1) {
+      installmentsRepaymentSchedule.push({
+        installmentRef: `${order.orderNumber}_${i}`, // concat with order number
+        installmentPercentage: order.installmentPercentage,
+        amount:
+         order.installmentTotalRepayment / order.installmentPeriod,
+        dueDate: moment()
+          .add(i, 'month')
+          .format()
+      })
+    }
+    order.installmentsRepaymentSchedule = installmentsRepaymentSchedule
+    order.save()
+
+    res.send({
+      success: true,
+      message: `Order status has been updated to ${req.params.status}. The buyer has been notified.`,
+      data: order
     })
+
+    // if the purchase is declined add the quantity back to available products
+    if (req.params.status === 'declined') {
+      req.Models.Inventory.findOne({ _id: order.purchases[0].product._id })
+        .then((result) => {
+          // since we are sure buyers can't buy more than one installment product
+          if (result) {
+            result.quantity += 1
+            result.save()
+          }
+        })
+    }
+    // Notify the buyer of the new status update
+    notificationEvents.emit('order_status_changed', {
+      order,
+      status: req.params.status
+    })
+  } catch (e) {
+    throw new Error(e)
+  }
 }
 
 const updateOrderStatus = (req, res) => {
   req.Models.Order.findOne({ _id: req.body.orderId })
-    .populate('buyer')
+    .populate('buyer purchases')
     .exec((err, order) => {
       if (err) {
         throw err
@@ -282,30 +357,7 @@ const updateOrderStatus = (req, res) => {
         })
 
         // notify the buyer and seller of the status change
-        const subject = `Order Status: #${order.orderNumber}`
-        const buyerMessage = `<div>
-        Hi ${order.buyer.lastName} ${order.buyer.firstName},
-        your order number <strong>#${order.orderNumber}</strong>
-        status changed to ${req.body.status}
-        <p>Login to your account to see more details</p>
-        </div>`
-        mailer.sendMail(order.buyer.email, subject,
-          buyerMessage, (mailErr, mailRes) => {
-            if (mailErr) req.log(`${subject} MAIL not sent to ${order.buyer.email}`)
-            if (mailRes) req.log(`Preview URL: %s ${nodemailer.getTestMessageUrl(mailRes)}`)
-          }, `${process.env.MAIL_FROM}`)
-
-        const sellerMessage = `<div>
-        Hi ${order.seller.lastName} ${order.seller.firstName},
-        Order number <strong>#${order.orderNumber}</strong>
-        status changed to ${req.body.status}
-        <p>Login to your account to see more details</p>
-        </div>`
-        mailer.sendMail(order.seller.email, subject,
-          sellerMessage, (mailErr, mailRes) => {
-            if (mailErr) req.log(`${subject} MAIL not sent to ${order.buyer.email}`)
-            if (mailRes) req.log(`Preview URL: %s ${nodemailer.getTestMessageUrl(mailRes)}`)
-          }, `${process.env.MAIL_FROM}`)
+        notificationEvents.emit('order_status_changed', { order, status: req.params.status })
       }
     })
 }
@@ -336,6 +388,7 @@ const getOrders = (req, res) => {
   query.select('-token')
   query.skip(offset)
   query.limit(limit)
+  query.sort({ createdAt: 'desc' })
   query.exec((err, results) => {
     if (err) {
       throw err
