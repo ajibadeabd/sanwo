@@ -365,8 +365,8 @@ const installmentMandateStatus = async (req, res) => {
       message: 'Mandate Status',
       data: mandateStatus
     })
-    // order.installmentPaymentMandate.status = mandateStatus.isActive
-    // order.save()
+    order.installmentPaymentMandate.status = mandateStatus.isActive
+    order.save()
 
     // If the mandate status changes update DB
     if (mandateStatus.isActive
@@ -374,7 +374,7 @@ const installmentMandateStatus = async (req, res) => {
       const purchase = order.purchases[0]
       order.installmentPaymentMandate.status = mandateStatus.isActive
       order.installmentPaymentMandate.statusChangeDate = Date.now()
-      // order.save()
+      order.save()
 
       const status = constants.ORDER_STATUS.approved
       purchase.status = status

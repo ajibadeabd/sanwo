@@ -19,14 +19,15 @@ router.get('/order/:orderNumber', paymentValidationMiddleware.getOrderPayments,
 router.get('/order/:orderNumber', paymentValidationMiddleware.getOrderPayments,
   paymentController.getOrderPayments)
 
-router.get('/:paymentId', paymentValidationMiddleware.getPayment,
-  paymentController.getPayment)
-
 router.get('/mandate-status/:orderId', paymentValidationMiddleware.installmentMandateStatus,
   paymentController.installmentMandateStatus)
 
 router.get('/installment-payment-history/:orderId', paymentValidationMiddleware.installmentMandateStatus,
   paymentController.installmentPaymentHistory)
+
+router.get('/:paymentId', paymentValidationMiddleware.getPayment,
+  paymentController.getPayment)
+
 
 
 module.exports = router
