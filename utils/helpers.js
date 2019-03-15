@@ -50,6 +50,14 @@ const constants = {
   }
 }
 
+const remitaConfig = {
+  baseUrl: 'https://www.remitademo.net/remita',
+  baseUrlHttp: 'http://www.remitademo.net/remita',
+  serviceTypeId: '4430731',
+  apiKey: '1946',
+  merchantId: '2547916',
+}
+
 const removeFile = (path) => {
   fs.unlink(path, (err) => {
     if (err) {
@@ -62,4 +70,5 @@ const removeFile = (path) => {
 module.exports = {
   removeFile,
   constants,
+  remitaConfig
 }

@@ -113,22 +113,30 @@ const requestWithdrawal = async (req, res) => {
     })
   }
   //
-  const inProgress = helpers.constants.WALLET_STATUS.withdrawal_in_progress
+  const { withdrawal_in_progress, payment_withdrawal_successful } = helpers.constants.WALLET_STATUS
   //
-  if (wallet.status === inProgress) {
+  if (wallet.status === withdrawal_in_progress) {
     return res.status(403).send({
       success: false,
-      message: 'Withdrawal in progress',
+      message: 'Previous withdrawal request for this transaction is still progress',
       data: []
     })
   }
 
-  wallet.status = inProgress
+  if (wallet.status === payment_withdrawal_successful) {
+    return res.status(403).send({
+      success: false,
+      message: 'Previous withdrawal request for this transaction was successful',
+      data: []
+    })
+  }
+
+  wallet.status = withdrawal_in_progress
   wallet.save()
 
   // send withdrawal status notification
   notificationEvents.emit('wallet_status_changed',
-    { wallet }, inProgress.replace(/_/g, ' ').toUpperCase())
+    { wallet }, withdrawal_in_progress.replace(/_/g, ' ').toUpperCase())
 
   return res.send({
     success: true,

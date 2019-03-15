@@ -89,6 +89,16 @@ const orderSchema = new Schema({
     type: installmentModel.InstallmentSchema,
     default: undefined
   }],
+  installmentPaymentMandate: {
+    status: Boolean,
+    statusChangeDate: Date,
+    hash: String,
+    mandateId: String,
+    requestId: String,
+    merchantId: String,
+    bankAccount: Object,
+    formUrl: String
+  },
   installmentPaymentStatus: {
     type: String,
     trim: true,

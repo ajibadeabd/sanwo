@@ -42,6 +42,11 @@ class CoreEvents extends EventEmitter {
     this.on('purchase_status_changed', this.onPurchaseStatusChanged)
     this.on('tracking_details_added', this.onTrackingDetailsAdded)
     this.on('completed_order_mail', this.onCompletedOrderMail)
+    this.on('new_order', this.onNewOrderMail)
+    this.on('installment_order_approval_mail', this.onInstallmentOrderApprovalMail)
+    this.on('order_status_changed', this.onOrderStatusChanged)
+    this.on('installment_payment_debit', this.onInstallmentPaymentDebit)
+    this.on('installment_payment_completed', this.onInstallmentPaymentCompleted)
   }
 
   static mailSent (data) {
@@ -60,7 +65,7 @@ class CoreEvents extends EventEmitter {
    * @return {VoidFunction} void
    */
   sendEmail (template, destination, locals) {
-    this.email.send({ template, destination, locals })
+    this.email.send({ template, message: destination, locals })
       .then(CoreEvents.mailSent).catch(CoreEvents.mailFailed)
   }
 
@@ -114,6 +119,94 @@ class CoreEvents extends EventEmitter {
 
   async onCompletedOrderMail ({ order, status, purchase }) {
     this.sendEmail('completed_order_mail', { to: order.buyer.email }, { order, status, purchase })
+  }
+
+  async onNewOrderMail (order) {
+    const buyer = await models.User.findOne({ _id: order.buyer })
+      .populate('cooperative')
+    const { cart } = order
+
+    this.sendEmail('buyer_new_order_mail', { to: buyer.email }, { cart, order, buyer })
+
+    // Get all sellers which customer purchased item from, send them purchase details
+    const sellers = cart.map(item => item.product.seller)
+    if (sellers.length) {
+      const sentAddress = []
+      for (let i = 0; i < sellers.length; i += 1) {
+        if (!sentAddress.includes(sellers[i].email)) {
+          this.sendEmail('seller_new_order_mail', { to: sellers[i].email }, {
+            cart, order, buyer, seller: sellers[i]
+          })
+          sentAddress.push(sellers[i].email)
+        }
+      }
+    }
+  }
+
+  async onInstallmentOrderApprovalMail (installmentOrder) {
+    const adminRecords = await models.User.find({ accountType: 'super_admin' })
+      .select('_id email')
+
+    const buyer = await models.User.findOne({ _id: installmentOrder.buyer })
+      .populate('cooperative')
+
+    const { cart } = installmentOrder
+    if (adminRecords.length) {
+      for (let i = 0; i < adminRecords.length; i += 1) {
+        this.sendEmail('admin_installment_order_approval_mail', { to: adminRecords.email },
+          {
+            order: installmentOrder, cart, buyer, admin: adminRecords[i]
+          })
+      }
+    }
+
+    this.sendEmail('cooperative_installment_order_approval_mail', { to: buyer.cooperative.email },
+      {
+        order: installmentOrder, cart, buyer, cooperative: buyer.cooperative
+      })
+  }
+
+  async onOrderStatusChanged ({ order, status, mandateFormUrl }) {
+    this.sendEmail('buyer_order_status_mail', { to: order.buyer.email },
+      { order, status, mandateFormUrl })
+
+    // Notify all seller of the item purchased
+    const sellers = order.purchases.map(item => item.product.seller)
+    if (sellers.length) {
+      const sentAddress = []
+      for (let i = 0; i < sellers.length; i += 1) {
+        // if mail is not already sent to this address
+        if (!sentAddress.includes(sellers[i].email)) {
+          this.sendEmail('seller_order_status_mail', { to: order.buyer.email },
+            { order, status, seller: sellers[i] })
+          sentAddress.push(sellers[i].email)
+        }
+      }
+    }
+  }
+
+  async onInstallmentPaymentDebit ({ order, payment }) {
+    const purchase = order.purchases[0]
+    this.sendEmail('buyer_installment_debit_mail', { to: order.buyer.email }, { order, purchase, payment })
+    this.sendEmail('seller_installment_debit_mail', { to: purchase.seller.email }, { order, purchase, payment })
+
+    const adminEmails = await models.User.find({ accountType: 'super_admin' })
+      .select('-_id email')
+    this.sendEmail('admin_installment_debit_mail', { to: adminEmails.join(',') }, { order, purchase, payment })
+    const { cooperative } = order.buyer
+    this.sendEmail('cooperate_admin_installment_debit_mail', { to: cooperative.email }, { order, purchase, payment })
+  }
+
+  async onInstallmentPaymentCompleted ({ order, payment }) {
+    const purchase = order.purchases[0]
+    this.sendEmail('buyer_installment_completed_mail', { to: order.buyer.email }, { order, purchase, payment })
+    this.sendEmail('seller_installment_completed_mail', { to: purchase.seller.email }, { order, purchase, payment })
+
+    const adminEmails = await models.User.find({ accountType: 'super_admin' })
+      .select('-_id email')
+    this.sendEmail('admin_installment_completed_mail', { to: adminEmails.join(',') }, { order, purchase, payment })
+    const { cooperative } = order.buyer
+    this.sendEmail('cooperate_admin_installment_completed_mail', { to: cooperative.email }, { order, purchase, payment })
   }
 }
 
