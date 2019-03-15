@@ -166,9 +166,9 @@ class CoreEvents extends EventEmitter {
       })
   }
 
-  async onOrderStatusChanged ({ order, status }) {
+  async onOrderStatusChanged ({ order, status, mandateFormUrl }) {
     this.sendEmail('buyer_order_status_mail', { to: order.buyer.email },
-      { order, status })
+      { order, status, mandateFormUrl })
 
     // Notify all seller of the item purchased
     const sellers = order.purchases.map(item => item.product.seller)

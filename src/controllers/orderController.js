@@ -334,7 +334,8 @@ const updateApprovalStatus = async (req, res) => {
     // Notify the buyer of the new status update
     notificationEvents.emit('order_status_changed', {
       order,
-      status: req.params.status
+      status: req.params.status,
+      mandateFormUrl: order.installmentPaymentMandate.formUrl
     })
   } catch (e) {
     throw new Error(e)
