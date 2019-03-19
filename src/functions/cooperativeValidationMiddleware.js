@@ -24,6 +24,27 @@ const profileUpdate = (req, res, next) => {
   })
 }
 
+const memberTransactions = (req, res, next) => {
+  const validationRule = {
+    memberId: 'required|mongoId|exists:User,_id'
+  }
+
+  Validator(req.params, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
+
+
 module.exports = {
-  profileUpdate
+  profileUpdate,
+  memberTransactions
 }

@@ -16,8 +16,6 @@ router.post('/order', paymentValidationMiddleware.generateOrderPaymentRRR,
 router.get('/order/:orderNumber', paymentValidationMiddleware.getOrderPayments,
   paymentController.getOrderPayments)
 
-router.get('/order/:orderNumber', paymentValidationMiddleware.getOrderPayments,
-  paymentController.getOrderPayments)
 
 router.get('/mandate-status/:orderId', paymentValidationMiddleware.installmentMandateStatus,
   paymentController.installmentMandateStatus)
@@ -27,7 +25,6 @@ router.get('/installment-payment-history/:orderId', paymentValidationMiddleware.
 
 router.get('/:paymentId', paymentValidationMiddleware.getPayment,
   paymentController.getPayment)
-
 
 
 module.exports = router
