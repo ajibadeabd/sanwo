@@ -193,7 +193,7 @@ const create = async (req, res) => {
     data: orderPayload
   })
   // empty current user cart
-  // await req.Models.Cart.deleteMany({ user: req.body.userId }).exec()
+  await req.Models.Cart.deleteMany({ user: req.body.userId }).exec()
   if (ordersWithoutInstallment) {
     ordersWithoutInstallment.cart = installmentItemInCart
     notificationEvents.emit('new_order', ordersWithoutInstallment)
