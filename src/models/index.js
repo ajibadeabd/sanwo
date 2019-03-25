@@ -12,6 +12,7 @@ const AddressBook = require('./addressBookModel')
 const Purchase = require('./purchaseModel')
 const BankAccount = require('./bankAccountModel')
 const Wallet = require('./walletModel')
+const Rating = require('./ratingModel')
 
 
 module.exports = {
@@ -29,4 +30,5 @@ module.exports = {
   Purchase,
   BankAccount,
   Wallet,
+  Rating,
 }

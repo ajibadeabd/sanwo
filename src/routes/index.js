@@ -1,6 +1,7 @@
 const express = require('express')
 const fs = require('fs')
 const path = require('path')
+const authMiddleware = require('./../functions/authMiddleware')
 const inventoryRoute = require('./inventoryRoute')
 const orderRoute = require('./orderRoute')
 const sampleRoute = require('./sampleRoute')
@@ -18,7 +19,7 @@ const messageRoute = require('./messageRoute')
 const paymentRoute = require('./paymentRoute')
 const bankAccountRoute = require('./bankAccountRoute')
 const walletRoute = require('./walletRoute')
-const authMiddleware = require('./../functions/authMiddleware')
+const ratingRoute = require('./ratingRoute')
 
 const router = express.Router()
 // All your parent route link should be in this file
@@ -45,6 +46,7 @@ router.use('/message', messageRoute)
 router.use('/payment', paymentRoute)
 router.use('/bank-account', authMiddleware.isAuthenticated, bankAccountRoute)
 router.use('/wallet', authMiddleware.isSeller, walletRoute)
+router.use('/rating', ratingRoute)
 
 // file download route
 router.get('/file/', (req, res) => {

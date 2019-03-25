@@ -39,6 +39,10 @@ const InventorySchema = new Schema({
   },
   images: [String],
   meta: {},
+  status: {
+    type: Boolean,
+    default: false
+  },
   updatedAt: {
     type: Date,
     default: Date.now

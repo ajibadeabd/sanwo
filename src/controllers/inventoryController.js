@@ -1,5 +1,6 @@
 const utils = require('../../utils/helper-functions')
 const helpers = require('../../utils/helpers')
+const notificationEvents = require('../../utils/notificationEvents')
 
 const _checkValidInstallment = (installmentPercentagePerMonth, catId, req, res, callback) => {
   req.Models.Category.findById(catId, (err, category) => {
@@ -53,16 +54,17 @@ const create = (req, res) => {
         quantity: req.body.quantity,
         installmentPercentagePerMonth,
         meta: req.body.meta ? JSON.parse(req.body.meta) : {},
-      }, (err, result) => {
+      }, (err, product) => {
         if (err) {
           throw err
         } else {
-          return res.status(201)
+          res.status(201)
             .send({
               success: true,
               message: 'Created Successfully',
-              data: result
+              data: product
             })
+          notificationEvents.emit('inventory_created', { product, sellerId: req.authData.userId })
         }
       })
     })
@@ -120,6 +122,7 @@ const _queryInventory = async (req) => {
   offset = offset || 0
   limit = limit || 10
   const filter = utils.queryFilters(req)
+  filter.status = true
   const model = req.Models.Inventory.find(filter)
   model.skip(offset)
   model.limit(limit)
@@ -218,7 +221,7 @@ const searchInventories = async (req, res) => {
   limit = limit || 10
   const { keyword } = req.params
   const products = await req.Models.Inventory
-    .find({ name: { $regex: keyword, $options: 'i' } })
+    .find({ name: { $regex: keyword, $options: 'i' }, status: true })
     .skip(offset).limit(limit)
 
   const categories = await req.Models.Category
