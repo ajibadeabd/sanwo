@@ -8,6 +8,9 @@ const adminValidationMiddleware = require('../functions/adminValidationMiddlewar
 router.put('/update-account-status/:userId', adminValidationMiddleware.updateAccountStatusValidation,
   adminController.updateAccountStatus)
 
+router.put('/update-inventory-status/:product', adminValidationMiddleware.updateInventoryStatus,
+  adminController.updateInventoryStatus)
+
 router.get('/get-users', adminController.getUsers)
 router.put('/', adminValidationMiddleware.profileUpdate,
   adminController.profileUpdate)

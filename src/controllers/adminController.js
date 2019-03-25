@@ -1,4 +1,5 @@
 const utils = require('../../utils/helper-functions')
+const notificationEvents = require('../../utils/notificationEvents')
 
 const updateAccountStatus = (req, res) => {
   req.Models.User.findOneAndUpdate({ _id: req.params.userId },
@@ -65,8 +66,17 @@ const profileUpdate = (req, res) => {
     })
 }
 
+const updateInventoryStatus = async (req, res) => {
+  const product = await req.Models.Inventory.findById(req.params.product)
+  product.status = req.body.status
+  product.save()
+  res.send({ success: true, message: 'Inventory status updated', data: product })
+  notificationEvents.emit('inventory_status_changed', { product })
+}
+
 module.exports = {
   updateAccountStatus,
   getUsers,
-  profileUpdate
+  profileUpdate,
+  updateInventoryStatus
 }
