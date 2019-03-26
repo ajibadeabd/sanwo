@@ -1,4 +1,5 @@
 const utils = require('../../utils/helper-functions')
+const { constants } = require('../../utils/helpers')
 const notificationEvents = require('../../utils/notificationEvents')
 
 const updateAccountStatus = (req, res) => {
@@ -74,9 +75,35 @@ const updateInventoryStatus = async (req, res) => {
   notificationEvents.emit('inventory_status_changed', { product })
 }
 
+const getUserStatistics = async (req, res) => {
+  const sellers = await req.Models.User
+    .countDocuments({ accountType: constants.SELLER })
+
+  const buyers = await req.Models.User
+    .countDocuments({ accountType: constants.BUYER })
+
+  const cooperatives = await req.Models.User
+    .countDocuments({ accountType: constants.CORPORATE_ADMIN })
+
+  const administrators = await req.Models.User
+    .countDocuments({ accountType: constants.SUPER_ADMIN })
+
+  return res.send({
+    success: true,
+    message: 'Successfully fetching stats',
+    data: {
+      sellers,
+      buyers,
+      cooperatives,
+      administrators
+    }
+  })
+}
+
 module.exports = {
   updateAccountStatus,
   getUsers,
   profileUpdate,
-  updateInventoryStatus
+  updateInventoryStatus,
+  getUserStatistics
 }

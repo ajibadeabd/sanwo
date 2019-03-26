@@ -116,13 +116,13 @@ const update = (req, res) => {
   })
 }
 
-const _queryInventory = async (req) => {
+const _queryInventory = async (req, status = true) => {
   let limit = parseInt(req.query.limit, 10)
   let offset = parseInt(req.query.offset, 10)
   offset = offset || 0
   limit = limit || 10
   const filter = utils.queryFilters(req)
-  filter.status = true
+  if (status) filter.status = true
   const model = req.Models.Inventory.find(filter)
   model.skip(offset)
   model.limit(limit)
@@ -138,6 +138,23 @@ const getInventories = async (req, res) => {
   const {
     model, offset, limit, resultCount
   } = await _queryInventory(req)
+  const results = await model
+  res.send({
+    success: true,
+    message: 'Successfully fetching inventories',
+    data: {
+      offset,
+      limit,
+      resultCount,
+      results
+    }
+  })
+}
+
+const getAllInventories = async (req, res) => {
+  const {
+    model, offset, limit, resultCount
+  } = await _queryInventory(req, false)
   const results = await model
   res.send({
     success: true,
@@ -322,4 +339,5 @@ module.exports = {
   getInventoryStat,
   getInventoryInStock,
   getInventoryOutStock,
+  getAllInventories
 }

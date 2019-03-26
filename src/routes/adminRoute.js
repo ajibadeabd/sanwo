@@ -12,6 +12,7 @@ router.put('/update-inventory-status/:product', adminValidationMiddleware.update
   adminController.updateInventoryStatus)
 
 router.get('/get-users', adminController.getUsers)
+router.get('/user-stats', adminController.getUserStatistics)
 router.put('/', adminValidationMiddleware.profileUpdate,
   adminController.profileUpdate)
 
