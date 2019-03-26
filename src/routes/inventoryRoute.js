@@ -23,6 +23,9 @@ const router = express.Router()
 router.get('/', inventoryValidation.get, inventoryController.getInventories)
 router.get('/search/:keyword', inventoryValidation.search, inventoryController.searchInventories)
 
+router.get('/all', authMiddleware.isAuthenticated,
+  inventoryValidation.get, inventoryController.getAllInventories)
+
 // apply auth middleware
 router.use(authMiddleware.isSeller)
 router.post('/', upload.array('images'), inventoryValidation.create, inventoryController.create)
