@@ -1,7 +1,9 @@
+const { constants } = require('../../utils/helpers')
+
 const _validateCartCreation = async (req) => {
   const errorMessages = []
   const product = await req.Models.Inventory.findById(req.body.product)
-  const currentUser = await req.Models.User.findById(req.body.userId).select('cooperative')
+  const currentUser = await req.Models.User.findById(req.body.userId)
   const currentUserCart = await req.Models.Cart.find({ user: req.body.userId })
   const productInstallmentMaxPeriod = product.installmentPercentagePerMonth
     ? product.installmentPercentagePerMonth.length : 0
@@ -33,6 +35,16 @@ const _validateCartCreation = async (req) => {
   if (productInstallmentMaxPeriod !== 0
     && req.body.installmentPeriod > 0 && !currentUser.cooperative) {
     errorMessages.push('You must belong to a cooperative before you can purchase a product on installment')
+  }
+
+  /**
+   * When a user set installment period for a product make sure that
+   * the user account status has been approved by cooperative before adding the item to cart
+   */
+  if (productInstallmentMaxPeriod !== 0
+    && req.body.installmentPeriod > 0
+    && currentUser.status !== constants.ACCOUNT_STATUS.accepted) {
+    errorMessages.push('Your cooperative admin must approve your account before you can purchase a product on installment')
   }
 
   /**

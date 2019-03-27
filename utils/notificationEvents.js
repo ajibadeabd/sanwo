@@ -49,6 +49,8 @@ class CoreEvents extends EventEmitter {
     this.on('installment_payment_completed', this.onInstallmentPaymentCompleted)
     this.on('inventory_created', this.onInventoryCreated)
     this.on('inventory_status_changed', this.onInventoryUpdated)
+    this.on('registered_new_buyer', this.onRegisteredNewBuyer)
+    this.on('cooperative_member_status_updated', this.onCooperativeMemberStatusUpdated)
   }
 
   static mailSent (data) {
@@ -218,6 +220,20 @@ class CoreEvents extends EventEmitter {
     const adminEmails = await models.User.find({ accountType: 'super_admin' })
       .select('-_id email')
     this.sendEmail('admin_inventory_created', { to: adminEmails.join(',') }, { product, seller })
+  }
+
+  async onRegisteredNewBuyer ({ user }) {
+    const userRecord = await models.User.findById(user._id)
+      .populate('cooperative')
+    this.sendEmail('registered_new_buyer', { to: user.email }, { user })
+    const { cooperative } = userRecord
+    if (cooperative) {
+      this.sendEmail('new_cooperative_member', { to: cooperative.email }, { user, cooperative })
+    }
+  }
+
+  async onCooperativeMemberStatusUpdated ({ user, status }) {
+    this.sendEmail('cooperative_member_status_updated', { to: user.email }, { user, status })
   }
 
   async onInventoryUpdated ({ product }) {

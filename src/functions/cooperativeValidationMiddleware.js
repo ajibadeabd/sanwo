@@ -43,8 +43,28 @@ const memberTransactions = (req, res, next) => {
   })
 }
 
+const memberStatus = (req, res, next) => {
+  const validationRule = {
+    memberId: 'required|mongoId|exists:User,_id',
+    status: 'required|valid_status',
+  }
+
+  Validator({ ...req.params, ...req.body }, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
 
 module.exports = {
   profileUpdate,
-  memberTransactions
+  memberTransactions,
+  memberStatus
 }
