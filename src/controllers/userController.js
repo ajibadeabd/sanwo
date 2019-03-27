@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt')
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const helpers = require('../../utils/helpers')
+const notificationEvents = require('../../utils/notificationEvents')
 const mailer = require('./../../utils/mailer')
 
 /**
@@ -66,19 +67,18 @@ const _createBuyer = (req, res) => {
     password: req.body.password,
     accountType: req.body.accountType,
     cooperative: req.body.cooperative
-  }, (err, result) => {
-    if (err) {
-      throw err
-    } else {
-      req.log(`Newly created buyer ${JSON.stringify(result)}`)
+  }, (err, user) => {
+    if (!err) {
       res.send({
         success: true,
         message: `Your registration successful. We're happy to have you here at ${process.env.APP_NAME}`,
-        data: result
+        data: user
       })
         .status(201)
       // send welcome email to buyer
-      mailer.sendWelcomeMail(result, req)
+      notificationEvents.emit('registered_new_buyer', { user })
+    } else {
+      throw err
     }
   })
 }

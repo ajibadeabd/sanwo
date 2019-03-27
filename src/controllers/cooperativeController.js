@@ -1,4 +1,6 @@
 const { queryFilters } = require('../../utils/helper-functions')
+const { constants } = require('../../utils/helpers')
+const notificationEvents = require('../../utils/notificationEvents')
 
 const update = (req, res) => {
   req.Models.User.findOne({ _id: req.body.userId })
@@ -193,11 +195,37 @@ const memberTransactions = async (req, res) => {
   }
 }
 
+const updateMemberStatus = async (req, res) => {
+  const { accepted, declined } = constants.ACCOUNT_STATUS
+  if (req.body.status !== accepted && req.body.status !== declined) {
+    return res.status(400)
+      .send({
+        status: false,
+        message: 'Validation failed',
+        data: {
+          errors: { status: ['The status can be either accepted or declined.'] }
+        }
+      })
+  }
+  const user = await req.Models.User.findById(req.params.memberId)
+  const { status } = req.body
+  user.status = status
+  user.save()
+
+  res.send({
+    success: true,
+    message: 'Successfully updated member status, member has been notified.',
+    data: user
+  })
+  notificationEvents.emit('cooperative_member_status_updated', { user, status })
+}
+
 
 module.exports = {
   update,
   members,
   cooperativeMemberOrders,
   defaultingMembers,
-  memberTransactions
+  memberTransactions,
+  updateMemberStatus
 }
