@@ -72,7 +72,6 @@ const cooperativeMemberOrders = async (req, res) => {
         }
       )
       .populate('purchases')
-    model.where('installmentPeriod').ne(null)
     model.select('-password')
     model.skip(offset)
     model.limit(limit)
