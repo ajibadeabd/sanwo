@@ -23,5 +23,7 @@ test_db:
    - mkdir -p ~/.ssh
    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   # - scp -r * root@178.128.42.16:/root/paysmosmo_backend
-   - rsync -avrc --delete --exclude=.env "$PWD/" root@178.128.42.16:/root/paysmosmo_backend/
-   - ssh root@178.128.42.16 "cd /root/paysmosmo_backend/; npm install; pm2 restart paysmosmo_backend"
+   - rsync -avrc --delete --exclude=.env --rsync-path="mkdir -p /root/paysmosmo_backend/ && rsync" "$PWD/" root@178.128.42.16:/root/paysmosmo_backend/
+   - ssh root@178.128.42.16 "cd /root/paysmosmo_backend/; npm install; pm2 restart paysmosmo_backend || pm2 start app.js --name paysmosmo_backend"
+
+
