@@ -25,8 +25,20 @@ const CategorySchema = new Schema({
     type: String,
     trim: true,
   },
+  parent: {
+    type: Schema.ObjectId,
+    ref: 'Category'
+  },
+  children: [{
+    type: Schema.ObjectId,
+    ref: 'Category',
+  }],
   icon: {
     type: String,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 
 
