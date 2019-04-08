@@ -17,9 +17,11 @@ const storage = multer.diskStorage({
 
 const multiPart = multer({ storage })
 router.get('/', categoryValidationMiddleware.get, categoryController.getCategories)
+router.get('/grouped', categoryValidationMiddleware.get, categoryController.getGroupedCategories)
 
 router.use(authMiddleware.isAdmin)
 router.post('/', multiPart.single('icon'), categoryValidationMiddleware.create, categoryController.createCategory)
+router.put('/remove-parent', categoryValidationMiddleware.removeParentCategory, categoryController.removeParentCategory)
 router.put('/:category', multiPart.single('icon'), categoryValidationMiddleware.update, categoryController.updateCategory)
 router.delete('/:category', categoryValidationMiddleware.deleteCategory, categoryController.destroyCategory)
 

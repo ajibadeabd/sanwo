@@ -139,6 +139,22 @@ const getInventories = async (req, res) => {
     model, offset, limit, resultCount
   } = await _queryInventory(req)
   const results = await model
+  if (req.query._id && results.length) {
+    // Let check that the user is finding product by id and return the rating
+    const ratings = await req.Models.Rating.aggregate([
+      { $match: { $and: [{ product: results[0]._id }] } },
+      {
+        $group: {
+          _id: '',
+          avgRating: { $avg: '$rating' }
+        }
+      }
+    ])
+    results[0] = {
+      ...results[0].toObject(),
+      avgRating: ratings && ratings.length ? ratings[0].avgRating : 0
+    }
+  }
   res.send({
     success: true,
     message: 'Successfully fetching inventories',

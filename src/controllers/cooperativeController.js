@@ -71,7 +71,11 @@ const cooperativeMemberOrders = async (req, res) => {
           match: { cooperative: req.authData.userId }
         }
       )
-      .populate('purchases')
+      .populate({
+        path: 'purchases',
+        populate: { path: 'category' }
+      })
+      .populate('buyer')
     model.select('-password')
     model.skip(offset)
     model.limit(limit)

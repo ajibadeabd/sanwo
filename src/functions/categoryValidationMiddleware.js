@@ -41,6 +41,7 @@ const create = (req, res, next) => {
   }
   const validationRule = {
     name: 'required|exists:Category,name',
+    parent: 'mongoId|exists:Category,_id',
     slug: 'exists:Category,slug',
     installmentPeriod: 'numeric|min:0',
     description: 'string',
@@ -80,6 +81,8 @@ const update = (req, res, next) => {
   }
   const validationRule = {
     category: 'required|mongoId|exists:Category,_id',
+    parent: 'mongoId|exists:Category,_id',
+    child: 'mongoId|exists:Category,_id',
     name: 'string',
     installmentPeriod: 'numeric|min:0',
     description: 'string',
@@ -116,9 +119,31 @@ const deleteCategory = (req, res, next) => {
   })
 }
 
+const removeParentCategory = (req, res, next) => {
+  const validationRule = {
+    parent: 'required|mongoId|exists:Category,_id',
+    child: 'required|mongoId|exists:Category,_id',
+  }
+
+  Validator(req.body, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
+
+
 module.exports = {
   get,
   create,
   update,
-  deleteCategory
+  deleteCategory,
+  removeParentCategory
 }

@@ -1,5 +1,4 @@
 const sha512 = require('crypto-js/sha512')
-const moment = require('moment')
 const helpers = require('../../utils/helpers')
 const utils = require('../../utils/helper-functions')
 const { _generateRRR, _getRRRStatus } = require('../../utils/remitaServices')
@@ -433,6 +432,7 @@ const debitNotification = async (req, res) => {
       pendingPayments[0].datePaid = debitItem.debitDate
       pendingPayments[0].meta = responseBody
       order.save()
+      // TODO Create payment and wallet record
       notificationEvents.emit('installment_payment_debit', { order, payment: debitItem })
     }
     if (pendingPayments.length === 0 || pendingPayments.length === 1) {

@@ -117,6 +117,10 @@ const create = async (req, res) => {
       path: 'product',
       populate: { path: 'seller', select: '_id name firstName lastName email' }
     })
+    .populate({
+      path: 'product',
+      populate: { path: 'category' }
+    })
 
   /** Assert that the user has items in cart */
   if (!currentUserCart.length) {

@@ -108,7 +108,7 @@ const requestWithdrawal = async (req, res) => {
   if (wallet.purchase.status !== helpers.constants.ORDER_STATUS.confirmed) {
     return res.status(403).send({
       success: false,
-      message: 'The purchase has not been confirmed has received by the buyer',
+      message: 'The purchase has not been confirmed by the buyer',
       data: []
     })
   }
