@@ -238,7 +238,7 @@ const login = (req, res) => {
           _id,
           accountType,
           status
-        }, process.env.TOKEN_SECRET, { expiresIn: '7d' })
+        }, process.env.TOKEN_SECRET, { expiresIn: '3d' })
         return res.send({
           success: true,
           message: 'login successful',
