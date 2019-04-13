@@ -29,81 +29,61 @@ const queryConversations = function (users) {
 }
 
 
-const queryRecentChat = async (userId, callback) => {
+const queryRecentChat = async (userId) => {
   try {
     if (!mongoRegex.test(userId)) {
-      callback(true, 'The userId sent is not a valid mongoId')
-      return
+      return Promise.reject(new Error('The userId sent is not a valid mongoId'))
     }
     // First we check that the user exists
     const currentUser = await models.User.findOne({ _id: userId })
     if (!currentUser) {
-      callback(true, 'Could not find the user you are trying to get message for')
-      return
+      return Promise.reject(new Error('Could not find the user you are trying to get message for'))
     }
 
-    const query = {
-      $or: [
-        {
-          toUserId: userId
-        },
-        {
-          fromUserId: userId
-        }
-      ]
-    }
+    const query = { $or: [{ toUserId: userId }, { fromUserId: userId }] }
     // secondly we get the distinct users which our currentUser has chatted with
     const relationIds = await models.Message.aggregate([
       { $match: query },
-      // group by key
       { $group: { _id: { toUserId: '$toUserId', fromUserId: '$fromUserId' } } },
-      // // Clean up the output
       { $project: { _id: 0, key: { toUserId: '$_id.toUserId', fromUserId: '$_id.fromUserId' } } }
     ])
-    // if we can't find any it means our user has'nt chatted with anyone. So return
+    // if we can't find any it means our user has not chatted with anyone. Message
     if (!relationIds.length) {
-      callback(true, 'No messages found relating to this user')
-      return
+      return Promise.resolve({ data: [], message: 'No messages found relating to this user' })
     }
     // Now, let's get the details of the users
     const recentlyChattedUserPromises = relationIds.map(async (relation) => {
       relation = Object.values(relation.key)
+
       // Here we're checking if our current user have'nt chatted with a user with invalidID
       if (relation && !relation.every(id => mongoRegex.test(id))) return []
+
       const results = await models.User.find({ _id: { $in: relation } })
-        .select('_id firstName lastName email name')
+        .select('_id firstName lastName email name avatar')
       return results
     })
 
     // if empty array is returned, respond accordingly
     if (!recentlyChattedUserPromises.length) {
-      callback(true, 'User records not found')
-      return
+      return Promise.reject(new Error('User records not found'))
     }
     // Resolve all promises of query
-    Promise.all(recentlyChattedUserPromises).then((recentlyChattedUsers) => {
-      // recentlyChattedUsers will be in nested array of objects, we flatten it to get each object
-      recentlyChattedUsers = flattenArray(recentlyChattedUsers)
-      if (recentlyChattedUsers.length) {
-        // get the 2 recent messages between the users, but first skipp our current user
-        const promises = recentlyChattedUsers.filter(e => e.id !== userId)
-          .map(async result => ({
-            ...result._doc,
-            message: await queryConversations(
-              {
-                fromUserId: userId,
-                toUserId: result._id
-              }
-            ).sort({ createdAt: 'desc' }).limit(2)
-          }))
-        // return the message via callback function
-        Promise.all(promises).then((records) => {
-          callback(null, records)
-        })
-      }
-    })
+    let recentlyChattedUsers = await Promise.all(recentlyChattedUserPromises)
+    // recentlyChattedUsers will be in nested array of objects, we flatten it to get each object
+    recentlyChattedUsers = flattenArray(recentlyChattedUsers)
+    if (recentlyChattedUsers.length) {
+      // get the 2 recent messages between the users, but first skipp our current user
+      const promises = recentlyChattedUsers.filter(e => e.id !== userId)
+        .map(async result => ({
+          ...result._doc,
+          message: await queryConversations({ fromUserId: userId, toUserId: result._id })
+            .sort({ createdAt: 'desc' }).limit(2)
+        }))
+      // return the message via callback function
+      return { data: await Promise.all(promises), message: 'Successfully fetching messages' }
+    }
   } catch (e) {
-    throw e
+    return Promise.reject(new Error(e))
   }
 }
 
@@ -200,6 +180,10 @@ Socket.prototype.ioEvents = function () {
         callback({ success: false, message: 'fromUserId or toUserId sent is not a valid mongoId', data })
         return
       }
+      if (data.fromUserId === data.toUserId) {
+        callback({ success: false, message: 'You can\'t chat yourself here.', data })
+        return
+      }
       if (this.clients[data.toUserId]) {
         data.toSocketId = this.clients[data.toUserId]
       }
@@ -257,36 +241,6 @@ Socket.prototype.ioEvents = function () {
         })
     })
 
-    /**
-     * Event name 'messages': Fetches recent messages for a particular user
-     * The client emits this event along with the
-     * userData to fetch messages for and a callback.
-     * @param {Object} options
-     * example {"userId": {MongoId}}
-     */
-    socket.on('messages', (options, callback) => {
-      if (!options.userId) {
-        callback({ success: false, data: 'userId property not set' })
-        return
-      }
-      queryRecentChat(options.userId, (err, results) => {
-        if (err) {
-          callback({
-            success: false,
-            message: results,
-            data: [],
-          })
-          throw err
-        } else {
-          callback({
-            success: true,
-            data: results
-          })
-        }
-      }).catch((err) => {
-        throw err
-      })
-    })
 
     socket.on('disconnect', () => {
       // do something when a user disconnects
@@ -305,27 +259,42 @@ Socket.prototype.startSocket = function () {
   this.ioEvents()
 }
 
-const getRecentChat = (req, res) => {
-  queryRecentChat(req.query.userId || req.body.userId, (err, results) => {
-    if (err) {
-      res.send({
-        success: false,
-        message: results,
-      }).status(400)
-    } else {
-      res.send({
-        success: true,
-        message: 'Successfully fetching recent messages',
-        data: {
-          results
-        }
-      })
-    }
-  })
-    .catch((err) => {
-      throw err
+/**
+ * @description Fetches recent messages for the current user
+ * @param { Object } req
+ * @param { Object } res
+ * @return {Promise<void>} Object
+ */
+const getRecentChat = async (req, res) => {
+  try {
+    const { data, message } = await queryRecentChat(req.body.userId)
+    res.send({
+      success: true,
+      message,
+      data
     })
+  } catch (e) {
+    res.status(400).send({ success: false, message: e.message })
+    throw new Error(e)
+  }
 }
 
-module.exports = Socket
-module.exports.getRecentChat = getRecentChat
+const truncateMessage = async (req, res) => {
+  try {
+    const results = await req.Models.Message.deleteMany({})
+    res.send({
+      success: true,
+      message: 'Successfully deleted messages',
+      data: { results }
+    })
+  } catch (e) {
+    res.status(400).send({ success: false, message: e.message })
+    throw new Error(e)
+  }
+}
+
+module.exports = {
+  Socket,
+  getRecentChat,
+  truncateMessage
+}

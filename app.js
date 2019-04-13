@@ -2,7 +2,7 @@ const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
 const io = require('socket.io')
-const IoEvents = require('./src/controllers/messageController')
+const { Socket } = require('./src/controllers/messageController')
 const SlackErrorNotificationBot = require('./src/functions/slack-bot')
 
 const db = require('./utils/db')
@@ -57,6 +57,6 @@ db.connect(config.dbUrl)
 
 const server = app.listen(config.port)
 //  Start socketIo
-new IoEvents(io(server)).startSocket()
+new Socket(io(server)).startSocket()
 
 logger.log(`Listening @ port ${config.port}`)

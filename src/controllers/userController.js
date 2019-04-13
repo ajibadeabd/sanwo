@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 const helpers = require('../../utils/helpers')
 const notificationEvents = require('../../utils/notificationEvents')
 const mailer = require('./../../utils/mailer')
+const { userService, addressService } = require('../services')
 
 /**
  * send a password reset mail to a user along with a validation token
@@ -58,29 +59,48 @@ const forgotPassword = (req, res, next, isNewUser = false) => {
     })
 }
 
-const _createBuyer = (req, res) => {
-  req.Models.User.create({
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    phoneNumber: req.body.phoneNumber,
-    email: req.body.email,
-    password: req.body.password,
-    accountType: req.body.accountType,
-    cooperative: req.body.cooperative
-  }, (err, user) => {
-    if (!err) {
-      res.send({
-        success: true,
-        message: `Your registration successful. We're happy to have you here at ${process.env.APP_NAME}`,
-        data: user
+const _createBuyer = async (req, res) => {
+  try {
+    const user = await userService.create({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      phoneNumber: req.body.phoneNumber,
+      email: req.body.email,
+      password: req.body.password,
+      accountType: req.body.accountType,
+      cooperative: req.body.cooperative
+    })
+    res.send({
+      success: true,
+      message: `Your registration successful. We're happy to have you here at ${process.env.APP_NAME}`,
+      data: user
+    })
+    if (user) {
+      // create address record for our new user
+      const address = await addressService.create({
+        user: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
+        address: req.body.address,
+        state: req.body.state,
+        city: req.body.city,
+        country: req.body.country,
+        zip: req.body.zip
       })
-        .status(201)
-      // send welcome email to buyer
-      notificationEvents.emit('registered_new_buyer', { user })
-    } else {
-      throw err
+      // update the users primary address
+      user.address = address._id
+      user.save()
     }
-  })
+    // send welcome email to buyer
+    notificationEvents.emit('registered_new_buyer', { user })
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message: 'Oops! an error occurred. Please retry, if error persist contact admin',
+    })
+    throw new Error(e)
+  }
 }
 
 const _createSuperAdmin = (req, res, next) => {

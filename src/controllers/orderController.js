@@ -204,7 +204,6 @@ const create = async (req, res) => {
   }
   if (installmentOrder) {
     installmentOrder.cart = installmentItemInCart
-    // await mailer.sendInstallmentOrderApprovalMail(installmentOrder, req)
     notificationEvents.emit('installment_order_approval_mail', installmentOrder)
   }
 }
