@@ -31,7 +31,15 @@ const AddressBookSchema = new Schema({
   additionalInfo: {
     type: String,
   },
-  region: {
+  state: {
+    type: String,
+    required: true
+  },
+  country: {
+    type: String,
+    required: true
+  },
+  zip: {
     type: String,
     required: true
   },

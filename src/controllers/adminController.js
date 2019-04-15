@@ -1,48 +1,48 @@
 const utils = require('../../utils/helper-functions')
 const { constants } = require('../../utils/helpers')
+const userService = require('../services/user.service')
 const notificationEvents = require('../../utils/notificationEvents')
 
-const updateAccountStatus = (req, res) => {
-  req.Models.User.findOneAndUpdate({ _id: req.params.userId },
-    { status: req.body.status }, (err, user) => {
-      if (err) {
-        throw err
-      } else {
-        // TODO notify use of account status change
-        return res.send({
-          success: true,
-          message: 'Account status updated',
-          data: user,
-        })
-      }
+const updateAccountStatus = async (req, res) => {
+  try {
+    const user = await userService.update(req.params.userId, { status: req.body.status })
+    // TODO notify use of account status change
+    return res.send({
+      success: true,
+      message: 'Account status updated',
+      data: user,
     })
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message: 'Oops! an error occurred. Please retry, if error persist contact admin',
+    })
+    throw new Error(e)
+  }
 }
 
-const getUsers = (req, res) => {
-  let limit = parseInt(req.query.limit, 10)
-  let offset = parseInt(req.query.offset, 10)
-  offset = offset || 0
-  limit = limit || 10
-  const filter = utils.queryFilters(req)
-  const model = req.Models.User.find(filter)
-  model.skip(offset)
-  model.limit(limit)
-  model.exec((err, results) => {
-    if (err) {
-      throw err
-    } else {
-      res.send({
-        success: true,
-        message: 'Successfully fetching users',
-        data: {
-          offset,
-          limit,
-          resultCount: results.length,
-          results
-        }
-      })
-    }
-  })
+const getUsers = async (req, res) => {
+  try {
+    let limit = parseInt(req.query.limit, 10)
+    let offset = parseInt(req.query.offset, 10)
+    offset = offset || 0
+    limit = limit || 10
+    const filter = utils.queryFilters(req)
+    const { results, resultCount } = await userService.get(filter, offset, limit)
+    res.send({
+      success: true,
+      message: 'Successfully fetching users',
+      data: {
+        offset, limit, resultCount, results
+      }
+    })
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message: 'Oops! an error occurred. Please retry, if error persist contact admin',
+    })
+    throw new Error(e)
+  }
 }
 
 const profileUpdate = (req, res) => {

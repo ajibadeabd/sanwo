@@ -70,6 +70,11 @@ const validateUserCreation = (req, res, next) => {
       mongoId: '',
       exists: 'User,_id'
     }],
+    country: 'required',
+    zip: 'required',
+    state: 'required',
+    address: 'required',
+    city: 'required',
     password: 'required|password_policy|confirmed'
   }
 
@@ -88,8 +93,16 @@ const validateUserCreation = (req, res, next) => {
     businessProductCategory: 'required',
     businessSellingOnOtherWebsite: 'required|boolean',
   }
-  //  password is not required when signing up as a seller so we won't validate it
-  delete sellerRules.password
+
+  // clone buyers rules for cooperative rules
+  const cooperativeRules = {
+    ...buyerRules,
+  }
+
+  // remove some check for a cooperative admin and seller account type
+  const rulesToSkip = ['password', 'country', 'zip', 'state', 'address', 'city']
+  rulesToSkip.forEach(e => delete cooperativeRules[e])
+  rulesToSkip.forEach(e => delete sellerRules[e])
 
   const customMessages = {
     'required_if.phoneNumber': 'Please provide your email or phone number',
@@ -103,8 +116,10 @@ const validateUserCreation = (req, res, next) => {
   // buyer and corporate_admin uses the same validation rule
   switch (accountType) {
     case helpers.constants.BUYER:
-    case helpers.constants.CORPORATE_ADMIN:
       validationRule = buyerRules
+      break
+    case helpers.constants.CORPORATE_ADMIN:
+      validationRule = cooperativeRules
       break
     case helpers.constants.SELLER:
       validationRule = sellerRules
@@ -116,10 +131,6 @@ const validateUserCreation = (req, res, next) => {
       validationRule = {}
   }
 
-  // When account type is co-orporate admin don't require password
-  if (accountType === helpers.constants.CORPORATE_ADMIN) {
-    validationRule.password = 'password_policy|confirmed'
-  }
 
   //  validation rule depends on the user registering
   Validator(reqBody, validationRule, customMessages, (error, status) => {

@@ -7,8 +7,10 @@ const create = (req, res, next) => {
     phoneNumber: 'digits:11',
     address: 'required',
     additionalInfo: 'string',
-    region: 'required|min:3',
+    state: 'required|min:3',
     city: 'required|min:3',
+    country: 'required|min:3',
+    zip: 'required|min:3',
   }
 
   Validator(req.body, validationRule, {}, (err, status) => {
@@ -33,8 +35,10 @@ const update = (req, res, next) => {
     phoneNumber: 'digits:11',
     address: 'string',
     additionalInfo: 'string',
-    region: 'min:3',
+    state: 'min:3',
     city: 'min:3',
+    country: 'min:3',
+    zip: 'min:3',
   }
 
   Validator({ ...req.body, ...req.params }, validationRule, {}, (err, status) => {
@@ -75,8 +79,10 @@ const get = (req, res, next) => {
     phoneNumber: 'digits:11',
     address: 'string',
     additionalInfo: 'string',
-    region: 'min:3',
+    state: 'min:3',
     city: 'min:3',
+    country: 'min:3',
+    zip: 'min:3'
   }
   Validator(req.query, validationRule, {}, (err, status) => {
     if (!status) {
