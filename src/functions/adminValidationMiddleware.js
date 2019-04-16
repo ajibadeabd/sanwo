@@ -1,11 +1,31 @@
 const Validator = require('./../functions/Validator')
 
 const updateAccountStatusValidation = (req, res, next) => {
-  const requestBody = { ...req.params, ...req.body }
+  const requestBody = { ...req.params, status: req.body.status }
 
   const validationRule = {
     userId: 'required|mongoId|exists:User,_id',
     status: 'required|valid_status'
+  }
+
+  Validator(requestBody, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400).send({
+        success: false,
+        message: 'Validation failed',
+        data: err
+      })
+    } else {
+      next()
+    }
+  })
+}
+
+const deleteAccount = (req, res, next) => {
+  const requestBody = { ...req.params }
+
+  const validationRule = {
+    userId: 'required|mongoId|exists:User,_id',
   }
 
   Validator(requestBody, validationRule, {}, (err, status) => {
@@ -67,5 +87,6 @@ const profileUpdate = (req, res, next) => {
 module.exports = {
   updateAccountStatusValidation,
   profileUpdate,
-  updateInventoryStatus
+  updateInventoryStatus,
+  deleteAccount
 }

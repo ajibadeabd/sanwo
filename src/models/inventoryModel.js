@@ -50,6 +50,11 @@ const InventorySchema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  deletedAt: Date,
+  deletedBy: {
+    type: Schema.ObjectId,
+    ref: 'User'
   }
 })
 

@@ -76,17 +76,18 @@ const updateInventoryStatus = async (req, res) => {
 }
 
 const getUserStatistics = async (req, res) => {
+  const filter = { deletedAt: undefined }
   const sellers = await req.Models.User
-    .countDocuments({ accountType: constants.SELLER })
+    .countDocuments({ accountType: constants.SELLER, ...filter })
 
   const buyers = await req.Models.User
-    .countDocuments({ accountType: constants.BUYER })
+    .countDocuments({ accountType: constants.BUYER, ...filter })
 
   const cooperatives = await req.Models.User
-    .countDocuments({ accountType: constants.CORPORATE_ADMIN })
+    .countDocuments({ accountType: constants.CORPORATE_ADMIN, ...filter })
 
   const administrators = await req.Models.User
-    .countDocuments({ accountType: constants.SUPER_ADMIN })
+    .countDocuments({ accountType: constants.SUPER_ADMIN, ...filter })
 
   return res.send({
     success: true,
@@ -100,10 +101,28 @@ const getUserStatistics = async (req, res) => {
   })
 }
 
+const deleteAccount = async (req, res) => {
+  try {
+    await userService.destroy(req.params.userId, req.body.userId)
+    return res.send({
+      success: true,
+      message: 'Account deleted successfully',
+      data: {},
+    })
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message: 'Oops! an error occurred. Please retry, if error persist contact admin',
+    })
+    throw new Error(e)
+  }
+}
+
 module.exports = {
   updateAccountStatus,
   getUsers,
   profileUpdate,
   updateInventoryStatus,
-  getUserStatistics
+  getUserStatistics,
+  deleteAccount
 }

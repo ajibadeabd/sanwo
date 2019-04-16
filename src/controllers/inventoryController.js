@@ -123,6 +123,7 @@ const _queryInventory = async (req, status = true) => {
   limit = limit || 10
   const filter = utils.queryFilters(req)
   if (status) filter.status = true
+  filter.deletedAt = undefined
   const model = req.Models.Inventory.find(filter)
   model.skip(offset)
   model.limit(limit)
@@ -156,7 +157,7 @@ const getInventories = async (req, res) => {
       success: true,
       message: 'Successfully fetching inventories',
       data: {
-        offset, limit, resultCount, inventories
+        offset, limit, resultCount, results: inventories
       }
     })
   } catch (e) {
@@ -185,32 +186,34 @@ const getAllInventories = async (req, res) => {
   })
 }
 
-const deleteInventory = (req, res) => {
-  req.Models.Inventory.findOneAndDelete(
-    {
-      _id: req.params.inventoryId,
-      seller: req.authData.userId
-    }, (err, result) => {
-      if (err) {
-        throw err
-      } else {
-        res.send({
-          success: true,
-          message: 'Deleted successfully',
-          data: result
-        })
-        // delete images related to the deleted product
-        const productImages = result.images
-        if (productImages.length) {
-          for (let i = 0; i <= productImages.length; i += 1) {
-            if (productImages[i]) {
-              helpers.removeFile(`public/upload/products/${productImages[i]}`)
-            }
-          }
+const deleteInventory = async (req, res) => {
+  try {
+    const result = await req.Models.Inventory
+      .findOne({ _id: req.params.inventoryId, seller: req.authData.userId })
+    if (!result) {
+      return res.status(400).send({ success: false, message: 'Inventory Not Found', data: null })
+    }
+    result.deletedAt = Date.now()
+    result.deletedBy = req.authData.userId
+    res.send({
+      success: true,
+      message: 'Deleted successfully',
+      data: result
+    })
+    // delete images related to the deleted product
+    const productImages = result.images
+    if (productImages.length) {
+      for (let i = 0; i <= productImages.length; i += 1) {
+        if (productImages[i]) {
+          helpers.removeFile(`public/upload/products/${productImages[i]}`)
         }
       }
     }
-  )
+  } catch (e) {
+    res.status(500)
+      .send({ success: false, message: 'Oops! an error occurred' })
+    throw new Error(e)
+  }
 }
 
 const deleteImage = (req, res) => {
