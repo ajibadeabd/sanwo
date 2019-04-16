@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken')
 const helpers = require('../../utils/helpers')
 const notificationEvents = require('../../utils/notificationEvents')
 const mailer = require('./../../utils/mailer')
-const { userService, addressService } = require('../services')
+const { userService } = require('../services')
 
 /**
  * send a password reset mail to a user along with a validation token
@@ -75,23 +75,23 @@ const _createBuyer = async (req, res) => {
       message: `Your registration successful. We're happy to have you here at ${process.env.APP_NAME}`,
       data: user
     })
-    if (user) {
-      // create address record for our new user
-      const address = await addressService.create({
-        user: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phoneNumber: user.phoneNumber,
-        address: req.body.address,
-        state: req.body.state,
-        city: req.body.city,
-        country: req.body.country,
-        zip: req.body.zip
-      })
-      // update the users primary address
-      user.address = address._id
-      user.save()
-    }
+    // if (user) {
+    //   // create address record for our new user
+    //   const address = await addressService.create({
+    //     user: user._id,
+    //     firstName: user.firstName,
+    //     lastName: user.lastName,
+    //     phoneNumber: user.phoneNumber,
+    //     address: req.body.address,
+    //     state: req.body.state,
+    //     city: req.body.city,
+    //     country: req.body.country,
+    //     zip: req.body.zip
+    //   })
+    //   // update the users primary address
+    //   user.address = address._id
+    //   user.save()
+    // }
     // send welcome email to buyer
     notificationEvents.emit('registered_new_buyer', { user })
   } catch (e) {

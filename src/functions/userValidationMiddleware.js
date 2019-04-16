@@ -70,11 +70,6 @@ const validateUserCreation = (req, res, next) => {
       mongoId: '',
       exists: 'User,_id'
     }],
-    country: 'required',
-    zip: 'required',
-    state: 'required',
-    address: 'required',
-    city: 'required',
     password: 'required|password_policy|confirmed'
   }
 
@@ -100,7 +95,7 @@ const validateUserCreation = (req, res, next) => {
   }
 
   // remove some check for a cooperative admin and seller account type
-  const rulesToSkip = ['password', 'country', 'zip', 'state', 'address', 'city']
+  const rulesToSkip = ['password']
   rulesToSkip.forEach(e => delete cooperativeRules[e])
   rulesToSkip.forEach(e => delete sellerRules[e])
 
