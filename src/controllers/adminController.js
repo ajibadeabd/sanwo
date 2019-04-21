@@ -23,11 +23,17 @@ const updateAccountStatus = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    let limit = parseInt(req.query.limit, 10)
-    let offset = parseInt(req.query.offset, 10)
-    offset = offset || 0
-    limit = limit || 10
-    const filter = utils.queryFilters(req)
+    const limit = parseInt(req.query.limit, 10) || 10
+    const offset = parseInt(req.query.offset, 10) || 0
+    let filter = utils.queryFilters(req)
+    // check if filter includes name query
+    if (Object.keys(filter).includes('name')) {
+      const { name } = filter
+      const query = { $regex: name, $options: 'i' }
+      filter = { ...filter, $or: [{ firstName: query }, { lastName: query }] }
+      delete filter.name
+    }
+
     const { results, resultCount } = await userService.get(filter, offset, limit)
     res.send({
       success: true,
