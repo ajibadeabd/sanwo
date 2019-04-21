@@ -22,7 +22,7 @@ const create = async (data) => {
  * @return {Promise<any>} updated user object
  */
 const update = async (id, data) => {
-  const result = User.findByIdAndUpdate(id, data, { upsert: true, new: true })
+  const result = User.findByIdAndUpdate(id, data, { new: true })
   return Promise.resolve(result)
 }
 

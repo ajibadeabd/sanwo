@@ -51,37 +51,38 @@ const queryRecentChat = async (userId) => {
     if (!relationIds.length) {
       return Promise.resolve({ data: [], message: 'No messages found relating to this user' })
     }
-    // Now, let's get the details of the users
-    const recentlyChattedUserPromises = relationIds.map(async (relation) => {
-      relation = Object.values(relation.key)
 
-      // Here we're checking if our current user have'nt chatted with a user with invalidID
-      if (relation && !relation.every(id => mongoRegex.test(id))) return []
+    let uniqueUser = relationIds.map(relation => Object.values(relation.key))
 
-      const results = await models.User.find({ _id: { $in: relation } })
-        .select('_id firstName lastName email name avatar')
-      return results
-    })
-
-    // if empty array is returned, respond accordingly
-    if (!recentlyChattedUserPromises.length) {
-      return Promise.reject(new Error('User records not found'))
-    }
-    // Resolve all promises of query
-    let recentlyChattedUsers = await Promise.all(recentlyChattedUserPromises)
     // recentlyChattedUsers will be in nested array of objects, we flatten it to get each object
-    recentlyChattedUsers = flattenArray(recentlyChattedUsers)
-    if (recentlyChattedUsers.length) {
-      // get the 2 recent messages between the users, but first skipp our current user
-      const promises = recentlyChattedUsers.filter(e => e.id !== userId)
-        .map(async result => ({
-          ...result._doc,
-          message: await queryConversations({ fromUserId: userId, toUserId: result._id })
-            .sort({ createdAt: 'desc' }).limit(2)
-        }))
-      // return the message via callback function
-      return { data: await Promise.all(promises), message: 'Successfully fetching messages' }
-    }
+    uniqueUser = flattenArray(uniqueUser)
+
+    // get the unique ids in the list of users our current user have chatted, make sure
+    // we are not fetching our current user details
+    uniqueUser = uniqueUser
+      .filter((value, index, self) => value !== userId && self.indexOf(value) === index)
+
+    // Now, let's get the details of the users
+    const recentlyChattedUsers = await models.User.find({ _id: { $in: uniqueUser } })
+      .select('_id firstName lastName email name avatar')
+
+    // if empty array is returned, it means the users are not found
+    if (!recentlyChattedUsers.length) return Promise.reject(new Error('User records not found'))
+
+    // get the 2 recent messages between the users
+    const promises = recentlyChattedUsers
+      .map(async result => ({
+        ...result._doc,
+        message: await queryConversations({ fromUserId: userId, toUserId: result._id })
+          .sort({ createdAt: 'desc' }).limit(2)
+      }))
+    // resolve promises
+    const recentChats = await Promise.all(promises)
+    // sort the result by message date
+    recentChats
+      .sort((a, b) => new Date(b.message[0].createdAt) - new Date(a.message[0].createdAt))
+    // return response
+    return { data: recentChats, message: 'Successfully fetching messages' }
   } catch (e) {
     return Promise.reject(new Error(e))
   }
