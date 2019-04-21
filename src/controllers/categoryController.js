@@ -181,8 +181,8 @@ const removeParentCategory = async (req, res) => {
         message: 'Parent category specified does not match child parent',
       })
   }
-
-  parentCategory.children = parentCategory.children.filter(child => child !== childCategory._id)
+  parentCategory.children = parentCategory.children
+    .filter(child => child.toString() !== childCategory._id.toString())
   parentCategory.save()
 
   childCategory.parent = undefined
