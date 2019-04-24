@@ -8,7 +8,8 @@ const profileUpdate = (req, res, next) => {
     lastName: 'sometimes|required',
     email: 'sometimes|email|exists:User,email',
     businessAddress: 'sometimes|required',
-    password: 'sometimes|password_policy|confirmed'
+    password: 'sometimes|password_policy|confirmed',
+    old_password: 'required_with:password'
   }
 
   Validator(requestBody, validationRule, {}, (err, status) => {

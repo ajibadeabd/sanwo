@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt')
+
 const utils = require('../../utils/helper-functions')
 const { constants } = require('../../utils/helpers')
 const userService = require('../services/user.service')
@@ -57,6 +59,14 @@ const profileUpdate = (req, res) => {
       if (err) {
         throw err
       } else {
+        if (req.body.password && bcrypt.compareSync(req.body.password, user.password)) {
+          return res.status(400)
+            .send({
+              success: false,
+              message: 'Old password is incorrect',
+              data: null
+            })
+        }
         user.name = req.body.name || user.name
         user.email = req.body.email || user.email
         user.password = req.body.password || user.password

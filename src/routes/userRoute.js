@@ -1,4 +1,5 @@
 const express = require('express')
+const fs = require('fs')
 const multer = require('multer')
 
 const authMiddleware = require('./../functions/authMiddleware')
@@ -19,6 +20,9 @@ const storage = multer.diskStorage({
       saveAt = `${parentPath}avatars/`
     } else {
       saveAt = `${parentPath}/`
+    }
+    if (!fs.existsSync(saveAt)) {
+      fs.mkdirSync(saveAt)
     }
     cb(null, saveAt)
   },
