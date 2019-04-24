@@ -1,4 +1,5 @@
 const express = require('express')
+const fs = require('fs')
 const multer = require('multer')
 const authMiddleware = require('./../functions/authMiddleware')
 const categoryValidationMiddleware = require('./../functions/categoryValidationMiddleware')
@@ -8,6 +9,9 @@ const categoryController = require('../controllers/categoryController')
 const router = express.Router()
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    if (!fs.existsSync('public/upload/categories/')) {
+      fs.mkdirSync('public/upload/categories/')
+    }
     cb(null, 'public/upload/categories/')
   },
   filename: (req, file, cb) => {

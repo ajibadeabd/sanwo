@@ -68,7 +68,8 @@ const profileUpdate = (req, res, next) => {
   const validationRule = {
     name: 'sometimes|required',
     email: 'sometimes|email|exists:User,email',
-    password: 'sometimes|password_policy|confirmed'
+    password: 'sometimes|password_policy|confirmed',
+    old_password: 'required_with:password'
   }
 
   Validator(requestBody, validationRule, {}, (err, status) => {

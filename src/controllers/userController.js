@@ -6,6 +6,9 @@ const notificationEvents = require('../../utils/notificationEvents')
 const mailer = require('./../../utils/mailer')
 const { userService } = require('../services')
 
+const generateResetToken = () => new Promise((resolve, reject) => {
+  crypto.randomBytes(20, (error, buffer) => (error ? reject(error) : resolve(buffer.toString('hex'))))
+})
 /**
  * send a password reset mail to a user along with a validation token
  * @param {Object} req
@@ -14,49 +17,34 @@ const { userService } = require('../services')
  * @param {Boolean}isNewUser used to check of the method was after a new user sign up
  * @return {Object} response
  */
-const forgotPassword = (req, res, next, isNewUser = false) => {
+const forgotPassword = async (req, res, next, isNewUser = false) => {
   const query = { email: req.body.email }
+  try {
+    //  check if email exists
+    const result = await req.Models.User.valueExists(query)
 
-  const sendTokenEmail = (err, newUser) => {
-    if (err) throw err
-    mailer.sendPasswordResetEmail(newUser, req)
-  }
+    // If it doesn't return proper error message
+    if (!result) return res.status(422).json({ success: false, message: 'Email doesn\'t exist' })
 
-  //  check if email exists
-  req.Models.User.valueExists(query)
-    .then((result) => {
-      if (result) {
-        //  yay! it does. let's generate a token
-        crypto.randomBytes(20, (error, buffer) => {
-          if (error) throw error
-          const token = buffer.toString('hex')
-          //  update to token to the user object in DB, and set expiry to 24hr
-          req.Models.User.findOneAndUpdate(query,
-            {
-              resetPasswordToken: token,
-              resetPasswordExpires: Date.now() + 86400000
-            },
-            {
-              upsert: true,
-              new: true
-            })
-            .exec(sendTokenEmail)
-          if (!isNewUser) {
-            res.json({
-              success: true,
-              message: 'Kindly check your email for further instructions',
-              data: null
-            })
-          }
-        })
-      } else {
-        return res.status(422)
-          .json({
-            success: false,
-            message: 'Email doesn\'t exist'
-          })
-      }
+    //  yay! it does. let's generate a token
+    const resetPasswordToken = await generateResetToken()
+
+    //  update token to the user object in DB, and set expiry to 24hr
+    const user = await req.Models.User.findOneAndUpdate(query,
+      { resetPasswordToken, resetPasswordExpires: Date.now() + 86400000 },
+      { new: true })
+
+    notificationEvents.emit('send_password_reset_email', { user })
+    if (!isNewUser) {
+      res.json({ success: true, message: 'Kindly check your email for further instructions', data: null })
+    }
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message: 'Oops! an error occurred. Please retry, if error persist contact admin',
     })
+    throw new Error(e)
+  }
 }
 
 const _createBuyer = async (req, res) => {

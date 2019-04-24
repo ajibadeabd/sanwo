@@ -51,6 +51,7 @@ class CoreEvents extends EventEmitter {
     this.on('inventory_status_changed', this.onInventoryUpdated)
     this.on('registered_new_buyer', this.onRegisteredNewBuyer)
     this.on('cooperative_member_status_updated', this.onCooperativeMemberStatusUpdated)
+    this.on('send_password_reset_email', this.onSendPasswordResetEmail)
   }
 
   static mailSent (data) {
@@ -234,6 +235,10 @@ class CoreEvents extends EventEmitter {
 
   async onCooperativeMemberStatusUpdated ({ user, status }) {
     this.sendEmail('cooperative_member_status_updated', { to: user.email }, { user, status })
+  }
+
+  async onSendPasswordResetEmail ({ user }) {
+    this.sendEmail('password_reset_email', { to: user.email }, { user })
   }
 
   async onInventoryUpdated ({ product }) {

@@ -10,7 +10,8 @@ const profileUpdate = (req, res, next) => {
     address: 'sometimes|mongoId|exists:AddressBook,_id',
     phoneNumber: 'sometimes|digits:11|exists:User,phoneNumber',
     businessAddress: 'sometimes|required',
-    password: 'sometimes|password_policy|confirmed'
+    password: 'sometimes|password_policy|confirmed',
+    old_password: 'required_with:password'
   }
 
   Validator(requestBody, validationRule, {}, (err, status) => {
