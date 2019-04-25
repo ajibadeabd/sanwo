@@ -6,7 +6,7 @@ const update = async (req, res) => {
       if (err) {
         throw err
       } else {
-        if (req.body.password && bcrypt.compareSync(req.body.password, user.password)) {
+        if (req.body.password && (!bcrypt.compareSync(req.body.old_password, user.password))) {
           return res.status(400)
             .send({
               success: false,
