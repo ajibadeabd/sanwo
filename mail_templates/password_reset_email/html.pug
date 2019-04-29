@@ -1,0 +1,4 @@
+p Hello #{user.lastName || ','} here's your password reset link
+
+a(href=`${process.env.WEB_URL}/password?type=set&token=${user.resetPasswordToken}`) #{process.env.WEB_URL}/password?type=set&token=#{user.resetPasswordToken}
+
