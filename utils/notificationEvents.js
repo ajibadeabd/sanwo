@@ -30,7 +30,7 @@ class CoreEvents extends EventEmitter {
       message: {
         from: process.env.MAIL_FROM, // sender address
       },
-      views: { root: path.resolve('public/templates/emails') },
+      views: { root: path.resolve('mail_templates/') },
       send: true,
       transport: nodemailer.createTransport(nodeMailerConfig),
       jsonTransport: true
