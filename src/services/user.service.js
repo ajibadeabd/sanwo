@@ -66,7 +66,7 @@ const destroy = async (id, deletedBy) => {
     await Inventory.updateMany({ seller: user._id }, { deletedAt, deletedBy })
   }
 
-  // user.save()
+  user.save()
   return Promise.resolve(user)
 }
 

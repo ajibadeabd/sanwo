@@ -116,14 +116,22 @@ const update = (req, res) => {
   })
 }
 
-const _queryInventory = async (req, status = true) => {
-  let limit = parseInt(req.query.limit, 10)
-  let offset = parseInt(req.query.offset, 10)
-  offset = offset || 0
-  limit = limit || 10
+/**
+ * @description
+ * @param {Object} req
+ * @param {Boolean}status used to flag maybe to query inventory by status
+ * @param {Boolean}allInventory
+ * @return {Promise<{model: *, offset: number, limit: number, resultCount: *}>} Object
+ * @private
+ */
+const _queryInventory = async (req, status = true, allInventory = false) => {
+  const limit = parseInt(req.query.limit, 10) || 10
+  const offset = parseInt(req.query.offset, 10) || 0
+
   const filter = utils.queryFilters(req)
   if (status) filter.status = true
   filter.deletedAt = undefined
+  if (!allInventory) filter.quantity = { $gt: 0 }
   const model = req.Models.Inventory.find(filter)
   model.skip(offset)
   model.limit(limit)
@@ -172,7 +180,7 @@ const getInventories = async (req, res) => {
 const getAllInventories = async (req, res) => {
   const {
     model, offset, limit, resultCount
-  } = await _queryInventory(req, false)
+  } = await _queryInventory(req, false, true)
   const results = await model
   res.send({
     success: true,
@@ -280,7 +288,7 @@ const searchInventories = async (req, res) => {
 }
 
 const getInventoryStat = async (req, res) => {
-  const bySeller = { seller: req.body.userId }
+  const bySeller = { seller: req.body.userId, deletedAt: undefined }
   const totalProducts = await req.Models.Inventory
     .countDocuments(bySeller)
 
@@ -302,11 +310,10 @@ const getInventoryStat = async (req, res) => {
 }
 
 const getInventoryInStock = async (req, res) => {
+  req.query = { seller: req.body.userId, quantity: { $gte: 1 }, ...req.query }
   const {
     model, offset, limit, resultCount
-  } = await _queryInventory(req)
-  const filter = { seller: req.body.userId, quantity: { $gte: 1 } }
-  model.find(filter)
+  } = await _queryInventory(req, true, false)
   model.exec((err, results) => {
     if (err) {
       throw err
@@ -326,11 +333,10 @@ const getInventoryInStock = async (req, res) => {
 }
 
 const getInventoryOutStock = async (req, res) => {
+  req.query = { seller: req.body.userId, quantity: { $lte: 1 }, ...req.query }
   const {
     model, offset, limit, resultCount
-  } = await _queryInventory(req)
-  const filter = { seller: req.body.userId, quantity: { $lte: 0 } }
-  model.find(filter)
+  } = await _queryInventory(req, true, false, )
   model.exec((err, results) => {
     if (err) {
       throw err

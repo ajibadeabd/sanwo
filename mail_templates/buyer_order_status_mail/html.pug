@@ -3,4 +3,4 @@ p Order Number <strong>##{order.orderNumber}</strong><br/> Status: <strong>#{sta
     if mandateFormUrl
         p Here's your mandate form URL
             a(href=mandateFormUrl) #{mandateFormUrl}
-p Login to your account to see more details
+p <a href="#{process.env.WEB_URL}/login}"> Login to your account</a> to see more details

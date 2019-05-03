@@ -5,4 +5,4 @@ p Details: #{purchase.product.name}<br/> Quantity: #{purchase.quantity}
       p
         a(href=`http://paysmosmo.natterbase.com/?product=${purchase.product._id}&name=${purchase.product.name}`) Please add a review for #{purchase.product.name}
 
-p Login to your account to see more details
+p <a href="#{process.env.WEB_URL}/login}"> Login to your account</a> to see more details
