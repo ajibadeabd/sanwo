@@ -40,6 +40,7 @@ const get = async (filter, offset = 0, limit = 10) => {
       .populate('user', 'avatar firstName lastName email phoneNumber')
       .skip(offset)
       .limit(limit)
+      .sort({ createdAt: 'desc' })
     const resultCount = await User.countDocuments(filter)
     return Promise.resolve({ results, resultCount })
   } catch (e) {
@@ -66,7 +67,7 @@ const destroy = async (id, deletedBy) => {
     await Inventory.updateMany({ seller: user._id }, { deletedAt, deletedBy })
   }
 
-  // user.save()
+  user.save()
   return Promise.resolve(user)
 }
 

@@ -1,4 +1,4 @@
 p Hi #{order.buyer.lastName} #{order.buyer.firstName} you have completed the payment of you installment
 h3 Details Below
 p #{purchase.product.name}
-p Login to your account to see more details
+p <a href="#{process.env.WEB_URL}/login}"> Login to your account</a> to see more details

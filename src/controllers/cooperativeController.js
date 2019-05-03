@@ -211,6 +211,18 @@ const updateMemberStatus = async (req, res) => {
       })
   }
   const user = await req.Models.User.findById(req.params.memberId)
+
+  // Check if the user belongs to this current users cooperative
+  if (user.cooperative.toString() !== req.authData.userId) {
+    return res.status(400)
+      .send({
+        status: false,
+        message: 'Validation failed',
+        data: {
+          errors: { status: ['This user doesn\'t belong to your co-operative.'] }
+        }
+      })
+  }
   const { status } = req.body
   user.status = status
   user.save()
