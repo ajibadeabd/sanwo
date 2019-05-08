@@ -51,7 +51,8 @@ const update = (query, data) => new Promise(async (resolve, reject) => {
   addressBook.phoneNumber = data.phoneNumber || addressBook.phoneNumber
   addressBook.address = data.address || addressBook.address
   addressBook.additionalInfo = data.additionalInfo || addressBook.additionalInfo
-  addressBook.region = data.region || addressBook.region
+  addressBook.state = data.state || addressBook.state
+  addressBook.zip = data.zip || addressBook.zip
   addressBook.city = data.city || addressBook.city
   addressBook.save((error) => {
     if (error) {
