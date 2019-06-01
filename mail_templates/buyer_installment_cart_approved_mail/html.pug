@@ -1,0 +1,47 @@
+p Hi #{buyer.firstName || ''} #{buyer.lastName || ''}, your request to purchase a product on installment has been <strong>Approved</strong>. You can now checkout this purchase
+
+H3 Details
+h5 Store Name
+span  #{seller.businessName}
+
+h5 Product
+table(border=1 style='border-spacing: 0px;')
+    thead
+        tr
+            th Product Number
+            td #{product.productNumber}
+        tr
+            th Name
+            td #{product.name}
+        tr
+            th Description
+            td #{product.description}
+        tr
+            th Price
+            td #{product.price}
+
+
+h5 Installment Repayment Details
+table(border=1 style='border-spacing: 0px;')
+    thead
+        tr
+            th Unit Price
+            td #{cart.unitPrice}
+        tr
+            th Subtotal
+            td #{cart.subTotal}
+        tr
+            th Repayment Duration
+            td #{cart.installmentPeriod} Month(s)
+        tr
+            th Quantity
+            td #{cart.quantity}
+        tr
+            th Percentage
+            td #{cart.installmentPercentage}%
+        tr
+            th Interest
+            td #{cart.installmentInterest}
+        tr
+            th Total Repayment
+            td #{cart.installmentTotalRepayment}

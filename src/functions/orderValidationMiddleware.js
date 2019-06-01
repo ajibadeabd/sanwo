@@ -83,9 +83,31 @@ const get = (req, res, next) => {
   })
 }
 
+const createInstallmentOrder = (req, res, next) => {
+  const validationRule = {
+    cartId: 'required|mongoId|exists:Cart,_id',
+    addressId: 'required|mongoId|exists:AddressBook,_id',
+    bankAccountId: 'required|mongoId|exists:BankAccount,_id',
+  }
+
+  Validator(req.body, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation Failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
+
 module.exports = {
   create,
   updateApprovalStatus,
   updateOrderStatus,
-  get
+  get,
+  createInstallmentOrder
 }

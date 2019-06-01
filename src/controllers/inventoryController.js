@@ -203,6 +203,7 @@ const deleteInventory = async (req, res) => {
     }
     result.deletedAt = Date.now()
     result.deletedBy = req.authData.userId
+    result.save()
     res.send({
       success: true,
       message: 'Deleted successfully',

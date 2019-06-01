@@ -55,13 +55,6 @@ const orderSchema = new Schema({
     type: Number,
     required: true
   },
-  approvalStatusChangedBy: {
-    type: Schema.ObjectId,
-    ref: 'User',
-  },
-  approvalStatusChangeDate: {
-    type: Date,
-  },
   token: {
     type: String
   },
@@ -102,6 +95,10 @@ const orderSchema = new Schema({
   installmentPaymentStatus: {
     type: String,
     trim: true,
+  },
+  approvalRecord: {
+    type: Schema.ObjectId,
+    ref: 'CartApproval'
   },
   createdAt: {
     type: Date,

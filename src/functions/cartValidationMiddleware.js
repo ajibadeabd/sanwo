@@ -78,9 +78,49 @@ const destroy = (req, res, next) => {
   })
 }
 
+const requestApproval = (req, res, next) => {
+  const validationRule = { cartId: 'required|mongoId|exists:Cart,_id' }
+  Validator(req.body, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
+
+const updateApprovalStatus = (req, res, next) => {
+  const validationRule = {
+    token: 'required',
+    userId: 'required|mongoId|exists:User,_id',
+    status: 'required|valid_order_status'
+  }
+
+  Validator(req.params, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400)
+        .send({
+          success: false,
+          message: 'Validation Failed',
+          data: err
+        })
+    } else {
+      next()
+    }
+  })
+}
+
+
 module.exports = {
   get,
   create,
   destroy,
-  reduceCartQuantity
+  reduceCartQuantity,
+  requestApproval,
+  updateApprovalStatus
 }

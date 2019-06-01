@@ -9,7 +9,7 @@ const createWishList = (req, res) => {
     } else {
       res.send({
         success: true,
-        message: 'Created Successfully',
+        message: 'Moved to wish list',
         data: result
       })
         .status(201)

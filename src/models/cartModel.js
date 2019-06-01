@@ -39,6 +39,10 @@ const CartSchema = new Schema({
   installmentTotalRepayment: {
     type: Number,
   },
+  approvalRecord: {
+    type: Schema.ObjectId,
+    ref: 'CartApproval'
+  },
   meta: {},
   createdAt: {
     type: Date,
