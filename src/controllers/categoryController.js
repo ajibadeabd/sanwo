@@ -6,7 +6,6 @@ const createCategory = async (req, res) => {
     const category = await req.Models.Category.create({
       name: categoryName,
       slug: req.body.slug || categoryName.toLowerCase().replace(/\s/ig, '-'),
-      installmentPeriod: req.body.installmentPeriod || 0,
       description: req.body.description,
       icon: req.body.icon
     })
@@ -95,7 +94,6 @@ const updateCategory = async (req, res) => {
     const category = await req.Models.Category.findOne({ _id: req.params.category })
     category.name = req.body.name || category.name
     category.description = req.body.description || category.description
-    category.installmentPeriod = req.body.installmentPeriod || category.installmentPeriod
     category.icon = req.body.icon || category.icon
 
     if (req.body.child) {

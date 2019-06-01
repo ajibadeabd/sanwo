@@ -5,8 +5,7 @@ const get = (req, res, next) => {
   const validationRule = {
     _id: 'mongoId',
     name: 'string',
-    slug: 'string',
-    installmentPeriod: 'numeric|min:0',
+    slug: 'string'
   }
 
   Validator(req.query, validationRule, {}, (err, status) => {
@@ -43,7 +42,6 @@ const create = (req, res, next) => {
     name: 'required|exists:Category,name',
     parent: 'mongoId|exists:Category,_id',
     slug: 'exists:Category,slug',
-    installmentPeriod: 'numeric|min:0',
     description: 'string',
     icon: 'string',
   }
@@ -84,7 +82,6 @@ const update = (req, res, next) => {
     parent: 'mongoId|exists:Category,_id',
     child: 'mongoId|exists:Category,_id',
     name: 'string',
-    installmentPeriod: 'numeric|min:0',
     description: 'string',
     icon: 'string',
   }

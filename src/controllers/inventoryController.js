@@ -2,118 +2,73 @@ const utils = require('../../utils/helper-functions')
 const helpers = require('../../utils/helpers')
 const notificationEvents = require('../../utils/notificationEvents')
 
-const _checkValidInstallment = (installmentPercentagePerMonth, catId, req, res, callback) => {
-  req.Models.Category.findById(catId, (err, category) => {
-    if (err) throw err
-    else if (category) {
-      /** fist let's get the length of price array set for each months, bear in mind that
-      * minimum period is 2(months).
-      */
-
-      const installmentPercentagePerMonthLength = (installmentPercentagePerMonth
-        && installmentPercentagePerMonth.length)
-        ? JSON.parse(installmentPercentagePerMonth).length : 0
-      let installmentCheckErrorMsg = ''
-      if (category.installmentPeriod === 0 && installmentPercentagePerMonthLength > 0) {
-        installmentCheckErrorMsg = 'The product category does not support installment payment'
-      }
-
-      if (category.installmentPeriod !== 0
-        && (installmentPercentagePerMonthLength > category.installmentPeriod)) {
-        installmentCheckErrorMsg = `The installment period cannot be greater than the category installment period which is ${category.installmentPeriod}`
-      }
-      if (installmentCheckErrorMsg) {
-        return res.status(400).send({
-          success: false,
-          message: 'Validation failed',
-          data: {
-            errors: {
-              installmentPeriod: [installmentCheckErrorMsg]
-            }
-          }
-        })
-      }
-      callback()
-    }
-  })
-}
 const create = (req, res) => {
   // first let's confirm that the installment period set(if any)
-  _checkValidInstallment(req.body.installmentPercentagePerMonth,
-    req.body.category, req, res, () => {
-    // now let's create the product
-      const installmentPercentagePerMonth = req.body.installmentPercentagePerMonth
-        ? JSON.parse(req.body.installmentPercentagePerMonth) : []
-      req.Models.Inventory.create({
-        name: req.body.name,
-        category: req.body.category,
-        description: req.body.description,
-        price: req.body.price,
-        seller: req.authData.userId,
-        images: req.body.images,
-        quantity: req.body.quantity,
-        installmentPercentagePerMonth,
-        meta: req.body.meta ? JSON.parse(req.body.meta) : {},
-      }, (err, product) => {
-        if (err) {
-          throw err
-        } else {
-          res.status(201)
-            .send({
-              success: true,
-              message: 'Created Successfully',
-              data: product
-            })
-          notificationEvents.emit('inventory_created', { product, sellerId: req.authData.userId })
-        }
-      })
-    })
+  // now let's create the product
+  const installmentPercentagePerMonth = req.body.installmentPercentagePerMonth
+    ? JSON.parse(req.body.installmentPercentagePerMonth) : []
+  req.Models.Inventory.create({
+    name: req.body.name,
+    category: req.body.category,
+    description: req.body.description,
+    price: req.body.price,
+    seller: req.authData.userId,
+    images: req.body.images,
+    quantity: req.body.quantity,
+    installmentPercentagePerMonth,
+    meta: req.body.meta ? JSON.parse(req.body.meta) : {},
+  }, (err, product) => {
+    if (err) {
+      throw err
+    } else {
+      res.status(201)
+        .send({
+          success: true,
+          message: 'Created Successfully',
+          data: product
+        })
+      notificationEvents.emit('inventory_created', { product, sellerId: req.authData.userId })
+    }
+  })
 }
 
 const update = (req, res) => {
-  req.Models.Inventory.findOne({
-    _id: req.params.inventoryId,
-    seller: req.authData.userId
-  },
-  (err, inventory) => {
-    if (err) throw err
-    if (inventory) {
-      inventory.name = req.body.name || inventory.name
-      inventory.category = req.body.category || inventory.category
-      inventory.description = req.body.description || inventory.description
-      inventory.price = req.body.price || inventory.price
-      inventory.quantity = req.body.quantity || inventory.quantity
-      inventory.images = req.body.images
-        ? inventory.images.concat(req.body.images)
-        : inventory.images
-      inventory.meta = req.body.meta
-        ? { ...inventory.meta, ...JSON.parse(req.body.meta) }
-        : inventory.meta
+  req.Models.Inventory.findOne({ _id: req.params.inventoryId, seller: req.authData.userId },
+    (err, inventory) => {
+      if (err) throw err
+      if (inventory) {
+        inventory.name = req.body.name || inventory.name
+        inventory.category = req.body.category || inventory.category
+        inventory.description = req.body.description || inventory.description
+        inventory.price = req.body.price || inventory.price
+        inventory.quantity = req.body.quantity || inventory.quantity
+        inventory.images = req.body.images
+          ? inventory.images.concat(req.body.images)
+          : inventory.images
+        inventory.meta = req.body.meta
+          ? { ...inventory.meta, ...JSON.parse(req.body.meta) }
+          : inventory.meta
 
-      // lets validate installment before saving
-      _checkValidInstallment(req.body.installmentPercentagePerMonth,
-        inventory.category, req, res, () => {
-          inventory.installmentPercentagePerMonth = req.body.installmentPercentagePerMonth
-            ? JSON.parse(req.body.installmentPercentagePerMonth)
-            : inventory.installmentPercentagePerMonth
-          inventory.save((error) => {
-            if (error) throw error
-            res.send({
-              success: true,
-              message: 'Successfully updated',
-              data: inventory
-            })
+        inventory.installmentPercentagePerMonth = req.body.installmentPercentagePerMonth
+          ? JSON.parse(req.body.installmentPercentagePerMonth)
+          : inventory.installmentPercentagePerMonth
+        inventory.save((error) => {
+          if (error) throw error
+          res.send({
+            success: true,
+            message: 'Successfully updated',
+            data: inventory
           })
         })
-    } else {
-      return res.status(400)
-        .send({
-          success: false,
-          message: 'Inventory Not Found',
-          data: null
-        })
-    }
-  })
+      } else {
+        return res.status(400)
+          .send({
+            success: false,
+            message: 'Inventory Not Found',
+            data: null
+          })
+      }
+    })
 }
 
 /**
