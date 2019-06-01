@@ -391,7 +391,7 @@ const updateApprovalStatus = async (req, res) => {
 
     // when the user accountType is cooperative assert that our customer belongs to this cooperative
     if (user.accountType === constants.CORPORATE_ADMIN
-      && user._id === approvalRecord.user.cooperative) {
+      && user._id.toString() !== approvalRecord.cart.user.cooperative) {
       responsePayload.data.errors.user = ['The customer doesn\'t belong to your cooperative']
       return res.status(400).send(responsePayload)
     }
