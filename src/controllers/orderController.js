@@ -8,54 +8,6 @@ const { queryFilters } = require('./../../utils/helper-functions')
 const notificationEvents = require('../../utils/notificationEvents')
 const remitaServices = require('../../utils/remitaServices')
 
-const _createInstallmentOrder = async (req, address, installmentItemInCart, bankAccount) => {
-  // save the installment order
-  const savedInstallmentOrder = await req.Models.Order.create({
-    buyer: req.body.userId, // save the current user as the buyer
-    address,
-    totalProduct: 1,
-    totalQuantities: installmentItemInCart.quantity,
-    subTotal: installmentItemInCart.subTotal,
-    installmentPeriod: installmentItemInCart.installmentPeriod,
-    installmentPercentage: installmentItemInCart.installmentPercentage,
-    installmentTotalRepayment: installmentItemInCart.installmentTotalRepayment,
-    installmentPaymentStatus: constants.ORDER_STATUS.pending,
-    orderStatus: constants.ORDER_STATUS.pending_approval,
-    installmentPaymentMandate: { bankAccount: bankAccount.toObject() }
-  })
-  if (savedInstallmentOrder) {
-    // create record for the purchased item
-    const createPurchaseRecord = await req.Models.Purchase.create({
-      product: installmentItemInCart.product.toObject(),
-      order: savedInstallmentOrder._id,
-      seller: installmentItemInCart.product.seller._id,
-      quantity: installmentItemInCart.quantity,
-      unitPrice: installmentItemInCart.unitPrice,
-      subTotal: installmentItemInCart.installmentTotalRepayment,
-      hasInstallment: true,
-      meta: installmentItemInCart.meta,
-      status: constants.ORDER_STATUS.pending_approval
-    })
-    // savedInstallmentOrder.installmentsRepaymentSchedule = installmentsRepaymentSchedule
-    savedInstallmentOrder.purchases = [createPurchaseRecord._id]
-    // generate token for order approval
-    crypto.randomBytes(20, (error, buffer) => {
-      if (error) throw error
-      savedInstallmentOrder.token = buffer.toString('hex')
-      savedInstallmentOrder.save((tokenError) => {
-        if (tokenError) throw tokenError
-        // reduce the available quantity once order has been created
-        if (installmentItemInCart.product.quantity) {
-          installmentItemInCart.product.quantity -= installmentItemInCart.quantity
-          installmentItemInCart.product.save()
-        }
-      })
-    })
-    return Promise.resolve(savedInstallmentOrder)
-  }
-  return Promise.reject(new Error('Could not create installment order'))
-}
-
 const createOrdersWithoutInstallment = async (req, address, cartItemsWithoutInstallment) => {
   let totalQuantities = 0
   let subTotal = 0
@@ -108,241 +60,45 @@ const createOrdersWithoutInstallment = async (req, address, cartItemsWithoutInst
 const create = async (req, res) => {
   const responsePayload = { success: false, message: 'Validation failed', data: { errors: {} } }
 
-  /** Check if a coupon/gift-card is supplied, then assert if coupon code is valid  */
+  // Check if a coupon/gift-card is supplied, then assert if coupon code is valid
   // TODO:: Check if a coupon/gift-card is supplied, then assert if coupon code is valid
 
-  /** Get current users cart */
+  // Get current users cart records without installment
   const currentUserCart = await req.Models.Cart.find({ user: req.body.userId })
     .populate({
       path: 'product',
       populate: { path: 'seller', select: '_id name firstName lastName email' }
     })
-    .populate({
-      path: 'product',
-      populate: { path: 'category' }
-    })
+    .populate({ path: 'product', populate: { path: 'category' } })
 
-  /** Assert that the user has items in cart */
-  if (!currentUserCart.length) {
-    responsePayload.data.errors.cart = ['You don\'t have any item in your cart']
+  // Get items with no installment
+  const cartItemsWithoutInstallment = currentUserCart
+    .filter(cartItem => !cartItem.installmentPeriod || cartItem.installmentPeriod === 0)
+
+
+  // Assert that the user has items in cart
+  if (!cartItemsWithoutInstallment.length) {
+    responsePayload.data.errors.cart = ['You don\'t have any item in your cart, valid for checkout']
     return res.status(400).send(responsePayload)
   }
 
-  /** Assert that the customer doesn't have a pending installmentPayment request */
-  // if (installmentItemInCart.length) {
-  //   const pendingRequest = await req.Models.Order
-  // .findOne({ buyer: req.body.userId, orderStatus: constants.ORDER_STATUS.pending_approval })
-  //   if (pendingRequest) {
-  //     responsePayload.data.errors.cart = ['You have a pending installment payment request.
-  // You can\'t make a new order on installment, please review your cart']
-  //     return res.status(400).send(responsePayload)
-  //   }
-  // }
-
-  /** Get cart item to be paid on installment(if any) */
-  const installmentItemInCart = currentUserCart
-    .filter(cartItem => cartItem.installmentPeriod > 0)
-
-  /** Get items with no installment */
-  const cartItemsWithoutInstallment = currentUserCart
-    .filter(cartItem => !cartItem.installmentPeriod || cartItem.installmentPeriod === 0)
 
   /** Get the user's shipping address */
   const address = await req.Models.AddressBook.findOne({ _id: req.body.address })
 
-  /** Save installment Order if any */
-  let installmentOrder
-  if (installmentItemInCart.length) {
-    const mongoIdRegex = /^[a-f\d]{24}$/i
-    // check that the customer supplied bankAccount
-    if (!req.body.bankAccountId || !mongoIdRegex.test(req.body.bankAccountId)) {
-      responsePayload.data.errors.bankAccountId = ['Please specify Bank Account which Installment payment will be charged from.']
-      return res.status(400).send(responsePayload)
-    }
-
-    const bankAccountDetails = await req.Models.BankAccount
-      .findOne({ _id: req.body.bankAccountId, user: req.body.userId })
-    // assert that the bankAccount is valid
-    if (!bankAccountDetails) {
-      responsePayload.data.errors.bankAccountId = ['Invalid bank account record supplied']
-      return res.status(400).send(responsePayload)
-    }
-
-    installmentOrder = await _createInstallmentOrder(req,
-      address, installmentItemInCart[0], bankAccountDetails)
-      .catch((installmentOrderError) => {
-        throw installmentOrderError
-      })
-  }
 
   /** Save orders without installment */
-  let ordersWithoutInstallment
-  if (cartItemsWithoutInstallment.length) {
-    ordersWithoutInstallment = await createOrdersWithoutInstallment(
-      req, address, cartItemsWithoutInstallment
-    ).catch((ordersWithoutInstallmentError) => {
-      throw ordersWithoutInstallmentError
-    })
-  }
-
-  const msg = installmentItemInCart.length ? '. Your installment payment request has been sent to your cooperative for approval. You order status will be updated once approved or rejected' : ''
-
-  const orderPayload = {
-    ordersWithoutInstallment,
-    installmentOrder,
-  }
-  res.send({
-    success: true,
-    message: `Successfully created order${msg}`,
-    data: orderPayload
+  const ordersWithoutInstallment = await createOrdersWithoutInstallment(
+    req, address, cartItemsWithoutInstallment
+  ).catch((ordersWithoutInstallmentError) => {
+    throw ordersWithoutInstallmentError
   })
-  // empty current user cart
-  await req.Models.Cart.deleteMany({ user: req.body.userId }).exec()
-  if (ordersWithoutInstallment) {
-    ordersWithoutInstallment.cart = installmentItemInCart
-    notificationEvents.emit('new_order', ordersWithoutInstallment)
-  }
-  if (installmentOrder) {
-    installmentOrder.cart = installmentItemInCart
-    notificationEvents.emit('installment_order_approval_mail', installmentOrder)
-  }
-}
 
-
-const updateApprovalStatus = async (req, res) => {
-  try {
-    const order = await req.Models.Order.findOne({ token: req.params.token })
-      .populate('buyer purchases')
-
-    if (!order) {
-      return res.status(400)
-        .send({
-          success: false,
-          message: 'The token does not exist or has already been used',
-          data: []
-        })
-    }
-
-    if (order.orderStatus === constants.ORDER_STATUS.approved) {
-      return res.status(403)
-        .send({
-          success: false,
-          message: 'Order Already Approved',
-          data: order
-        })
-    }
-
-    if (order.orderStatus === constants.ORDER_STATUS.declined) {
-      return res.status(403)
-        .send({
-          success: false,
-          message: 'Order Already Declined',
-          data: []
-        })
-    }
-
-    const adminUser = await req.Models.User.findById(req.params.adminId)
-    if (!adminUser) {
-      return res.status(403)
-        .send({
-          success: false,
-          message: 'User does not exist',
-          data: []
-        })
-    }
-
-    if (adminUser.accountType !== constants.SUPER_ADMIN
-      && adminUser.accountType !== constants.CORPORATE_ADMIN) {
-      return res.status(403)
-        .send({
-          success: false,
-          message: 'Unauthorized account',
-          data: []
-        })
-    }
-
-    order.orderStatus = req.params.status
-    order.token = undefined
-    order.approvalStatusChangedBy = req.params.adminId
-    order.approvalStatusChangeDate = Date.now()
-
-    // If the order is approved, generate a mandate
-    if (req.params.status === constants.ORDER_STATUS.approved) {
-      const { bankAccount } = order.installmentPaymentMandate
-      const payload = {
-        payerName: `${order.installmentPaymentMandate.bankAccount.accountName}`,
-        payerEmail: `${order.buyer.email}`,
-        payerPhone: `${order.buyer.phoneNumber}`,
-        payerBankCode: `${order.installmentPaymentMandate.bankAccount.bankCode}`,
-        payerAccount: `${order.installmentPaymentMandate.bankAccount.accountNumber}`,
-        requestId: `${order.orderNumber}`,
-        amount: `${order.installmentTotalRepayment}`,
-        startDate: `${moment()
-          .format('D/MM/Y')}`,
-        endDate: `${moment()
-          .add(order.installmentPeriod, 'months')
-          .format('D/MM/Y')}`,
-        mandateType: 'SO',
-        frequency: 'Month'
-      }
-
-      const mandateResponse = await remitaServices._setUpMandate(payload)
-      const { merchantId, apiKey, baseUrlHttp } = remitaConfig
-      const hash = sha512(`${merchantId}${apiKey}${order.orderNumber}`)
-        .toString()
-      order.installmentPaymentMandate = {
-        bankAccount,
-        status: false,
-        hash,
-        formUrl: `${baseUrlHttp}/ecomm/mandate/form/${merchantId}/${hash}/${mandateResponse.mandateId}/${mandateResponse.requestId}/rest.reg`,
-        mandateId: mandateResponse.mandateId,
-        requestId: mandateResponse.requestId,
-        merchantId,
-      }
-    }
-
-    const installmentsRepaymentSchedule = []
-    // create installment repayment schedule
-    for (let i = 1; i <= order.installmentPeriod; i += 1) {
-      installmentsRepaymentSchedule.push({
-        installmentRef: `${order.orderNumber}_${i}`, // concat with order number
-        installmentPercentage: order.installmentPercentage,
-        amount:
-         order.installmentTotalRepayment / order.installmentPeriod,
-        dueDate: moment()
-          .add(i, 'month')
-          .format()
-      })
-    }
-    order.installmentsRepaymentSchedule = installmentsRepaymentSchedule
-    order.save()
-
-    res.send({
-      success: true,
-      message: `Order status has been updated to ${req.params.status}. The buyer has been notified.`,
-      data: order
-    })
-
-    // if the purchase is declined add the quantity back to available products
-    if (req.params.status === 'declined') {
-      req.Models.Inventory.findOne({ _id: order.purchases[0].product._id })
-        .then((result) => {
-          // since we are sure buyers can't buy more than one installment product
-          if (result) {
-            result.quantity += 1
-            result.save()
-          }
-        })
-    }
-    // Notify the buyer of the new status update
-    notificationEvents.emit('order_status_changed', {
-      order,
-      status: req.params.status,
-      mandateFormUrl: order.installmentPaymentMandate.formUrl
-    })
-  } catch (e) {
-    throw new Error(e)
-  }
+  res.send({ success: true, message: 'Successfully created order', data: ordersWithoutInstallment })
+  // Empty current user cart with no installment
+  await req.Models.Cart.deleteMany({ user: req.body.userId, installmentPeriod: undefined })
+  ordersWithoutInstallment.cart = cartItemsWithoutInstallment
+  notificationEvents.emit('new_order', ordersWithoutInstallment)
 }
 
 const updateOrderStatus = (req, res) => {
@@ -366,54 +122,216 @@ const updateOrderStatus = (req, res) => {
     })
 }
 
-const getOrders = (req, res) => {
-  let limit = parseInt(req.query.limit, 10)
-  let offset = parseInt(req.query.offset, 10)
-  offset = offset || 0
-  limit = limit || 10
+const getOrders = async (req, res) => {
+  try {
+    let limit = parseInt(req.query.limit, 10)
+    let offset = parseInt(req.query.offset, 10)
+    offset = offset || 0
+    limit = limit || 10
 
-  let filter = queryFilters(req)
-  filter = { buyer: req.body.userId, ...filter }
+    let filter = queryFilters(req)
+    filter = { buyer: req.body.userId, ...filter }
 
-  const select = 'email firstName lastName email'
-  const query = req.Models.Order.find(filter)
-  query.populate('buyer', select)
-  query.populate('payment')
-  query.populate({
-    path: 'purchases',
-    populate: { path: 'seller', select }
-  })
-  // filter by date if any
-  if (req.query.startDate && req.query.endDate) {
-    const startDate = moment(new Date(req.query.startDate)).format()
-    const endDate = moment(new Date(req.query.endDate)).add(1, 'day').format()
-    query.where({ createdAt: { $gt: startDate, $lt: endDate } })
+    const select = 'email firstName lastName email'
+    const query = req.Models.Order.find(filter)
+    query.populate('buyer', select)
+    query.populate('payment')
+    query.populate('approvalRecord')
+    query.populate({
+      path: 'purchases',
+      populate: { path: 'seller', select }
+    })
+    // filter by date if any
+    if (req.query.startDate && req.query.endDate) {
+      const startDate = moment(new Date(req.query.startDate)).format()
+      const endDate = moment(new Date(req.query.endDate)).add(1, 'day').format()
+      const dateFilter = { createdAt: { $gt: startDate, $lt: endDate } }
+      filter = { ...filter, ...dateFilter }
+      query.where(dateFilter)
+    }
+    const resultCount = await req.Models.Order.countDocuments(filter)
+    query.select('-token')
+    query.skip(offset)
+    query.limit(limit)
+    query.sort({ createdAt: 'desc' })
+
+    const results = await query
+    res.send({
+      success: true,
+      message: 'Successfully fetching orders',
+      data: {
+        offset,
+        limit,
+        resultCount,
+        results
+      }
+    })
+  } catch (error) {
+    res.status(500).send('Oops! An error occurred. If error persist please notify admin')
+    req.log(error)
   }
-  query.select('-token')
-  query.skip(offset)
-  query.limit(limit)
-  query.sort({ createdAt: 'desc' })
-  query.exec((err, results) => {
-    if (err) {
-      throw err
-    } else {
-      res.send({
-        success: true,
-        message: 'Successfully fetching orders',
-        data: {
-          offset,
-          limit,
-          resultCount: results.length,
-          results
-        }
+}
+
+const _createInstallmentRelatedRecords = async (req, address, cart, bankAccount) => {
+  // save the installment order
+  const savedInstallmentOrder = await req.Models.Order.create({
+    buyer: req.authData.userId, // save the current user as the buyer
+    address,
+    totalProduct: 1,
+    totalQuantities: cart.quantity,
+    subTotal: cart.subTotal,
+    installmentPeriod: cart.installmentPeriod,
+    installmentPercentage: cart.installmentPercentage,
+    installmentTotalRepayment: cart.installmentTotalRepayment,
+    installmentPaymentStatus: constants.ORDER_STATUS.pending,
+    orderStatus: constants.ORDER_STATUS.approved,
+    installmentPaymentMandate: { bankAccount }, // Save bank account object(In case user deletes it)
+    approvalRecord: cart.approvalRecord // Saved the related cart record
+  })
+  if (savedInstallmentOrder) {
+    // create record for the purchased item
+    const createPurchaseRecord = await req.Models.Purchase.create({
+      product: cart.product.toObject(),
+      order: savedInstallmentOrder._id,
+      seller: cart.product.seller._id,
+      quantity: cart.quantity,
+      unitPrice: cart.unitPrice,
+      subTotal: cart.installmentTotalRepayment,
+      hasInstallment: true,
+      meta: cart.meta,
+      status: constants.ORDER_STATUS.approved
+    })
+    // savedInstallmentOrder.installmentsRepaymentSchedule = installmentsRepaymentSchedule
+    savedInstallmentOrder.purchases = [createPurchaseRecord._id]
+    // generate token for order approval
+    savedInstallmentOrder.save()
+
+    // reduce the available quantity once order has been created
+    if (cart.product.quantity) {
+      cart.product.quantity -= cart.quantity
+      cart.product.save()
+    }
+    return Promise.resolve(savedInstallmentOrder)
+  }
+  return Promise.reject(new Error('Could not create installment order'))
+}
+
+
+const createInstallmentOrder = async (req, res) => {
+  try {
+    const responsePayload = { success: false, message: 'Validation failed', data: { errors: {} } }
+
+    // Get the cart record with the supplied cart Id and the current user id
+    const cart = await req.Models.Cart
+      .findOne({ _id: req.body.cartId, user: req.authData.userId })
+      .populate({
+        path: 'product',
+        populate: { path: 'seller', select: '_id name firstName lastName email' }
+      })
+      .populate({ path: 'product', populate: { path: 'category' } })
+      .populate('approvalRecord')
+
+    // Asset that the cart record is available
+    if (!cart) {
+      responsePayload.data.errors.cart = ['The specified cart item is not available on your list']
+      return res.status(400).send(responsePayload)
+    }
+
+    // Asset that approval has been requested
+    if (!cart.approvalRecord) {
+      responsePayload.data.errors.bankAccountId = ['Approval has not been requested for this cart.']
+      return res.status(400).send(responsePayload)
+    }
+
+    // assert that this cart has been approved
+    if (cart.approvalRecord.adminApprovalStatus !== constants.ORDER_STATUS.approved) {
+      responsePayload.data.errors.bankAccountId = ['This cart is not valid for checkout, still waiting admin approval']
+      return res.status(400).send(responsePayload)
+    }
+
+    const bankAccountDetails = await req.Models.BankAccount
+      .findOne({ _id: req.body.bankAccountId, user: req.body.userId })
+    // assert that the bankAccount is valid
+    if (!bankAccountDetails) {
+      responsePayload.data.errors.bankAccountId = ['Invalid bank account record supplied']
+      return res.status(400).send(responsePayload)
+    }
+
+    // Get the user's shipping address
+    const address = await req.Models.AddressBook.findOne({ _id: req.body.addressId })
+    const orderRecord = await _createInstallmentRelatedRecords(req, address,
+      cart, bankAccountDetails.toObject())
+
+    const order = await req.Models.Order.findById(orderRecord._id)
+      .populate('buyer purchases')
+
+    // After saving order and purchase record, setUp payment mandate on Remita payment mandate
+    const { bankAccount } = order.installmentPaymentMandate
+    const mandateResponse = await remitaServices._setUpMandate({
+      payerName: `${order.installmentPaymentMandate.bankAccount.accountName}`,
+      payerEmail: `${order.buyer.email}`,
+      payerPhone: `${order.buyer.phoneNumber}`,
+      payerBankCode: `${order.installmentPaymentMandate.bankAccount.bankCode}`,
+      payerAccount: `${order.installmentPaymentMandate.bankAccount.accountNumber}`,
+      requestId: `${order.orderNumber}`,
+      amount: `${order.installmentTotalRepayment}`,
+      startDate: `${moment().format('D/MM/Y')}`,
+      endDate: `${moment().add(order.installmentPeriod, 'months').format('D/MM/Y')}`,
+      mandateType: 'SO',
+      frequency: 'Month'
+    })
+    if (mandateResponse === 'remita-error') {
+      // Delete the create order and purchase record
+      if (order.purchases && order.purchases[0]) order.purchases[0].delete()
+      order.delete()
+      return res.status(500).send('Oops! An error occurred connecting to Remita. If error persist please notify admin')
+    }
+
+    const { merchantId, apiKey, baseUrlHttp } = remitaConfig
+    const hash = sha512(`${merchantId}${apiKey}${order.orderNumber}`).toString()
+    // update the order record with the generated mandate form URL and additional details
+    order.installmentPaymentMandate = {
+      bankAccount,
+      status: false,
+      hash,
+      formUrl: `${baseUrlHttp}/ecomm/mandate/form/${merchantId}/${hash}/${mandateResponse.mandateId}/${mandateResponse.requestId}/rest.reg`,
+      mandateId: mandateResponse.mandateId,
+      requestId: mandateResponse.requestId,
+      merchantId,
+    }
+    const installmentsRepaymentSchedule = []
+    // create installment repayment schedule
+    for (let i = 1; i <= order.installmentPeriod; i += 1) {
+      installmentsRepaymentSchedule.push({
+        installmentRef: `${order.orderNumber}_${i}`, // concat with order number
+        installmentPercentage: order.installmentPercentage,
+        amount:
+          order.installmentTotalRepayment / order.installmentPeriod,
+        dueDate: moment()
+          .add(i, 'month')
+          .format()
       })
     }
-  })
+    order.installmentsRepaymentSchedule = installmentsRepaymentSchedule
+    order.save()
+    cart.delete()
+    res.send({ success: true, message: 'Order created successfully', data: order })
+
+
+    // Send an email to the customer regarding installment purchase and mandate form URL
+    notificationEvents.emit('buyer_mandate_form_details', {
+      order,
+      mandateFormUrl: order.installmentPaymentMandate.formUrl
+    })
+  } catch (error) {
+    res.status(500).send('Oops! An error occurred. If error persist please notify admin')
+    req.log(error)
+  }
 }
 
 module.exports = {
   create,
-  updateApprovalStatus,
   updateOrderStatus,
-  getOrders
+  getOrders,
+  createInstallmentOrder
 }

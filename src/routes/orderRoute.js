@@ -7,11 +7,10 @@ const authMiddleware = require('./../functions/authMiddleware')
 const router = express.Router()
 
 
-router.get('/update-approval-status/:token/:adminId/:status',
-  orderValidationMiddleware.updateApprovalStatus, orderController.updateApprovalStatus)
-
 router.use(authMiddleware.isAuthenticated)
 router.post('/', orderValidationMiddleware.create, orderController.create)
+router.post('/installment', orderValidationMiddleware.createInstallmentOrder,
+  orderController.createInstallmentOrder)
 
 router.put('/update-order-status', orderValidationMiddleware.updateOrderStatus,
   orderController.updateOrderStatus)

@@ -1,0 +1,17 @@
+p Hi #{buyer.firstName || ''} #{buyer.lastName || ''}. Thank you for patronizing us at Paysmosmo.
+
+p kindly find the below URL to download/print your mandate form, kindly take the form your bank for approval.
+
+p Here's your mandate form URL
+    a(href=mandateFormUrl) #{mandateFormUrl}
+
+H3 Details
+h5 Store Name
+span  #{seller.businessName}
+
+h5 Order Details
+table(border=1 style='border-spacing: 0px;')
+    thead
+        tr
+            th Order Number
+            td #{order.orderNumber}

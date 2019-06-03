@@ -4,7 +4,7 @@ p <a href="#"><strong>Login to take action</strong></a>
 
 h3 Purchase Details
 
-table(border=1)
+table(border=1 style='border-spacing: 0px;')
     tr
         th Order Number
         td #{order.orderNumber}
@@ -20,13 +20,14 @@ table(border=1)
                     th Unit Subtotal
                 tbody
                   each item in cart
-                      if item.product.seller === seller._id
-                        td= item.product.name
-                        td= item.quantity
-                        td= item.unitPrice
-                        td= item.subTotal
+                      tr
+                      if item.product.seller._id.toString() === seller._id.toString()
+                          td= item.product.name
+                          td= item.quantity
+                          td= item.unitPrice
+                          td= item.subTotal
                       else
-                        p
+                          p
 
     tr
         th Subtotal

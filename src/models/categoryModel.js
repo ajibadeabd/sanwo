@@ -16,11 +16,6 @@ const CategorySchema = new Schema({
     required: true,
     unique: true,
   },
-  installmentPeriod: {
-    type: Number,
-    min: 0,
-    default: 0
-  },
   description: {
     type: String,
     trim: true,

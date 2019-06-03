@@ -73,7 +73,12 @@ const _setUpMandate = async (body) => {
     const response = await request(options)
     return Promise.resolve(eval(response))
   } catch (error) {
-    return Promise.reject(error)
+    console.log(error)
+    // Remita service is not consistence.... arrhhh
+    // I am resolving a value which I will use to check for errors so I can perform
+    // some operation, like deleting any records created before this error
+    // NOTE: Throwing or rejecting would be great yea?, but...
+    return Promise.resolve('remita-error')
   }
 }
 

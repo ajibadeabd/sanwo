@@ -1,9 +1,9 @@
 p= `Hello ${buyer.firstName || ''} ${buyer.lastName || ''} thank you for using ${process.env.APP_NAME}`
 p   Your order number <strong>##{order.orderNumber}</strong> is currently <strong>PENDING</strong> <br/> you'll be notified of the status once processed
 
-h3 Order Details
+h5 Order Details
 
-table(border=1)
+table(border=1 style='border-spacing: 0px;')
     tr
         th Order Number
         td #{order.orderNumber}
@@ -25,10 +25,11 @@ table(border=1)
                     th Unit Subtotal
                 tbody
                   each item in cart
-                    td= item.product.name
-                    td= item.quantity
-                    td= item.unitPrice
-                    td= item.subTotal
+                    tr
+                        td= item.product.name
+                        td= item.quantity
+                        td= item.unitPrice
+                        td= item.subTotal
 
     tr
         th Subtotal

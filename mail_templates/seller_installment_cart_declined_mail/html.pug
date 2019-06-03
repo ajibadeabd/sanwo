@@ -1,0 +1,50 @@
+p= `Hi ${seller.firstName || ''} ${seller.lastName || ''}, A request to purchase your product on installment has been <strong>declined</strong> login to your account for more details
+
+H3 Details
+h5 Name
+span  #{buyer.firstName} #{buyer.lastName}
+
+h5 Product
+table(border=1 style='border-spacing: 0px;')
+    thead
+        tr
+            th Product Number
+            td #{product.productNumber}
+        tr
+            th Name
+            td #{product.name}
+        tr
+            th Category
+            td #{product.category.name}
+        tr
+            th Description
+            td #{product.description}
+        tr
+            th Price
+            td #{product.price}
+
+
+h5 Installment Repayment Details
+table(border=1 style='border-spacing: 0px;')
+    thead
+        tr
+            th Quantity
+            td #{cart.quantity}
+        tr
+            th Unit Price
+            td #{cart.unitPrice}
+        tr
+            th Subtotal
+            td #{cart.subTotal}
+        tr
+            th Repayment Duration
+            td #{cart.installmentPeriod} Month(s)
+        tr
+            th Percentage
+            td #{cart.installmentPercentage}%
+        tr
+            th Interest
+            td #{cart.installmentInterest}
+        tr
+            th Total Repayment
+            td #{cart.installmentTotalRepayment}

@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 
 module.exports.queryFilters = (req) => {
   const { query } = req
@@ -29,5 +30,12 @@ module.exports.isJson = (item) => {
   }
   return typeof item === 'object' && item !== null
 }
+
+module.exports.generateToken = () => new Promise((resolve, reject) => {
+  crypto.randomBytes(20, (error, buffer) => {
+    if (error) return reject(error)
+    resolve(buffer.toString('hex'))
+  })
+})
 
 module.exports.flattenArray = arrays => arrays.reduce((acc, val) => acc.concat(val))

@@ -52,6 +52,12 @@ class CoreEvents extends EventEmitter {
     this.on('registered_new_buyer', this.onRegisteredNewBuyer)
     this.on('cooperative_member_status_updated', this.onCooperativeMemberStatusUpdated)
     this.on('send_password_reset_email', this.onSendPasswordResetEmail)
+    this.on('installment_cart_approval_mail', this.onInstallmentCartApprovalMail)
+    this.on('seller_installment_cart_declined', this.onSellerInstallmentCartDeclined)
+    this.on('installment_cart_approval_request_admin', this.onInstallmentCartApprovalRequestAdmin)
+    this.on('installment_cart_admin_approved', this.onInstallmentCartAdminApproved)
+    this.on('installment_cart_admin_declined', this.onInstallmentCartAdminDeclined)
+    this.on('buyer_mandate_form_details', this.onBuyerMandateFormDetails)
   }
 
   static mailSent (data) {
@@ -59,6 +65,7 @@ class CoreEvents extends EventEmitter {
   }
 
   static mailFailed (error) {
+    console.log(error)
     logger.error('Error Sending Email')
   }
 
@@ -72,6 +79,15 @@ class CoreEvents extends EventEmitter {
   sendEmail (template, destination, locals) {
     this.email.send({ template, message: destination, locals })
       .then(CoreEvents.mailSent).catch(CoreEvents.mailFailed)
+  }
+
+  /**
+   * @description Converts arrays of email object to string
+   * @param {Array} emailArrayObject
+   * @return {Socket|*|string} string
+   */
+  static convertEmailsToString (emailArrayObject) {
+    return emailArrayObject.map(obj => obj.email).join(',')
   }
 
 
@@ -92,7 +108,7 @@ class CoreEvents extends EventEmitter {
 
     // Notify all admin
     adminEmails = adminEmails.map(admin => admin.email)
-    this.sendEmail('admin_payment_status_mail', { to: adminEmails.join(',') }, {
+    this.sendEmail('admin_payment_status_mail', { to: `${CoreEvents.convertEmailsToString(adminEmails)}` }, {
       status, buyer, adminEmails, order
     })
 
@@ -110,7 +126,7 @@ class CoreEvents extends EventEmitter {
 
     // Notify all admin
     adminEmails = adminEmails.map(admin => admin.email)
-    this.sendEmail('admin_wallet_status_mail', { to: adminEmails.join(',') }, { seller, purchase, status })
+    this.sendEmail('admin_wallet_status_mail', { to: `${CoreEvents.convertEmailsToString(adminEmails)}` }, { seller, purchase, status })
   }
 
   async onPurchaseStatusChanged ({ order, status, purchase }) {
@@ -158,7 +174,7 @@ class CoreEvents extends EventEmitter {
     const { cart } = installmentOrder
     if (adminRecords.length) {
       for (let i = 0; i < adminRecords.length; i += 1) {
-        this.sendEmail('admin_installment_order_approval_mail', { to: adminRecords.email },
+        this.sendEmail('admin_installment_order_approval_mail', { to: adminRecords[i].email },
           {
             order: installmentOrder, cart, buyer, admin: adminRecords[i]
           })
@@ -169,6 +185,31 @@ class CoreEvents extends EventEmitter {
       {
         order: installmentOrder, cart, buyer, cooperative: buyer.cooperative
       })
+  }
+
+  async onInstallmentCartApprovalMail ({ cart, approvalRecord }) {
+    const adminEmails = await models.User.find({ accountType: 'super_admin' })
+      .select('-_id email')
+
+    // de-structure the cart object to get the user details
+    const {
+      product, user: buyer, user: { cooperative }, product: { seller }
+    } = cart
+
+    // Send seller and approval email
+    this.sendEmail('seller_cart_item_confirmation_mail', { to: seller.email },
+      {
+        cart, seller, product, buyer, approvalRecord
+      })
+
+    // send notification email to all admin and the user cooperative admin
+    if (adminEmails.length) {
+      this.sendEmail('admin_cart_item_confirmation_mail',
+        { to: `${CoreEvents.convertEmailsToString(adminEmails)}, ${cooperative.email}` },
+        {
+          cart, seller, product, buyer, approvalRecord
+        })
+    }
   }
 
   async onOrderStatusChanged ({ order, status, mandateFormUrl }) {
@@ -197,7 +238,7 @@ class CoreEvents extends EventEmitter {
 
     const adminEmails = await models.User.find({ accountType: 'super_admin' })
       .select('-_id email')
-    this.sendEmail('admin_installment_debit_mail', { to: adminEmails.join(',') }, { order, purchase, payment })
+    this.sendEmail('admin_installment_debit_mail', { to: `${CoreEvents.convertEmailsToString(adminEmails)}` }, { order, purchase, payment })
     const { cooperative } = order.buyer
     this.sendEmail('cooperate_admin_installment_debit_mail', { to: cooperative.email }, { order, purchase, payment })
   }
@@ -209,7 +250,7 @@ class CoreEvents extends EventEmitter {
 
     const adminEmails = await models.User.find({ accountType: 'super_admin' })
       .select('-_id email')
-    this.sendEmail('admin_installment_completed_mail', { to: adminEmails.join(',') }, { order, purchase, payment })
+    this.sendEmail('admin_installment_completed_mail', { to: `${CoreEvents.convertEmailsToString(adminEmails)}` }, { order, purchase, payment })
     const { cooperative } = order.buyer
     this.sendEmail('cooperate_admin_installment_completed_mail', { to: cooperative.email }, { order, purchase, payment })
   }
@@ -220,7 +261,7 @@ class CoreEvents extends EventEmitter {
 
     const adminEmails = await models.User.find({ accountType: 'super_admin' })
       .select('-_id email')
-    this.sendEmail('admin_inventory_created', { to: adminEmails.join(',') }, { product, seller })
+    this.sendEmail('admin_inventory_created', { to: `${CoreEvents.convertEmailsToString(adminEmails)}` }, { product, seller })
   }
 
   async onRegisteredNewBuyer ({ user }) {
@@ -247,7 +288,101 @@ class CoreEvents extends EventEmitter {
 
     // const adminEmails = await models.User.find({ accountType: 'super_admin' })
     //   .select('-_id email')
-    // this.sendEmail('admin_inventory_created', { to: adminEmails.join(',') }, { product, seller })
+    // this.sendEmail('admin_inventory_created',
+    // { to: `${CoreEvents.convertEmailsToString(adminEmails)} }, { product, seller })
+  }
+
+  /**
+   * @description Send Cart approval decline mail
+   * @param {Object} approvalRecord
+   * @return {Promise<void>} void
+   */
+  async onSellerInstallmentCartDeclined (approvalRecord) {
+    const { cart: { product, user: buyer }, seller } = approvalRecord
+    const cooperative = await models.User.findById(buyer.cooperative)
+    const adminEmails = await models.User.find({ accountType: 'super_admin' })
+      .select('-_id email')
+
+    this.sendEmail('buyer_installment_cart_declined_mail',
+      { to: `${CoreEvents.convertEmailsToString(adminEmails)}, ${cooperative.email}` },
+      { product, buyer, seller })
+
+    this.sendEmail('admin_installment_cart_declined_mail',
+      { to: `${CoreEvents.convertEmailsToString(adminEmails)}, ${cooperative.email}` },
+      { product, buyer, seller })
+  }
+
+  async onInstallmentCartApprovalRequestAdmin (approvalRecord) {
+    const { cart, cart: { product, user: buyer }, seller } = approvalRecord
+    const cooperative = await models.User.findById(buyer.cooperative)
+
+    const adminEmails = await models.User.find({ accountType: 'super_admin' })
+      .select('_id email')
+
+    // send notification email to all admin and the user cooperative admin
+    if (adminEmails.length) {
+      for (let index = 0; index < adminEmails.length; index += 1) {
+        if (adminEmails[index].email) {
+          this.sendEmail('admin_cart_item_confirmation_request_mail',
+            { to: adminEmails[index].email },
+            {
+              cart,
+              product,
+              buyer,
+              seller,
+              approvalRecord,
+              admin: adminEmails[index]
+            })
+        }
+      }
+    }
+    this.sendEmail('admin_cart_item_confirmation_request_mail',
+      { to: cooperative.email },
+      {
+        cart,
+        product,
+        buyer,
+        seller,
+        approvalRecord,
+        admin: cooperative
+      })
+  }
+
+  async onInstallmentCartAdminApproved (approvalRecord) {
+    const { cart, cart: { product, user: buyer }, seller } = approvalRecord
+    // Notify seller
+    this.sendEmail('seller_installment_cart_approved_mail',
+      { to: seller.email },
+      {
+        cart, product, buyer, seller
+      })
+
+    // Notify buyer
+    this.sendEmail('buyer_installment_cart_approved_mail',
+      { to: seller.email },
+      {
+        cart, product, buyer, seller
+      })
+  }
+
+  async onInstallmentCartAdminDeclined (approvalRecord) {
+    const { cart: { product, user: buyer }, seller } = approvalRecord
+    // Notify seller
+    this.sendEmail('seller_installment_cart_declined_mail',
+      { to: seller.email },
+      { product, buyer, seller })
+
+    // Notify buyer
+    this.sendEmail('buyer_installment_cart_declined_mail',
+      { to: seller.email },
+      { product, buyer, seller })
+  }
+
+  async onBuyerMandateFormDetails ({ order, mandateFormUrl}) {
+    // Notify seller
+    this.sendEmail('buyer_mandate_form_mail',
+      { to: order.buyer.email },
+      { order, mandateFormUrl })
   }
 }
 
