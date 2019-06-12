@@ -366,6 +366,7 @@ const updateApprovalStatus = async (req, res) => {
       && user.accountType !== constants.SUPER_ADMIN
       && user.accountType !== constants.CORPORATE_ADMIN)) {
       responsePayload.data.errors.user = ['Invalid User']
+      return res.status(400).send(responsePayload)
     }
 
     // 2. Validate the user token,check if it matches our record based
@@ -479,6 +480,71 @@ const updateApprovalStatus = async (req, res) => {
   }
 }
 
+const getApprovalRequests = async (req, res) => {
+  const responsePayload = { success: false, message: 'Validation failed', data: { errors: {} } }
+  // NOTE: admin in this context is either a coorporative or superadmin
+  const user = await req.Models.User.findById(req.authData.userId)
+
+  // Check that the user accessing this route is either an admin, co-operative admin or a seller
+  if (!user || (user.accountType !== constants.SELLER
+    && user.accountType !== constants.SUPER_ADMIN
+    && user.accountType !== constants.CORPORATE_ADMIN)) {
+    responsePayload.data.errors.user = ['Invalid User. Only seller, co-operative admin and super admin']
+    return res.status(400).send(responsePayload)
+  }
+  let limit = parseInt(req.query.limit, 10)
+  let offset = parseInt(req.query.offset, 10)
+  offset = offset || 0
+  limit = limit || 10
+  const filter = utils.queryFilters(req)
+
+  // If add query based on current user
+  switch (user.accountType) {
+    case constants.SUPER_ADMIN:
+    case constants.CORPORATE_ADMIN:
+      filter.adminApprovalStatus = 'pending'
+      break
+    case constants.SELLER:
+      filter.sellerApprovalStatus = 'pending'
+      break
+    default:
+  }
+
+  let results = await req.Models.CartApproval.find(filter)
+    .populate({
+      path: 'cart',
+      populate: {
+        path: 'user product',
+        populate: { path: 'cooperative' }
+      }
+    })
+    .populate('seller')
+    .skip(offset)
+    .limit(limit)
+    .sort({ createdAt: 'desc' })
+  let resultCount = await req.Models.CartApproval.countDocuments(filter)
+
+  // We need to make sure if our current user is a co-operative admin,
+  // only related records are returned
+  if (user.accountType === constants.CORPORATE_ADMIN) {
+    results = results.filter(item => item.cart.user
+      .cooperative._id.toString() === req.authData.userId)
+    // Here, we are making sure we get the total count of result correctly
+    resultCount = resultCount > results.length ? 0 : resultCount
+  }
+
+  res.send({
+    success: true,
+    message: 'Successfully fetching orders',
+    data: {
+      offset,
+      limit,
+      resultCount,
+      results
+    }
+  })
+}
+
 module.exports = {
   create,
   get,
@@ -486,5 +552,6 @@ module.exports = {
   reduceCartQuantity,
   getInstallment,
   requestApproval,
-  updateApprovalStatus
+  updateApprovalStatus,
+  getApprovalRequests
 }

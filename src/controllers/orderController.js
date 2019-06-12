@@ -1,6 +1,5 @@
 /* eslint-disable no-inner-declarations,require-jsdoc */
 const moment = require('moment')
-const crypto = require('crypto')
 const sha512 = require('crypto-js/sha512')
 
 const { constants, remitaConfig } = require('../../utils/helpers')
