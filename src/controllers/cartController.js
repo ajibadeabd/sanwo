@@ -228,7 +228,8 @@ const get = (req, res) => {
 
 const getInstallment = async (req, res) => {
   try {
-    const filter = { user: req.body.userId, installmentPeriod: { $ne: undefined } }
+    let filter = utils.queryFilters(req)
+    filter = { ...filter, user: req.body.userId, installmentPeriod: { $ne: undefined } }
     const model = req.Models.Cart.find(filter)
     const select = 'name firstName lastName email avatar businessName'
     model.populate({ path: 'product', populate: { path: 'category seller', select } })
