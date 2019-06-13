@@ -18,4 +18,5 @@ router.post('/request-approval', cartValidationMiddleware.requestApproval, cartC
 router.put('/:cart', cartValidationMiddleware.reduceCartQuantity, cartController.reduceCartQuantity)
 router.delete('/:cart', cartValidationMiddleware.destroy, cartController.destroy)
 
+router.get('/approval-requests', cartValidationMiddleware.get, cartController.getApprovalRequests)
 module.exports = router

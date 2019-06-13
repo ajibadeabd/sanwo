@@ -1,6 +1,5 @@
 /* eslint-disable no-inner-declarations,require-jsdoc */
 const moment = require('moment')
-const crypto = require('crypto')
 const sha512 = require('crypto-js/sha512')
 
 const { constants, remitaConfig } = require('../../utils/helpers')
@@ -201,11 +200,8 @@ const _createInstallmentRelatedRecords = async (req, address, cart, bankAccount)
       meta: cart.meta,
       status: constants.ORDER_STATUS.approved
     })
-    // savedInstallmentOrder.installmentsRepaymentSchedule = installmentsRepaymentSchedule
-    savedInstallmentOrder.purchases = [createPurchaseRecord._id]
-    // generate token for order approval
+    savedInstallmentOrder.purchases.push(createPurchaseRecord._id)
     savedInstallmentOrder.save()
-
     // reduce the available quantity once order has been created
     if (cart.product.quantity) {
       cart.product.quantity -= cart.quantity
@@ -299,10 +295,9 @@ const createInstallmentOrder = async (req, res) => {
       requestId: mandateResponse.requestId,
       merchantId,
     }
-    const installmentsRepaymentSchedule = []
     // create installment repayment schedule
     for (let i = 1; i <= order.installmentPeriod; i += 1) {
-      installmentsRepaymentSchedule.push({
+      order.installmentsRepaymentSchedule.push({
         installmentRef: `${order.orderNumber}_${i}`, // concat with order number
         installmentPercentage: order.installmentPercentage,
         amount:
@@ -312,11 +307,11 @@ const createInstallmentOrder = async (req, res) => {
           .format()
       })
     }
-    order.installmentsRepaymentSchedule = installmentsRepaymentSchedule
+    // Save all modifications
     order.save()
+    // remove cart item
     cart.delete()
     res.send({ success: true, message: 'Order created successfully', data: order })
-
 
     // Send an email to the customer regarding installment purchase and mandate form URL
     notificationEvents.emit('buyer_mandate_form_details', {
