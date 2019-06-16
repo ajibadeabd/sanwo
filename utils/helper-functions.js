@@ -11,6 +11,7 @@ module.exports.queryFilters = (req) => {
       'offset',
       'startDate',
       'endDate',
+      'approvalStatus'
     ]
     queryKeys.forEach((key) => {
       if (!ignore.includes(key)) {
