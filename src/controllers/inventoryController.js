@@ -87,6 +87,7 @@ const _queryInventory = async (req, status = true, allInventory = false) => {
   if (status) filter.status = true
   filter.deletedAt = undefined
   if (!allInventory) filter.quantity = { $gt: 0 }
+  if (req.query.name) filter.name = { $regex: filter.name, $options: 'i' }
   const model = req.Models.Inventory.find(filter)
   model.skip(offset)
   model.limit(limit)
