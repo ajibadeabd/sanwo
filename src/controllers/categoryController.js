@@ -33,7 +33,8 @@ const getCategories = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 10
     const offset = parseInt(req.query.offset, 10) || 0
     const filter = utils.queryFilters(req)
-    const resultCount = await req.Models.Category.countDocuments()
+    if (req.query.name) filter.name = { $regex: filter.name, $options: 'i' }
+    const resultCount = await req.Models.Category.countDocuments(filter)
     const results = await req.Models.Category.find(filter)
       .populate('parent')
       .skip(offset)
