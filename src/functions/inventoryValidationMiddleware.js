@@ -41,7 +41,7 @@ const create = (req, res, next) => {
     description: 'string',
     price: 'required|numeric|min:100',
     category: 'required|mongoId|exists:Category,_id',
-    installmentPercentagePerMonth: 'isJson',
+    installmentPercentagePerMonth: 'isJson|valid_percentage',
     images: 'max:5',
     meta: 'isJson',
     quantity: 'required|numeric|min:1'

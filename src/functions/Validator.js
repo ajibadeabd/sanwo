@@ -22,6 +22,11 @@ Validator.register('mongoId', value => mongoRegex.test(value),
 Validator.register('isJson', value => utils.isJson(value),
   'Invalid data sent for :attribute')
 
+// validate isJson
+Validator.register('valid_percentage', values => utils.isJson(values) && JSON
+  .parse(values).every(val => parseInt(val, 10) && (parseInt(val, 10) <= 100)),
+'One of the values for :attribute contains an invalid value')
+
 // validate Password policy
 Validator.register('password_policy', value => passwordRegex.test(value),
   'Minimum six characters, at least one uppercase letter, one lowercase letter and one number')

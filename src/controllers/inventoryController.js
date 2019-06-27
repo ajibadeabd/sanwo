@@ -5,8 +5,15 @@ const notificationEvents = require('../../utils/notificationEvents')
 const create = (req, res) => {
   // first let's confirm that the installment period set(if any)
   // now let's create the product
-  const installmentPercentagePerMonth = req.body.installmentPercentagePerMonth
-    ? JSON.parse(req.body.installmentPercentagePerMonth) : []
+  let installmentPercentagePerMonth = []
+
+  if (req.body.installmentPercentagePerMonth) {
+    // parse installmentPercentagePerMonth to number
+    installmentPercentagePerMonth = JSON
+      .parse(req.body.installmentPercentagePerMonth)
+    installmentPercentagePerMonth = installmentPercentagePerMonth
+      .map(percentagePerMonth => parseInt(percentagePerMonth, 10))
+  }
   req.Models.Inventory.create({
     name: req.body.name,
     category: req.body.category,
