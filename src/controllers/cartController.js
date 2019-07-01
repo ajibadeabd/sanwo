@@ -498,7 +498,7 @@ const getApprovalRequests = async (req, res) => {
   limit = limit || 10
   const filter = utils.queryFilters(req)
 
-  // If add query based on current user
+  // Add status query based on current user type
   switch (user.accountType) {
     case constants.SUPER_ADMIN:
     case constants.CORPORATE_ADMIN:
@@ -506,6 +506,7 @@ const getApprovalRequests = async (req, res) => {
       break
     case constants.SELLER:
       filter.sellerApprovalStatus = 'pending'
+      filter.seller = req.authData.userId
       break
     default:
   }
