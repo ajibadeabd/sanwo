@@ -26,6 +26,33 @@ class CoreEvents extends EventEmitter {
         pass: process.env.MAIL_PASSWORD
       }
     }
+    this.mailjet = function(data) {
+      /* using mailjet */
+      const publickey = process.env.MAILJET_PUBLIC_KEY;
+      const privatekey = process.env.MAILJET_PRIVATE_KEY;
+
+      const mailjet = require('node-mailjet')
+          .connect(publickey, privatekey)
+      const request = mailjet
+          .post("send", {
+              'version': 'v3.1'
+          })
+          .request({
+              "Messages": [{
+                  "From": {
+                      "Email": "tech@natterbase.com"
+                  },
+                  "To": [{
+                      "Email": data.destination.to
+                  }],
+                  "Subject": data.content.subject,
+                  // "TextPart": "Dear passenger 1, welcome to Mailjet! May the delivery force be with you!",
+                  "HTMLPart": data.content.html
+              }]
+          })
+
+      return request;
+    },
     this.email = new Email({
       message: {
         from: process.env.MAIL_FROM, // sender address
@@ -77,7 +104,19 @@ class CoreEvents extends EventEmitter {
    * @return {VoidFunction} void
    */
   sendEmail (template, destination, locals) {
-    this.email.send({ template, message: destination, locals })
+    // this.email.send({ template, message: destination, locals })
+    const pug = require('pug');
+
+    // Compile the source code
+    const subject_path = path.join('mail_templates/' + template + '/subject.pug')
+    const html_path = path.join('mail_templates/' + template + '/html.pug')
+    const compiledFunctionHtml = pug.compileFile(html_path);
+    const compiledFunctionSubject = pug.compileFile(subject_path);
+    
+    // Render a set of data
+    const htmlContent = compiledFunctionHtml(locals);
+    const subjectContent = compiledFunctionSubject(locals);
+    this.mailjet({ destination, content: {html: htmlContent, subject: subjectContent} })
       .then(CoreEvents.mailSent).catch(CoreEvents.mailFailed)
   }
 
