@@ -26,6 +26,21 @@ class CoreEvents extends EventEmitter {
         pass: process.env.MAIL_PASSWORD
       }
     }
+    this.sendmail = function(data) {
+      const sendmail = require('sendmail')();
+      sendmail({
+        from: `${process.env.APP_NAME} <${process.env.MAIL_FROM}>`,
+        to: data.destination.to,
+        subject: data.content.subject,
+        html: data.content.html,
+      }, (err, reply) => {
+        if (!err) {
+          // console.log("Mail sent to ", data.destination.to, reply);
+        } else {
+          console.log("Error sending mail to ", err);
+        }
+      });
+    }
     this.mailjet = function(data) {
       /* using mailjet */
       const publickey = process.env.MAILJET_PUBLIC_KEY;
@@ -116,8 +131,8 @@ class CoreEvents extends EventEmitter {
     // Render a set of data
     const htmlContent = compiledFunctionHtml(locals);
     const subjectContent = compiledFunctionSubject(locals);
-    this.mailjet({ destination, content: {html: htmlContent, subject: subjectContent} })
-      .then(CoreEvents.mailSent).catch(CoreEvents.mailFailed)
+    this.sendmail({ destination, content: {html: htmlContent, subject: subjectContent} })
+      // .then(CoreEvents.mailSent).catch(CoreEvents.mailFailed)
   }
 
   /**
