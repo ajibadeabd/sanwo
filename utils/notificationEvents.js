@@ -413,7 +413,7 @@ class CoreEvents extends EventEmitter {
 
     // Notify buyer
     this.sendEmail('buyer_installment_cart_approved_mail',
-      { to: seller.email },
+      { to: buyer.email },
       {
         cart, product, buyer, seller
       })
