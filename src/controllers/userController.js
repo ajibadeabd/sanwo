@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt')
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
+const google = require('../../utils/googleUtil')
 const helpers = require('../../utils/helpers')
 const notificationEvents = require('../../utils/notificationEvents')
 const mailer = require('./../../utils/mailer')
@@ -30,9 +31,7 @@ const forgotPassword = async (req, res, next, isNewUser = false) => {
     const resetPasswordToken = await generateResetToken()
 
     //  update token to the user object in DB, and set expiry to 24hr
-    const user = await req.Models.User.findOneAndUpdate(query,
-      { resetPasswordToken, resetPasswordExpires: Date.now() + 86400000 },
-      { new: true })
+    const user = await req.Models.User.findOneAndUpdate(query, { resetPasswordToken, resetPasswordExpires: Date.now() + 86400000 }, { new: true })
 
     notificationEvents.emit('send_password_reset_email', { user })
     if (!isNewUser) {
@@ -101,10 +100,10 @@ const _createSuperAdmin = (req, res, next) => {
       throw err
     } else {
       res.send({
-        success: true,
-        message: 'Your registration successful. Password reset link sent to your email.',
-        data: result
-      })
+          success: true,
+          message: 'Your registration successful. Password reset link sent to your email.',
+          data: result
+        })
         .status(201)
       forgotPassword(req, res, next, true)
     }
@@ -130,10 +129,10 @@ const _createSeller = (req, res, next) => {
       throw err
     } else {
       res.send({
-        success: true,
-        message: 'Your registration successful. Password reset link sent to your email.',
-        data: result
-      })
+          success: true,
+          message: 'Your registration successful. Password reset link sent to your email.',
+          data: result
+        })
         .status(201)
       forgotPassword(req, res, next, true)
     }
@@ -156,10 +155,10 @@ const _createCorporateAdmin = (req, res, next) => {
       req.log(`Newly created corporate_admin ${JSON.stringify(result)}`)
 
       res.send({
-        success: true,
-        message: 'Your registration successful. You\'ll be notified once your account has been activated',
-        data: result
-      })
+          success: true,
+          message: 'Your registration successful. You\'ll be notified once your account has been activated',
+          data: result
+        })
         .status(201)
       // send welcome email
       mailer.sendWelcomeMail(result, req)
@@ -185,26 +184,26 @@ const login = (req, res) => {
     .exec((err, user) => {
       if (err) throw err
 
-      if (user
-        && (user.status === helpers.constants.ACCOUNT_STATUS.suspended)) {
+      if (user &&
+        (user.status === helpers.constants.ACCOUNT_STATUS.suspended)) {
         return res.send({
-          success: false,
-          message: 'Your account is suspended, contact admin for more details.',
-          data: null
-        })
+            success: false,
+            message: 'Your account is suspended, contact admin for more details.',
+            data: null
+          })
           .status(401)
       }
 
       // If the users account type is seller or corporate admin and the user status is pending
-      if (user
-      && (helpers.constants.SELLER === user.accountType
-        || user.accountType === helpers.constants.CORPORATE_ADMIN)
-      && user.status === helpers.constants.ACCOUNT_STATUS.pending) {
+      if (user &&
+        (helpers.constants.SELLER === user.accountType ||
+          user.accountType === helpers.constants.CORPORATE_ADMIN) &&
+        user.status === helpers.constants.ACCOUNT_STATUS.pending) {
         return res.send({
-          success: false,
-          message: 'Your account is still pending confirmation. You will be notified once your account has been activated',
-          data: null
-        })
+            success: false,
+            message: 'Your account is still pending confirmation. You will be notified once your account has been activated',
+            data: null
+          })
           .status(401)
       }
 
@@ -220,7 +219,9 @@ const login = (req, res) => {
 
       if (user && bcrypt.compareSync(req.body.password, user.password)) {
         const {
-          _id, accountType, status
+          _id,
+          accountType,
+          status
         } = user
         const token = jwt.sign({
           _id,
@@ -248,11 +249,11 @@ const passwordReset = (req, res) => {
   // check if the sent token exists and hasn't expired
 
   req.Models.User.findOne({
-    resetPasswordToken: req.query.token,
-    resetPasswordExpires: {
-      $gt: Date.now()
-    }
-  })
+      resetPasswordToken: req.query.token,
+      resetPasswordExpires: {
+        $gt: Date.now()
+      }
+    })
     .exec((err, user) => {
       if (err) throw err
 
@@ -284,12 +285,10 @@ const getCooperatives = (req, res) => {
   let offset = parseInt(req.query.offset, 10)
   offset = offset || 0
   limit = limit || 10
-  req.Models.User.find(
-    {
+  req.Models.User.find({
       accountType: helpers.constants.CORPORATE_ADMIN,
       $and: [{ status: helpers.constants.ACCOUNT_STATUS.accepted }]
-    }
-  )
+    })
     .select('firstName lastName _id')
     .skip(offset)
     .limit(limit)
@@ -335,11 +334,100 @@ const updateUserAvatar = (req, res) => {
     })
 }
 
+const googleUrl = async (req, res) => {
+  try {
+    var url = await google.urlGoogle(req.query);
+    res.send({
+      status: true,
+      url: url
+    })
+  } catch (error) {
+    res.send({
+      status: false,
+      message: "Try again"
+    })
+  }
+}
+const googleSignup = async (req, res) => {
+  try {
+    var gUser = await google.getGoogleAccountFromCode(decodeURIComponent(req.body.code), req.query);
+    try {
+      var user = await req.Models.User.findOne({ email: gUser.email });
+      if (user) {
+        const {
+          _id,
+          accountType,
+          status
+        } = user
+        const token = jwt.sign({
+          _id,
+          accountType,
+          status
+        }, process.env.TOKEN_SECRET, { expiresIn: '3d' })
+        user = JSON.parse(JSON.stringify(user));
+        delete user.password;
+        return res.send({
+          token: token,
+          user: user,
+          message: "successfully logged in"
+        })
+      }
+
+      // var userId = shortid.generate();
+      // gUser.social = true;
+
+      // var nUser = new req.Models.User(gUser);
+      // try {
+      //   await nUser.save();
+
+      //   user = await req.Models.User.findOne({ email: gUser.email });
+      //   if (user.social) {
+      //     var data = {
+      //       username: user.firstName,
+      //       backend: process.env.BACKEND
+      //     }
+      //     sendWelcomeEmail(user.email, data);
+      //   }
+
+      //   var token = user.getJWT(),
+      //     user = JSON.parse(JSON.stringify(user));
+      //   delete user.password;
+
+      return res.send({
+        user: gUser,
+        new_account: true
+      })
+      // } catch (createError) {
+      //   return res.send({
+      //     status: false,
+      //     message: "Try again",
+      //     error: createError
+      //   })
+      // }
+
+    } catch (findError) {
+      return res.send({
+        status: false,
+        message: "Try again",
+        error: findError
+      })
+    }
+  } catch (error) {
+    return res.send({
+      status: false,
+      message: "Try again",
+      error: error
+    })
+  }
+}
+
 module.exports = {
   create,
   login,
   forgotPassword,
   passwordReset,
   getCooperatives,
-  updateUserAvatar
+  updateUserAvatar,
+  googleUrl,
+  googleSignup
 }
