@@ -107,7 +107,6 @@ var getGoogleAccountFromCode = async function(code, param) {
     tokens: tokens,
     lastName: userLastName,
     firstName: userFirstName,
-    avatar: userAvatar,
     username: userGoogleEmail.split('@')[0]
   };
 }

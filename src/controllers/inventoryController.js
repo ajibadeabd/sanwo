@@ -49,16 +49,15 @@ const update = (req, res) => {
         inventory.description = req.body.description || inventory.description
         inventory.price = req.body.price || inventory.price
         inventory.quantity = req.body.quantity || inventory.quantity
-        inventory.images = req.body.images
-          ? inventory.images.concat(req.body.images)
-          : inventory.images
-        inventory.meta = req.body.meta
-          ? { ...inventory.meta, ...JSON.parse(req.body.meta) }
-          : inventory.meta
+        inventory.images = req.body.images ?
+          inventory.images.concat(req.body.images) :
+          inventory.images
+        inventory.meta = req.body.meta ? { ...inventory.meta, ...JSON.parse(req.body.meta) } :
+          inventory.meta
 
-        inventory.installmentPercentagePerMonth = req.body.installmentPercentagePerMonth
-          ? JSON.parse(req.body.installmentPercentagePerMonth)
-          : inventory.installmentPercentagePerMonth
+        inventory.installmentPercentagePerMonth = req.body.installmentPercentagePerMonth ?
+          JSON.parse(req.body.installmentPercentagePerMonth) :
+          inventory.installmentPercentagePerMonth
         inventory.save((error) => {
           if (error) throw error
           res.send({
@@ -102,15 +101,21 @@ const _queryInventory = async (req, status = true, allInventory = false) => {
   model.sort({ createdAt: 'desc' })
   const resultCount = await req.Models.Inventory.countDocuments(filter)
   return Promise.resolve({
-    model, offset, limit, resultCount
+    model,
+    offset,
+    limit,
+    resultCount
   })
 }
 
 const getInventories = async (req, res) => {
   try {
     const {
-      model, offset, limit, resultCount
-    } = await _queryInventory(req)
+      model,
+      offset,
+      limit,
+      resultCount
+    } = await _queryInventory(req, true, false)
     const results = await model
 
     // fetch average ratings for each product
@@ -120,7 +125,8 @@ const getInventories = async (req, res) => {
         { $group: { _id: '', avgRating: { $avg: '$rating' } } }
       ])
       return {
-        ...result.toObject(), avgRating: ratings && ratings.length ? ratings[0].avgRating : 0
+        ...result.toObject(),
+        avgRating: ratings && ratings.length ? ratings[0].avgRating : 0
       }
     })
     const inventories = await Promise.all(getInventoryRating)
@@ -128,7 +134,10 @@ const getInventories = async (req, res) => {
       success: true,
       message: 'Successfully fetching inventories',
       data: {
-        offset, limit, resultCount, results: inventories
+        offset,
+        limit,
+        resultCount,
+        results: inventories
       }
     })
   } catch (e) {
@@ -142,7 +151,10 @@ const getInventories = async (req, res) => {
 
 const getAllInventories = async (req, res) => {
   const {
-    model, offset, limit, resultCount
+    model,
+    offset,
+    limit,
+    resultCount
   } = await _queryInventory(req, false, true)
   const results = await model
   res.send({
@@ -262,59 +274,77 @@ const getInventoryStat = async (req, res) => {
   const productsInStock = await req.Models.Inventory
     .countDocuments({ ...bySeller, quantity: { $gte: 1 } })
 
+  const productsUnapproved = await req.Models.Inventory
+    .countDocuments({ ...bySeller, status: false })
+
+  var products = await req.Models.Inventory
+    .find({ ...bySeller });
+  var soldItems = 0;
+
+  for (product of products) {
+    let solds = await req.Models.Cart.find({ product: product._id });
+    for (sold of solds) {
+      soldItems += sold.quantity;
+    }
+  }
+
   return res.send({
     success: true,
     message: 'Successfully fetching inventories',
     data: {
       totalProducts,
       productsOutOfStock,
-      productsInStock
+      productsInStock,
+      productsUnapproved,
+      soldItems
     }
   })
 }
 
 const getInventoryInStock = async (req, res) => {
-  req.query = { seller: req.body.userId, quantity: { $gte: 1 }, ...req.query }
+  req.query = { seller: req.authData.userId, quantity: { $gte: 1 }, ...req.query }
+
   const {
-    model, offset, limit, resultCount
-  } = await _queryInventory(req, true, false)
-  model.exec((err, results) => {
-    if (err) {
-      throw err
-    } else {
-      res.send({
-        success: true,
-        message: 'Successfully fetching inventories in stock',
-        data: {
-          offset,
-          limit,
-          resultCount,
-          results
-        }
-      })
+    offset,
+    limit,
+    resultCount
+  } = await _queryInventory(req, true, true)
+  var results = await req.Models.Inventory.find(req.query, (error, result) => {
+    if (error) throw error
+    return result;
+  })
+  res.send({
+    success: true,
+    message: 'Successfully fetching inventories in stock',
+    data: {
+      offset,
+      limit,
+      resultCount,
+      results
     }
   })
 }
 
 const getInventoryOutStock = async (req, res) => {
-  req.query = { seller: req.body.userId, quantity: { $lte: 1 }, ...req.query }
+  req.query = { seller: req.authData.userId, quantity: { $lte: 0 }, ...req.query }
+
   const {
-    model, offset, limit, resultCount
-  } = await _queryInventory(req, true, false, )
-  model.exec((err, results) => {
-    if (err) {
-      throw err
-    } else {
-      res.send({
-        success: true,
-        message: 'Successfully fetching inventories out of stock',
-        data: {
-          offset,
-          limit,
-          resultCount,
-          results
-        }
-      })
+    offset,
+    limit,
+    resultCount
+  } = await _queryInventory(req, true, true)
+  var results = await req.Models.Inventory.find(req.query, (error, result) => {
+    if (error) throw error
+    return result;
+  })
+  res.send({
+    success: true,
+    message: 'Successfully fetching inventories in stock',
+    data: {
+      offset,
+      limit,
+      resultCount,
+      results
     }
   })
 }

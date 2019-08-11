@@ -183,7 +183,15 @@ const login = (req, res) => {
     .populate('cooperative address', '-password -relatedUsers -status')
     .exec((err, user) => {
       if (err) throw err
-
+      //  If the user does't have password set and it is a google account
+      if (user && !user.password && user.social) {
+        return res.status(401)
+          .send({
+            success: false,
+            message: 'Your account was created using your Google account. Please login with your google account to continue.',
+            data: null
+          })
+      }
       if (user &&
         (user.status === helpers.constants.ACCOUNT_STATUS.suspended)) {
         return res.send({
@@ -207,8 +215,8 @@ const login = (req, res) => {
           .status(401)
       }
 
-      //  If the user does't have password set
-      if (user && !user.password) {
+      //  If the user does't have password set adn is not a google account
+      if (user && !user.password && !user.social) {
         return res.status(401)
           .send({
             success: false,
@@ -353,6 +361,29 @@ const googleSignup = async (req, res) => {
     var gUser = await google.getGoogleAccountFromCode(decodeURIComponent(req.body.code), req.query);
     try {
       var user = await req.Models.User.findOne({ email: gUser.email });
+      if (user &&
+        (user.status === helpers.constants.ACCOUNT_STATUS.suspended)) {
+        return res.send({
+            success: false,
+            message: 'Your account is suspended, contact admin for more details.',
+            data: null
+          })
+          .status(401)
+      }
+
+      // If the users account type is seller or corporate admin and the user status is pending
+      if (user &&
+        (helpers.constants.SELLER === user.accountType ||
+          user.accountType === helpers.constants.CORPORATE_ADMIN) &&
+        user.status === helpers.constants.ACCOUNT_STATUS.pending) {
+        return res.send({
+            success: false,
+            message: 'Your account is still pending confirmation. You will be notified once your account has been activated',
+            data: null
+          })
+          .status(401)
+      }
+
       if (user) {
         const {
           _id,
@@ -374,36 +405,66 @@ const googleSignup = async (req, res) => {
       }
 
       // var userId = shortid.generate();
-      // gUser.social = true;
+      gUser.social = true;
+      gUser.accountType = req.query.type;
 
-      // var nUser = new req.Models.User(gUser);
-      // try {
-      //   await nUser.save();
 
-      //   user = await req.Models.User.findOne({ email: gUser.email });
-      //   if (user.social) {
-      //     var data = {
-      //       username: user.firstName,
-      //       backend: process.env.BACKEND
-      //     }
-      //     sendWelcomeEmail(user.email, data);
-      //   }
+      var nUser = new req.Models.User(gUser);
+      try {
+        var message;
+        await nUser.save();
 
-      //   var token = user.getJWT(),
-      //     user = JSON.parse(JSON.stringify(user));
-      //   delete user.password;
+        user = await req.Models.User.findOne({ email: gUser.email });
 
-      return res.send({
-        user: gUser,
-        new_account: true
-      })
-      // } catch (createError) {
-      //   return res.send({
-      //     status: false,
-      //     message: "Try again",
-      //     error: createError
-      //   })
-      // }
+        if (user.accountType === helpers.constants.CORPORATE_ADMIN) {
+          mailer.sendWelcomeMail(user, req)
+          message = 'Your registration successful. You\'ll be notified once your account has been activated';
+        }
+
+        if (user.accountType === helpers.constants.BUYER) {
+          notificationEvents.emit('registered_new_buyer', { user })
+          message = `Your registration successful. We're happy to have you here at ${process.env.APP_NAME}`;
+        }
+
+        if (user.accountType === helpers.constants.SELLER) {
+          message = `Your registration successful. We're happy to have you here at ${process.env.APP_NAME}`;
+        }
+
+        // If the users account type is seller or corporate admin and the user status is pending
+        if (user &&
+          (helpers.constants.SELLER === user.accountType ||
+            user.accountType === helpers.constants.CORPORATE_ADMIN) &&
+          user.status === helpers.constants.ACCOUNT_STATUS.pending) {
+          return res.send({
+              success: false,
+              message: 'Your account is still pending confirmation. You will be notified once your account has been activated',
+              data: null
+            })
+            .status(401)
+        }
+        const {
+          _id,
+          accountType,
+          status
+        } = user
+        const token = jwt.sign({
+          _id,
+          accountType,
+          status
+        }, process.env.TOKEN_SECRET, { expiresIn: '3d' })
+        user = JSON.parse(JSON.stringify(user));
+        return res.send({
+          token: token,
+          user: user,
+          message: "successfully logged in"
+        })
+      } catch (createError) {
+        return res.send({
+          status: false,
+          message: "Try again",
+          error: createError
+        })
+      }
 
     } catch (findError) {
       return res.send({
