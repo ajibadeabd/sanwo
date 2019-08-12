@@ -358,6 +358,7 @@ const googleUrl = async (req, res) => {
 }
 const googleSignup = async (req, res) => {
   try {
+    console.log(req.body)
     var gUser = await google.getGoogleAccountFromCode(decodeURIComponent(req.body.code), req.query);
     try {
       var user = await req.Models.User.findOne({ email: gUser.email });
