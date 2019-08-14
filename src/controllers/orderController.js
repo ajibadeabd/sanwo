@@ -101,35 +101,36 @@ const create = async (req, res) => {
   notificationEvents.emit('new_order', ordersWithoutInstallment)
 }
 
-const updateOrderStatus = (req, res) => {
-  console.log(req)
-  req.Models.Order.findOne({ _id: req.body.orderId })
-    .populate('buyer purchases')
-    .exec((err, order) => {
-      if (err) {
-        throw err
-      } else {
-        if(req.body.status==="payment_completed"){
-          // Notify buyer that product has been shipped by email
+const updateOrderStatus = async (req, res) => {
+  var order = req.Models.Order.findById(req.body.orderId);\
+  res.send(order);
+  // req.Models.Order.findOne({ _id: req.body.orderId })
+  //   .populate('buyer purchases')
+  //   .exec((err, order) => {
+  //     if (err) {
+  //       throw err
+  //     } else {
+  //       if(req.body.status==="payment_completed"){
+  //         // Notify buyer that product has been shipped by email
 
-        }
+  //       }
 
-        if(req.body.status==="delivered"){
-          // Notify Seller that product has reached the buyer by email
-        }
-        order.orderStatus = req.body.status
-        order.save()
-        res.send({
-          success: true,
-          message: 'Order status updated successfully',
-          data: order
-        })
+  //       if(req.body.status==="delivered"){
+  //         // Notify Seller that product has reached the buyer by email
+  //       }
+  //       order.orderStatus = req.body.status
+  //       order.save()
+  //       res.send({
+  //         success: true,
+  //         message: 'Order status updated successfully',
+  //         data: order
+  //       })
 
 
-        // notify the buyer and seller of the status change
-        notificationEvents.emit('order_status_changed', { order, status: req.params.status })
-      }
-    })
+  //       // notify the buyer and seller of the status change
+  //       notificationEvents.emit('order_status_changed', { order, status: req.params.status })
+  //     }
+  //   })
 }
 
 const getOrders = async (req, res) => {
