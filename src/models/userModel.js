@@ -60,6 +60,10 @@ const UserSchema = new Schema({
   businessSellingOnOtherWebsite: {
     type: Boolean,
   },
+  social: {
+    type: Boolean,
+    default: false
+  },
   accountType: {
     type: String,
     trim: true,
@@ -104,13 +108,13 @@ const UserSchema = new Schema({
 
 
 UserSchema.statics = {
-  valueExists (query) {
+  valueExists(query) {
     return this.findOne(query)
       .then(result => result)
   }
 }
 
-UserSchema.pre('save', function (next) {
+UserSchema.pre('save', function(next) {
   if (!this.isModified('password')) return next()
   if (this.password) this.password = bcrypt.hashSync(this.password, 10)
   next()
