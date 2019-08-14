@@ -48,8 +48,50 @@ const sendWelcomeMail = (user, req) => {
   }, `${process.env.MAIL_FROM}`)
 }
 
+const orderShipped = (order, req) => {
+  const { lastName, email } = order.buyer
+  const messageBody = `<p>Hello ${lastName} we are happy to inform you that your order from ${process.env.APP_NAME} has been shipped</p>
+  <h3>Order Details</h3>  
+  <ul>
+    <li>Order Number: ${order.orderNumber}</li>
+    <li>Order Quantity: ${order.totalQuantities}</li>
+    <li>Order Cost: ₦ ${order.subTotal}</li>
+  </ul>
+  <p></p>`
+  const subject = `Shipped Order ${order.orderNumber}`
+
+  sendMail(email, subject, messageBody, (mailErr, mailRes) => {
+    if (mailErr) {
+      req.log('MAIL not sent')
+    }
+    if (mailRes) req.log('Message sent: %s', mailRes.messageId)
+  }, `${process.env.MAIL_FROM}`)
+}
+
+const orderDelivered = (order, req) => {
+  const { lastName, email, firstName } = order.buyer
+  const messageBody = `<p>Your order for ${lastName} ${firstName} has been delivered</p>
+  <h3>Order Details</h3>  
+  <ul>
+    <li>Order Number: ${order.orderNumber}</li>
+    <li>Order Quantity: ${order.totalQuantities}</li>
+    <li>Order Cost: ₦ ${order.subTotal}</li>
+  </ul>
+  <p></p>`
+  const subject = `Delivered Order ${order.orderNumber}`
+
+  sendMail(email, subject, messageBody, (mailErr, mailRes) => {
+    if (mailErr) {
+      req.log('MAIL not sent')
+    }
+    if (mailRes) req.log('Message sent: %s', mailRes.messageId)
+  }, `${process.env.MAIL_FROM}`)
+}
+
 
 module.exports = {
   sendMail,
+  orderShipped,
+  orderDelivered,
   sendWelcomeMail
 }

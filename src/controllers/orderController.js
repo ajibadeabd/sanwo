@@ -1,5 +1,6 @@
 /* eslint-disable no-inner-declarations,require-jsdoc */
 const moment = require('moment')
+const mailer = require('./../../utils/mailer')
 const sha512 = require('crypto-js/sha512')
 
 const { constants, remitaConfig } = require('../../utils/helpers')
@@ -107,6 +108,14 @@ const updateOrderStatus = (req, res) => {
       if (err) {
         throw err
       } else {
+        if(req.body.status==="payment_completed"){
+          // Notify buyer that product has been shipped by email
+
+        }
+
+        if(req.body.status==="delivered"){
+          // Notify Seller that product has reached the buyer by email
+        }
         order.orderStatus = req.body.status
         order.save()
         res.send({
@@ -114,6 +123,7 @@ const updateOrderStatus = (req, res) => {
           message: 'Order status updated successfully',
           data: order
         })
+
 
         // notify the buyer and seller of the status change
         notificationEvents.emit('order_status_changed', { order, status: req.params.status })
