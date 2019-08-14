@@ -62,7 +62,7 @@ const orderShipped = (order, req) => {
 
   sendMail(email, subject, messageBody, (mailErr, mailRes) => {
     if (mailErr) {
-      req.log('MAIL not sent')
+      req.log('MAIL not sent', mailErr)
     }
     if (mailRes) req.log('Message sent: %s', mailRes.messageId)
   }, `${process.env.MAIL_FROM}`)
@@ -82,7 +82,7 @@ const orderDelivered = (order, req) => {
 
   sendMail(email, subject, messageBody, (mailErr, mailRes) => {
     if (mailErr) {
-      req.log('MAIL not sent')
+      req.log('MAIL not sent', mailErr)
     }
     if (mailRes) req.log('Message sent: %s', mailRes.messageId)
   }, `${process.env.MAIL_FROM}`)
