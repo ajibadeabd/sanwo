@@ -109,7 +109,7 @@ const updateOrderStatus = (req, res) => {
       if (err) {
         throw err
       } else {
-        if(req.body.status==="payment_completed"){
+        if(req.body.status==="in_route"){
           // Notify buyer that product has been shipped by email
           mailer.orderShipped(order, req);
         }
