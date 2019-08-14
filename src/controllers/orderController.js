@@ -105,6 +105,7 @@ const updateOrderStatus = (req, res) => {
   req.Models.Order.findOne({ _id: req.body.orderId })
     .populate('buyer purchases')
     .exec((err, order) => {
+      console.log(order)
       if (err) {
         throw err
       } else {
