@@ -111,11 +111,12 @@ const updateOrderStatus = (req, res) => {
       } else {
         if(req.body.status==="payment_completed"){
           // Notify buyer that product has been shipped by email
-
+          mailer.orderShipped(order, req);
         }
 
         if(req.body.status==="delivered"){
           // Notify Seller that product has reached the buyer by email
+          mailer.orderDelivered(order, req);
         }
         order.orderStatus = req.body.status
         order.save()
@@ -127,7 +128,7 @@ const updateOrderStatus = (req, res) => {
 
 
         // notify the buyer and seller of the status change
-        notificationEvents.emit('order_status_changed', { order, status: req.params.status })
+        // notificationEvents.emit('order_status_changed', { order, status: req.params.status })
       }
     })
 }
