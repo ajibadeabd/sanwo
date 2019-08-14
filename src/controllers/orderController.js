@@ -102,10 +102,10 @@ const create = async (req, res) => {
 }
 
 const updateOrderStatus = (req, res) => {
+  console.log(req)
   req.Models.Order.findOne({ _id: req.body.orderId })
     .populate('buyer purchases')
     .exec((err, order) => {
-      console.log(order)
       if (err) {
         throw err
       } else {
