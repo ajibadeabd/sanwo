@@ -102,7 +102,7 @@ const create = async (req, res) => {
 }
 
 const updateOrderStatus = async (req, res) => {
-  var order = await req.Models.Order.find({_idreq.body.orderId});
+  var order = await req.Models.Order.find({_id: req.body.orderId});
   res.send(order);
   // req.Models.Order.findOne({ _id: req.body.orderId })
   //   .populate('buyer purchases')
