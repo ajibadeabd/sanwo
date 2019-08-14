@@ -49,6 +49,7 @@ const sendWelcomeMail = (user, req) => {
 }
 
 const orderShipped = (order, req) => {
+  console.log(order)
   const { lastName, email } = order.buyer
   const messageBody = `<p>Hello ${lastName} we are happy to inform you that your order from ${process.env.APP_NAME} has been shipped</p>
   <h3>Order Details</h3>  
