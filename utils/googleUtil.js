@@ -1,5 +1,5 @@
 const { google } = require('googleapis');
-
+const rp = require('request-promise')
 /*******************/
 /** CONFIGURATION **/
 /*******************/
@@ -105,6 +105,7 @@ var getGoogleAccountFromCode = async function(code, param) {
     id: userGoogleId,
     email: userGoogleEmail,
     tokens: tokens,
+    name: userLastName + " " + userFirstName,
     lastName: userLastName,
     firstName: userFirstName,
     username: userGoogleEmail.split('@')[0]

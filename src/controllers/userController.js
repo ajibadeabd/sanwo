@@ -357,7 +357,7 @@ const googleUrl = async (req, res) => {
   }
 }
 const googleSignup = async (req, res) => {
-  console.log(req.body)
+  console.log(req.body.code)
   try {
     var gUser = await google.getGoogleAccountFromCode(decodeURIComponent(req.body.code), req.query);
     try {
