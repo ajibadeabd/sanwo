@@ -29,7 +29,19 @@ const router = express.Router()
  *     router.use("/user", userRoute)
  */
 
+router.post('/vanhack',(req, res)=>{
+ 
+  var {magic, dist} = req.body;
+  var cold = [];
+  for (let index = 0; index < magic.length; index++) {
+    let current = {};
+    current.magic = magic[index];
+    current.dist = dist[index];
+    cold.push(current);
+  }
 
+  res.send(cold)
+})
 router.use('/users', userRoute)
 router.use('/users/admin', authMiddleware.isAdmin, adminRoute)
 router.use('/users/seller', authMiddleware.isSeller, sellerRoute)
