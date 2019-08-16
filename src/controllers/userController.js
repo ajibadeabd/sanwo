@@ -400,7 +400,7 @@ const googleSignup = async (req, res) => {
         delete user.password;
         return res.send({
           token: token,
-          user: user,
+          data: user,
           message: "successfully logged in"
         })
       }
@@ -456,7 +456,7 @@ const googleSignup = async (req, res) => {
         user = JSON.parse(JSON.stringify(user));
         return res.send({
           token: token,
-          user: user,
+          data: user,
           message: "successfully logged in"
         })
       } catch (createError) {

@@ -1,5 +1,6 @@
 /* eslint-disable no-inner-declarations,require-jsdoc */
 const moment = require('moment')
+const mailer = require('./../../utils/mailer')
 const sha512 = require('crypto-js/sha512')
 
 const { constants, remitaConfig } = require('../../utils/helpers')
@@ -101,12 +102,22 @@ const create = async (req, res) => {
 }
 
 const updateOrderStatus = (req, res) => {
+  
   req.Models.Order.findOne({ _id: req.body.orderId })
     .populate('buyer purchases')
     .exec((err, order) => {
       if (err) {
         throw err
       } else {
+        if(req.body.status==="in_route"){
+          // Notify buyer that product has been shipped by email
+          mailer.orderShipped(order, req);
+        }
+
+        if(req.body.status==="delivered"){
+          // Notify Seller that product has reached the buyer by email
+          mailer.orderDelivered(order, req);
+        }
         order.orderStatus = req.body.status
         order.save()
         res.send({
@@ -115,8 +126,9 @@ const updateOrderStatus = (req, res) => {
           data: order
         })
 
+
         // notify the buyer and seller of the status change
-        notificationEvents.emit('order_status_changed', { order, status: req.params.status })
+        // notificationEvents.emit('order_status_changed', { order, status: req.params.status })
       }
     })
 }
