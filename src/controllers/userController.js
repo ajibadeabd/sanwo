@@ -401,7 +401,8 @@ const googleSignup = async (req, res) => {
         return res.send({
           token: token,
           data: user,
-          message: "successfully logged in"
+          message: "successfully logged in",
+          success: true,
         })
       }
 
@@ -455,13 +456,14 @@ const googleSignup = async (req, res) => {
         }, process.env.TOKEN_SECRET, { expiresIn: '3d' })
         user = JSON.parse(JSON.stringify(user));
         return res.send({
+          success: true,
           token: token,
           data: user,
-          message: "successfully logged in"
+          message: message
         })
       } catch (createError) {
         return res.send({
-          status: false,
+          success: false,
           message: "Try again",
           error: createError
         })
@@ -469,14 +471,14 @@ const googleSignup = async (req, res) => {
 
     } catch (findError) {
       return res.send({
-        status: false,
+        success: false,
         message: "Try again",
         error: findError
       })
     }
   } catch (error) {
     return res.send({
-      status: false,
+      success: false,
       message: "Try again",
       error: error
     })
