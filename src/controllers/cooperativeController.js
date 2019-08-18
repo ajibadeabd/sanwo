@@ -124,7 +124,7 @@ const defaultingMembers = async (req, res) => {
     limit = limit || 10
     let corperativeIds = [];
     let corpertiveMembers = await req.Models.User.find({ cooperative: req.authData.userId })
-    .select({_id: 1}).skip(offset)
+    .skip(offset)
     .limit(limit);
     for(let member of corpertiveMembers){
       corperativeIds.push(member._id);
