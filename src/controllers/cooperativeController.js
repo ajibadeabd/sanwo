@@ -118,28 +118,25 @@ const cooperativeMemberOrders = async (req, res) => {
 
 const defaultingMembers = async (req, res) => {
   try {
+    let limit = parseInt(req.query.limit, 10)
+    let offset = parseInt(req.query.offset, 10)
+    offset = offset || 0
+    limit = limit || 10
     let corperativeIds = [];
-    let corpertiveMembers = await req.Models.User.find({ cooperative: req.authData.userId }).select({_id: 1});
+    let corpertiveMembers = await req.Models.User.find({ cooperative: req.authData.userId })
+    .select({_id: 1}).skip(offset)
+    .limit(limit);
     for(let member of corpertiveMembers){
       corperativeIds.push(member._id);
     }
-    let members = JSON.parse(JSON.stringify(cooperativeMemberOrders));
-
+    let members = JSON.parse(JSON.stringify(corpertiveMembers));
+    let resultCount = members.length;
     for(mem of members){
-      mem.totalMoneyOwed = await req.Models.User.aggregate({
-        $match: {
-          buyer: mem._id,
-          installmentPaymentStatus: 'pending',
-          installmentPeriod: {$ne: null},
-        }
-      },
-      {
-        $project: {
-          total: {
-            $add: ["$subTotal"]
-          }
-        }
-      });
+      mem.totalMoneyOwed = 0;
+      let orders = await({buyer: mem._id}).select({subTotal: 1});
+      for(order of orders){
+        mem.totalMoneyOwed+=order.subTotal;
+      }
     }    
 
     res.send({
