@@ -106,7 +106,7 @@ const requestWithdrawal = async (req, res) => {
     .populate('purchase')
     .populate('order')
 
-  if (wallet.order.status !== helpers.constants.ORDER_STATUS.confirmed) {
+  if (wallet.order.orderStatus !== helpers.constants.ORDER_STATUS.confirmed) {
     return res.status(403).send({
       success: false,
       message: 'The purchase has not been confirmed by the buyer',
