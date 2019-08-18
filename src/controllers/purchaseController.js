@@ -49,7 +49,7 @@ const get = (req, res) => {
 const update = (req, res) => {
   // check that this seller is trying to change status to either in_route or delivered
   if (req.body.status && (req.body.status !== constants.ORDER_STATUS.in_route
-    || req.body.status !== constants.ORDER_STATUS.delivered)) {
+    && req.body.status !== constants.ORDER_STATUS.delivered)) {
     return res.status(403).send({
       success: false,
       message: 'A seller can only update purchase status to delivered or in_route',
