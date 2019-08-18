@@ -28,8 +28,8 @@ if (!fs.existsSync("./public/upload/")) {
   });
 }
 
-if (!fs.existsSync("./public/products/")) {
-  fs.mkdir("./public/products/", function(err) {
+if (!fs.existsSync("./public/upload/products/")) {
+  fs.mkdir("./public/upload/products/", function(err) {
       if (err) {
           return console.log('failed to write directory', err);
       }
