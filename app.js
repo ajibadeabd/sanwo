@@ -2,6 +2,7 @@ const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
 const io = require('socket.io')
+const fs  = require('fs');
 const { Socket } = require('./src/controllers/messageController')
 const SlackErrorNotificationBot = require('./src/functions/slack-bot')
 
@@ -10,6 +11,30 @@ const config = require('./config/index.js')
 
 const route = require('./src/routes')
 const logger = require('./config/logger')
+
+if (!fs.existsSync("./public/")) {
+  fs.mkdir("./public/", function(err) {
+      if (err) {
+          return console.log('failed to write directory', err);
+      }
+  });
+}
+
+if (!fs.existsSync("./public/upload/")) {
+  fs.mkdir("./public/upload/", function(err) {
+      if (err) {
+          return console.log('failed to write directory', err);
+      }
+  });
+}
+
+if (!fs.existsSync("./public/products/")) {
+  fs.mkdir("./public/products/", function(err) {
+      if (err) {
+          return console.log('failed to write directory', err);
+      }
+  });
+}
 
 // Models
 const Models = require('./src/models')
