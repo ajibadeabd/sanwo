@@ -120,19 +120,18 @@ const defaultingMembers = async (req, res) => {
   // to get defaulting Get all members whose installmentsRepaymentSchedule
   // last item dueDate is past current date
   try {
+    let corperativeIds = [];
+    let corpertiveMembers = await req.Models.User.find({ cooperative: req.authData.userId }).select({_id: 1});
+    for(let member of corpertiveMembers){
+      corperativeIds.push(member._id);
+    }
     let limit = parseInt(req.query.limit, 10)
     let offset = parseInt(req.query.offset, 10)
     offset = offset || 0
     limit = limit || 10
     const filter = queryFilters(req)
-    const model = req.Models.Order.find(filter)
-      .populate(
-        {
-          path: 'buyer',
-          // select: 'cooperative',
-          match: { cooperative: req.authData.userId }
-        }
-      )
+    filter.buyer = {$in: corperativeIds};
+    const model = req.Models.Order.find(filter);
     model.where('installmentPeriod').ne(null)
     model.where('installmentPaymentStatus', 'pending')
     model.select('-password')
