@@ -130,7 +130,7 @@ const defaultingMembers = async (req, res) => {
       corperativeIds.push(member._id);
     }
     let members = JSON.parse(JSON.stringify(corpertiveMembers));
-    let resultCount = members.length;
+    
     for(mem of members){
       mem.totalMoneyOwed = 0;
       let orders = await req.Models.Order.find({buyer: mem._id, installmentPaymentStatus: 'pending', installmentPeriod: {$ne: null}}).select({subTotal: 1});
@@ -141,6 +141,7 @@ const defaultingMembers = async (req, res) => {
     let result = members.filter(e=>{
       return e.totalMoneyOwed!==0;
     });
+    let resultCount = result.length;
     res.send({
       success: true,
       message: 'Successfully fetching defaulting members',
