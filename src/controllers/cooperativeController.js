@@ -117,47 +117,46 @@ const cooperativeMemberOrders = async (req, res) => {
 }
 
 const defaultingMembers = async (req, res) => {
-  // to get defaulting Get all members whose installmentsRepaymentSchedule
-  // last item dueDate is past current date
   try {
     let corperativeIds = [];
     let corpertiveMembers = await req.Models.User.find({ cooperative: req.authData.userId }).select({_id: 1});
     for(let member of corpertiveMembers){
       corperativeIds.push(member._id);
     }
-    let limit = parseInt(req.query.limit, 10)
-    let offset = parseInt(req.query.offset, 10)
-    offset = offset || 0
-    limit = limit || 10
-    const filter = queryFilters(req)
-    filter.buyer = {$in: corperativeIds};
-    const model = req.Models.Order.find(filter);
-    model.where('installmentPeriod').ne(null)
-    model.where('installmentPaymentStatus', 'pending')
-    model.select('-password')
-    model.skip(offset)
-    model.limit(limit)
-    model.sort({ createdAt: 'desc' })
-    const results = await model
-    const resultCount = await model.countDocuments()
+    let members = JSON.parse(JSON.stringify(cooperativeMemberOrders));
+
+    for(mem of members){
+      mem.totalMoneyOwed = await req.Models.User.aggregate({
+        $match: {
+          buyer: mem._id,
+          installmentPaymentStatus: 'pending',
+          installmentPeriod: {$ne: null},
+        }
+      },
+      {
+        $project: {
+          total: {
+            $add: ["$subTotal"]
+          }
+        }
+      });
+    }    
 
     res.send({
       success: true,
       message: 'Successfully fetching defaulting members',
       data: {
-        offset,
-        limit,
         resultCount,
-        results
+        members
       }
     })
-  } catch (err) {
+  } catch (error) {
     res.status(500).send({
       success: false,
       message: 'Oops! an error occurred.',
       data: {}
     })
-    throw err
+    throw error
   }
 }
 

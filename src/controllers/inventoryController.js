@@ -326,17 +326,17 @@ const getInventoryInStock = async (req, res) => {
 }
 
 const getInventoryOutStock = async (req, res) => {
-  req.query = { seller: req.authData.userId, quantity: { $lte: 0 }, ...req.query }
+  let query = { seller: req.authData.userId, quantity: { $lte: 0 } }
 
   const {
     offset,
     limit,
     resultCount
   } = await _queryInventory(req, true, true)
-  var results = await req.Models.Inventory.find(req.query, (error, result) => {
+  var results = await req.Models.Inventory.find(query, (error, result) => {
     if (error) throw error
     return result;
-  })
+  }).skip(offset).limit(limit)
   res.send({
     success: true,
     message: 'Successfully fetching inventories in stock',
