@@ -79,6 +79,7 @@ class CoreEvents extends EventEmitter {
     })
 
     // Listen for system events
+    this.on('cooperative_member_payment_reminder', this.onPaymentReminder)
     this.on('payment_status_changed', this.onPaymentStatusChanged)
     this.on('wallet_status_changed', this.onWalletStatusChanged)
     this.on('purchase_status_changed', this.onPurchaseStatusChanged)
@@ -169,6 +170,10 @@ class CoreEvents extends EventEmitter {
     this.sendEmail('seller_payment_status_mail', { to: sellerEmails.join(',') }, {
       status, buyer, adminEmails, order
     })
+  }
+
+  async onPaymentReminder({user, amount}){
+    this.sendEmail('corporative_defaulting_member_reminder', { to: user.email }, {user, amount})
   }
 
   async onWalletStatusChanged ({ wallet }, status) {

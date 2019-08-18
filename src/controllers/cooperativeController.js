@@ -56,6 +56,19 @@ const members = async (req, res) => {
   })
 }
 
+const cooperativePaymentReminder = async (req, res)=>{  
+  const {amount} = req.body;
+  const user = await req.Models.User.findById(req.params.memberId)
+
+  // send mesaage to defaulting member.
+  notificationEvents.emit('cooperative_member_payment_reminder', { user, amount })
+  res.send({
+    success: true,
+    message: 'Successfully notified the defaulting member.',
+    data: user
+  })
+}
+
 const cooperativeMemberOrders = async (req, res) => {
   try {
     let limit = parseInt(req.query.limit, 10)
@@ -242,5 +255,6 @@ module.exports = {
   cooperativeMemberOrders,
   defaultingMembers,
   memberTransactions,
-  updateMemberStatus
+  updateMemberStatus,
+  cooperativePaymentReminder
 }
