@@ -147,7 +147,7 @@ const defaultingMembers = async (req, res) => {
       message: 'Successfully fetching defaulting members',
       data: {
         resultCount,
-        result
+        results: result
       }
     })
   } catch (error) {
