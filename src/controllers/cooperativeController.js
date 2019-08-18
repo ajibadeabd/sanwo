@@ -138,7 +138,9 @@ const defaultingMembers = async (req, res) => {
         mem.totalMoneyOwed+=order.subTotal;
       }
     }    
-    let result = members.filter(e=>e.totalMoneyOwed>0);
+    let result = members.filter(e=>{
+      return e.totalMoneyOwed!==0;
+    });
     res.send({
       success: true,
       message: 'Successfully fetching defaulting members',

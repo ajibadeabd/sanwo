@@ -92,7 +92,7 @@ const update = (req, res) => {
         const oldTrackingDetails = purchase.trackingDetails
         purchase.status = req.body.status || purchase.status
         purchase.trackingDetails = req.body.trackingDetails || purchase.trackingDetails
-        // purchase.save()
+        purchase.save()
         res.send({
           success: true,
           message: 'Order status updated successfully',
