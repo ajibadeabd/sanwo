@@ -133,7 +133,7 @@ const defaultingMembers = async (req, res) => {
     let resultCount = members.length;
     for(mem of members){
       mem.totalMoneyOwed = 0;
-      let orders = await req.Models.Order.find({buyer: mem._id}).select({subTotal: 1});
+      let orders = await req.Models.Order.find({buyer: mem._id, installmentPaymentStatus: 'pending', installmentPeriod: {$ne: null}}).select({subTotal: 1});
       for(order of orders){
         mem.totalMoneyOwed+=order.subTotal;
       }
