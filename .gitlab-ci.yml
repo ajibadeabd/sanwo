@@ -1,0 +1,29 @@
+# This file is a template, and might need editing before it works on your project.
+# Official framework image. Look for the different tagged releases at:
+# https://hub.docker.com/r/library/node/tags/
+image: node:latest
+
+# Pick zero or more services to be used on all builds.
+# Only needed when using a docker container to run your tests in.
+# Check out: http://docs.gitlab.com/ce/ci/docker/using_docker_images.html#what-is-a-service
+
+# This folder is cached between builds
+# http://docs.gitlab.com/ce/ci/yaml/README.html#cache
+test_db:
+  before_script:
+    - apt-get update
+    - apt-get --yes --force-yes install rsync
+    
+  script:
+   - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+   # Run ssh-agent (inside the build environment)
+   - eval $(ssh-agent -s)
+   # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+   - ssh-add <(echo "$SSH_PRIVATE_KEY")
+   - mkdir -p ~/.ssh
+   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  # - scp -r * root@178.128.42.16:/root/paysmosmo_backend
+   - rsync -avrc --delete --exclude=.env --exclude=public --rsync-path="mkdir -p /root/paysmosmo_backend/ && rsync" "$PWD/" root@178.128.42.16:/root/paysmosmo_backend/
+   - ssh root@178.128.42.16 "cd /root/paysmosmo_backend/; npm install; pm2 restart paysmosmo_backend || pm2 start app.js --name paysmosmo_backend"
+
+

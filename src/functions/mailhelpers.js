@@ -1,13 +1,4 @@
-const fs = require('fs')
 const nodemailer = require('nodemailer')
-
-const constants = {
-  STATUS: {
-    delivered: 'delivered',
-    created: 'created',
-    payment: 'payment'
-  }
-}
 
 const sendMail = (to, subject, mailBody, callback, from = null) => {
   const mailOptions = {

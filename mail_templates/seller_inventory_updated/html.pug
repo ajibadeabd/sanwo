@@ -1,0 +1,7 @@
+p Hi #{seller.lastName} #{seller.firstName}
+p Your product #{product.name} status has changed to
+    if (product.status)
+        strong 'PUBLISHED'
+    else
+        strong 'UN-PUBLISHED'
+p For further enquiry please contact admin.

@@ -1,18 +1,20 @@
 const express = require('express')
 
 const orderController = require('../controllers/orderController')
+const orderValidationMiddleware = require('../functions/orderValidationMiddleware')
+const authMiddleware = require('./../functions/authMiddleware')
 
 const router = express.Router()
 
 
-router.post('/createOrder', orderController.create)
-router.get('/getOrder', orderController.getOrder)
-router.get('/getDisbursed', orderController.getDisbursedStock)
-router.put('/:orderId', orderController.putOrder)
-router.get('/getPurchased', orderController.purchasedStock)
-router.get('/inProcess', orderController.inProcess)
-router.get('/shipped', orderController.shipped)
-router.delete('/:OrderId', orderController.del)
-// router.get('/shippedItem', orderController.shippedItem)
+router.use(authMiddleware.isAuthenticated)
+router.post('/', orderValidationMiddleware.create, orderController.create)
+router.post('/installment', orderValidationMiddleware.createInstallmentOrder,
+  orderController.createInstallmentOrder)
+
+router.put('/update-order-status', orderValidationMiddleware.updateOrderStatus,
+  orderController.updateOrderStatus)
+
+router.get('/', orderValidationMiddleware.get, orderController.getOrders)
 
 module.exports = router

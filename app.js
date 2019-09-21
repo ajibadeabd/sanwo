@@ -1,12 +1,40 @@
 const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
+const io = require('socket.io')
+const fs  = require('fs');
+const { Socket } = require('./src/controllers/messageController')
+const SlackErrorNotificationBot = require('./src/functions/slack-bot')
 
 const db = require('./utils/db')
 const config = require('./config/index.js')
 
 const route = require('./src/routes')
 const logger = require('./config/logger')
+
+if (!fs.existsSync("./public/")) {
+  fs.mkdir("./public/", function(err) {
+      if (err) {
+          return console.log('failed to write directory', err);
+      }
+  });
+}
+
+if (!fs.existsSync("./public/upload/")) {
+  fs.mkdir("./public/upload/", function(err) {
+      if (err) {
+          return console.log('failed to write directory', err);
+      }
+  });
+}
+
+if (!fs.existsSync("./public/upload/products/")) {
+  fs.mkdir("./public/upload/products/", function(err) {
+      if (err) {
+          return console.log('failed to write directory', err);
+      }
+  });
+}
 
 // Models
 const Models = require('./src/models')
@@ -25,7 +53,14 @@ app.use(morgan('dev'))
 app.use((req, res, next) => {
   req.Models = Models
   req.log = logger.log
-  next()
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type, x-access-token')
+  if (req.method === 'OPTIONS') {
+    res.status(200).end()
+  } else {
+    next()
+  }
 })
 
 // All route should be added to the index.js file inside the route folder
@@ -34,10 +69,19 @@ app.use('/', route)
 // Handle the error
 app.use((err, req, res, next) => {
   logger.error(err)
+  if (process.env.NOTIFY_SLACK === 'true') {
+    new SlackErrorNotificationBot(
+      {
+        username: 'BackEndBot', type: 'error', webHookUrl: process.env.SLACK_WEB_HOOK_URL
+      }
+    ).sendMessage(err)
+  }
 })
 
 db.connect(config.dbUrl)
 
-app.listen(config.port)
+const server = app.listen(config.port)
+//  Start socketIo
+new Socket(io(server)).startSocket()
 
 logger.log(`Listening @ port ${config.port}`)

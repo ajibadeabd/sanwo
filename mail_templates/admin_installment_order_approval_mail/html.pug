@@ -1,0 +1,37 @@
+p= `Hi admin, ${buyer.firstName || ''} ${buyer.lastName || ''} just made a purchase below are the order details`
+h3 Order Details
+table(border=1)
+    tr
+        th Order Number
+        td #{order.orderNumber}
+    tr
+        th Total Product
+        td #{order.totalProduct}
+    tr
+        th Total Quantities
+        td #{order.totalQuantities}
+    tr
+        th Product Details
+        td
+            table(border=0)
+                thead
+                tr
+                    th Product Name
+                    th Quantity
+                    th Unit Price
+                    th Unit Subtotal
+                tbody
+                  each item in cart
+                    td= item.product.name
+                    td= item.quantity
+                    td= item.unitPrice
+                    td= item.subTotal
+
+    tr
+        th Subtotal
+        td #{order.subTotal}
+
+h4 Take Action
+p Your action is needed for this order<br/> APPROVE : <a href="#{process.env.APP_URL}/order/update-approval-status/#{order.token}/#{admin._id}/approved"> #{process.env.APP_URL}/order/update-approval-status/#{order.token}/#{admin._id}/approved</a><br/>
+<strong>Or</strong>
+p DECLINE: <a href="#{process.env.APP_URL}/order/update-approval-status/#{order.token}/#{admin._id}/declined"> #{process.env.APP_URL}/order/update-approval-status/#{order.token}/#{admin._id}/declined</a>

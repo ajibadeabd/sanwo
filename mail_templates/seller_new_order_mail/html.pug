@@ -1,0 +1,34 @@
+p= `Hi ${seller.lastName} ${seller.firstName}, you have a new Order on ${process.env.APP_NAME} below are the order details`
+p   Order Number <strong>##{order.orderNumber}</strong>
+p <a href="#"><strong>Login to take action</strong></a>
+
+h3 Purchase Details
+
+table(border=1 style='border-spacing: 0px;')
+    tr
+        th Order Number
+        td #{order.orderNumber}
+    tr
+        th Product Details
+        td
+            table(border=0)
+                thead
+                tr
+                    th Product Name
+                    th Quantity
+                    th Unit Price
+                    th Unit Subtotal
+                tbody
+                  each item in cart
+                      tr
+                      if item.product.seller._id.toString() === seller._id.toString()
+                          td= item.product.name
+                          td= item.quantity
+                          td= item.unitPrice
+                          td= item.subTotal
+                      else
+                          p
+
+    tr
+        th Subtotal
+        td #{order.subTotal}

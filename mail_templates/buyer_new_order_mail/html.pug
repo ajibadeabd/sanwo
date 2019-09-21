@@ -1,0 +1,36 @@
+p= `Hello ${buyer.firstName || ''} ${buyer.lastName || ''} thank you for using ${process.env.APP_NAME}`
+p   Your order number <strong>##{order.orderNumber}</strong> is currently <strong>PENDING</strong> <br/> you'll be notified of the status once processed
+
+h5 Order Details
+
+table(border=1 style='border-spacing: 0px;')
+    tr
+        th Order Number
+        td #{order.orderNumber}
+    tr
+        th Total Product
+        td #{order.totalProduct}
+    tr
+        th Total Quantities
+        td #{order.totalQuantities}
+    tr
+        th Product Details
+        td
+            table(border=0)
+                thead
+                tr
+                    th Product Name
+                    th Quantity
+                    th Unit Price
+                    th Unit Subtotal
+                tbody
+                  each item in cart
+                    tr
+                        td= item.product.name
+                        td= item.quantity
+                        td= item.unitPrice
+                        td= item.subTotal
+
+    tr
+        th Subtotal
+        td #{order.subTotal}

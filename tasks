@@ -1,0 +1,24 @@
+Sign In: Google signup api
+
+Seller Inventory: 
+--a single api should return values for 1. total item, 2. total in stock, 3. total unapproved, 4. Sold
+--in-stock and out-of-stock returns similar values from the apis
+ 
+Seller Create Product:
+--on creating a product, the field collection is not saved on the back end as their is no response
+
+Seller Wallet
+--on requesting withdrawal, seems the api breaks @https://api.paysmosmo.dev.natterbase.com/wallet/request-withdrawal
+
+Cooperative Admin
+--api to view orders of its members(buyers)
+--api to view transaction history paid to paysmosmo admin
+
+Paysmosmo Admin
+--api to view orders with the correct status of the order
+
+Buyers
+--buyer should be notified when order is en route to them
+
+Seller
+--seller should be notified when a purchase is delivered to a buyer(email)

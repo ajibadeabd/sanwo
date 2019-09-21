@@ -1,0 +1,6 @@
+p Hi #{order.buyer.lastName} #{order.buyer.firstName} your order status changed
+p Order Number <strong>##{order.orderNumber}</strong><br/> Status: <strong>#{status.toUpperCase()}</strong>
+    if mandateFormUrl
+        p Here's your mandate form URL
+            a(href=mandateFormUrl) #{mandateFormUrl}
+p <a href="#{process.env.WEB_URL}/login}"> Login to your account</a> to see more details

@@ -1,34 +1,40 @@
 const express = require('express')
 const multer = require('multer')
+const inventoryValidation = require('../functions/inventoryValidationMiddleware')
+const authMiddleware = require('./../functions/authMiddleware')
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, './public/upload/')
+    cb(null, './public/upload/products/')
   },
   filename: (req, file, cb) => {
-    cb(null, new Date().toISOString() + file.originalname)
+    cb(null, `${new Date().toISOString()}_${file.originalname.replace(/\s/ig, '_')}`)
   }
 })
 
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/jpg') {
-    cb(null, true)
-  } else {
-    cb(new Error('File Image not supported'), false)
-  }
-}
-
-const upload = multer({ storage, limits: { fileSize: 1024 * 1024 * 5 }, fileFilter })
+const upload = multer({
+  storage,
+  limits: { fileSize: 1024 * 1024 * 5 },
+})
 const inventoryController = require('../controllers/inventoryController')
 
 const router = express.Router()
 
-router.get('/', inventoryController.getAll)
-router.post('/create', upload.single('productImage'), inventoryController.create)
-router.delete('/:inventoryid', inventoryController.del)
-router.put('/:inventoryId', inventoryController.update)
-// router.get('/:inventoryId', inventoryController.getOne)
-router.get('/search', inventoryController.buyerSearch)
+router.get('/', inventoryValidation.get, inventoryController.getInventories)
+router.get('/search/:keyword', inventoryValidation.search, inventoryController.searchInventories)
 
+router.get('/all', authMiddleware.isAuthenticated,
+  inventoryValidation.get, inventoryController.getAllInventories)
 
+// apply auth middleware
+router.use(authMiddleware.isSeller)
+// router.get('/me', inventoryController.getAllMyInventory)
+router.post('/', upload.array('images'), inventoryValidation.create, inventoryController.create)
+router.put('/:inventoryId', upload.array('images'), inventoryValidation.update, inventoryController.update)
+router.delete('/:inventoryId', inventoryValidation.deleteInventory, inventoryController.deleteInventory)
+router.delete('/image/:inventoryId',
+  inventoryValidation.deleteImage, inventoryController.deleteImage)
+router.get('/stats', inventoryController.getInventoryStat)
+router.get('/in-stock', inventoryController.getInventoryInStock)
+router.get('/out-of-stock', inventoryController.getInventoryOutStock)
 module.exports = router
