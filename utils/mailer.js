@@ -35,9 +35,15 @@ const sendMail = (to, subject, mailBody, callback, from = null) => {
 
 const sendWelcomeMail = (user, req) => {
   const { lastName, email } = user
-  const messageBody = `<p>Hello ${lastName} we are happy to have you at ${process.env.APP_NAME}</p>
-                    <p>Follow this link to learn more about us<br/><a href=${process.env.APP_URL}
-    >Learn more</a></p>`
+  const messageBody = `
+  <div>
+    <p>Hello ${lastName} </p>
+    <p>we are happy to have you at ${process.env.APP_NAME}</p>
+    <p>Follow this link to learn more about us<br/><a href="${process.env.WEB_URL}/"
+>Learn more</a></p>
+    <a>${process.env.WEB_URL}</a>
+</div>
+`
   const subject = `Welcome to ${process.env.APP_NAME}`
 
   sendMail(email, subject, messageBody, (mailErr, mailRes) => {
@@ -49,16 +55,20 @@ const sendWelcomeMail = (user, req) => {
 }
 
 const orderShipped = (order, req) => {
-  console.log(order)
   const { lastName, email } = order.buyer
-  const messageBody = `<p>Hello ${lastName} we are happy to inform you that your order from ${process.env.APP_NAME} has been shipped</p>
-  <h3>Order Details</h3>  
-  <ul>
-    <li>Order Number: ${order.orderNumber}</li>
-    <li>Order Quantity: ${order.totalQuantities}</li>
-    <li>Order Cost: ₦ ${order.subTotal}</li>
-  </ul>
-  <p></p>`
+  const messageBody = `
+  <div>
+    <p>Hello ${lastName},
+    We are happy to inform you that your order from ${process.env.APP_NAME} has been shipped.</p>
+    <h3>Order Details</h3>
+    <ul>
+        <li>Order Number: ${order.orderNumber}</li>
+        <li>Order Quantity: ${order.totalQuantities}</li>
+        <li>Order Cost: ₦ ${order.subTotal}</li>
+    </ul>
+    <p>Thanks.</p>
+  </div>
+  `
   const subject = `Shipped Order ${order.orderNumber}`
 
   sendMail(email, subject, messageBody, (mailErr, mailRes) => {
@@ -71,14 +81,18 @@ const orderShipped = (order, req) => {
 
 const orderDelivered = (order, req) => {
   const { lastName, email, firstName } = order.buyer
-  const messageBody = `<p>Your order for ${lastName} ${firstName} has been delivered</p>
-  <h3>Order Details</h3>  
-  <ul>
-    <li>Order Number: ${order.orderNumber}</li>
-    <li>Order Quantity: ${order.totalQuantities}</li>
-    <li>Order Cost: ₦ ${order.subTotal}</li>
-  </ul>
-  <p></p>`
+  const messageBody = `
+  <div>
+    <p>Your order for ${lastName} ${firstName} has been delivered</p>
+    <h3>Order Details</h3>
+    <ul>
+        <li>Order Number: ${order.orderNumber}</li>
+        <li>Order Quantity: ${order.totalQuantities}</li>
+        <li>Order Cost: ₦ ${order.subTotal}</li>
+    </ul>
+    <p></p>
+  </div>
+  `
   const subject = `Delivered Order ${order.orderNumber}`
 
   sendMail(email, subject, messageBody, (mailErr, mailRes) => {

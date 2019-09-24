@@ -2,7 +2,7 @@ const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
 const io = require('socket.io')
-const fs  = require('fs');
+const fs = require('fs')
 const { Socket } = require('./src/controllers/messageController')
 const SlackErrorNotificationBot = require('./src/functions/slack-bot')
 
@@ -12,28 +12,28 @@ const config = require('./config/index.js')
 const route = require('./src/routes')
 const logger = require('./config/logger')
 
-if (!fs.existsSync("./public/")) {
-  fs.mkdir("./public/", function(err) {
+if (!fs.existsSync('./public/')) {
+  fs.mkdir('./public/', (err) => {
       if (err) {
           return console.log('failed to write directory', err);
       }
-  });
+  })
 }
 
-if (!fs.existsSync("./public/upload/")) {
-  fs.mkdir("./public/upload/", function(err) {
+if (!fs.existsSync('./public/upload/')) {
+  fs.mkdir('./public/upload/', (err) => {
       if (err) {
           return console.log('failed to write directory', err);
       }
-  });
+  })
 }
 
-if (!fs.existsSync("./public/upload/products/")) {
-  fs.mkdir("./public/upload/products/", function(err) {
+if (!fs.existsSync('./public/upload/products/')) {
+  fs.mkdir('./public/upload/products/', (err) => {
       if (err) {
           return console.log('failed to write directory', err);
       }
-  });
+  })
 }
 
 // Models
@@ -84,4 +84,4 @@ const server = app.listen(config.port)
 //  Start socketIo
 new Socket(io(server)).startSocket()
 
-logger.log(`Listening @ port ${config.port}`)
+logger.log(`\nListening @ port http://localhost:${config.port}`)

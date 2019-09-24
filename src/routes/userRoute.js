@@ -36,9 +36,9 @@ const multiPart = multer({ storage })
 router.post('/register', multiPart.single('businessRegistrationDocument'),
   userValidationMiddleware.validateUserCreation, userController.create)
 
-router.get('/fetch-google-url', userController.googleUrl);
+router.get('/fetch-google-url', userController.googleUrl)
 
-router.post('/google-url-complete', userController.googleSignup);
+router.post('/google-url-complete', userController.googleSignup)
 
 router.post('/login',
   userValidationMiddleware.validateUserLogin, userController.login)
