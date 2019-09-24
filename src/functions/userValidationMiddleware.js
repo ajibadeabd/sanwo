@@ -63,7 +63,7 @@ const validateUserCreation = (req, res, next) => {
     email: 'email|exists:User,email',
     phoneNumber: [{
       required_if: ['email', ''],
-      digits: 11,
+      digits: 10,
       exists: 'User,phoneNumber'
     }],
     cooperative: [{

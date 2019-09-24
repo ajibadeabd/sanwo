@@ -49,15 +49,15 @@ const update = (req, res) => {
         inventory.description = req.body.description || inventory.description
         inventory.price = req.body.price || inventory.price
         inventory.quantity = req.body.quantity || inventory.quantity
-        inventory.images = req.body.images ?
-          inventory.images.concat(req.body.images) :
-          inventory.images
-        inventory.meta = req.body.meta ? { ...inventory.meta, ...JSON.parse(req.body.meta) } :
-          inventory.meta
+        inventory.images = req.body.images
+          ? inventory.images.concat(req.body.images)
+          : inventory.images
+        inventory.meta = req.body.meta ? { ...inventory.meta, ...JSON.parse(req.body.meta) }
+          : inventory.meta
 
-        inventory.installmentPercentagePerMonth = req.body.installmentPercentagePerMonth ?
-          JSON.parse(req.body.installmentPercentagePerMonth) :
-          inventory.installmentPercentagePerMonth
+        inventory.installmentPercentagePerMonth = req.body.installmentPercentagePerMonth
+          ? JSON.parse(req.body.installmentPercentagePerMonth)
+          : inventory.installmentPercentagePerMonth
         inventory.save((error) => {
           if (error) throw error
           res.send({
@@ -277,14 +277,14 @@ const getInventoryStat = async (req, res) => {
   const productsUnapproved = await req.Models.Inventory
     .countDocuments({ ...bySeller, status: false })
 
-  var products = await req.Models.Inventory
-    .find({ ...bySeller });
-  var soldItems = 0;
+  let products = await req.Models.Inventory
+    .find({ ...bySeller })
+  var soldItems = 0
 
   for (product of products) {
-    let solds = await req.Models.Cart.find({ product: product._id });
+    const solds = await req.Models.Cart.find({ product: product._id })
     for (sold of solds) {
-      soldItems += sold.quantity;
+      soldItems += sold.quantity
     }
   }
 
@@ -302,16 +302,16 @@ const getInventoryStat = async (req, res) => {
 }
 
 const getInventoryInStock = async (req, res) => {
-  let query = { seller: req.authData.userId, quantity: { $gte: 1 } }
+  const query = { seller: req.authData.userId, quantity: { $gte: 1 } }
 
   const {
     offset,
     limit,
     resultCount
   } = await _queryInventory(req, true, true)
-  var results = await req.Models.Inventory.find(query, (error, result) => {
+  let results = await req.Models.Inventory.find(query, (error, result) => {
     if (error) throw error
-    return result;
+    return result
   }).skip(offset).limit(limit)
   res.send({
     success: true,
@@ -326,16 +326,16 @@ const getInventoryInStock = async (req, res) => {
 }
 
 const getInventoryOutStock = async (req, res) => {
-  let query = { seller: req.authData.userId, quantity: { $lte: 0 } }
+  const query = { seller: req.authData.userId, quantity: { $lte: 0 } }
 
   const {
     offset,
     limit,
     resultCount
   } = await _queryInventory(req, true, true)
-  var results = await req.Models.Inventory.find(query, (error, result) => {
+  let results = await req.Models.Inventory.find(query, (error, result) => {
     if (error) throw error
-    return result;
+    return result
   }).skip(offset).limit(limit)
   res.send({
     success: true,

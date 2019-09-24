@@ -7,7 +7,7 @@ const SlackErrorNotificationBot = require('../src/functions/slack-bot')
  * @return {*} log to show success or failure of connection
  */
 exports.connect = function (url) {
-  mongoose.connect(url, { useNewUrlParser: true })
+  mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
     .then(() => {
       console.log('database successfully connected')
     })
