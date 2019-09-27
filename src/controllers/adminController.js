@@ -66,7 +66,7 @@ const profileUpdate = async (req, res) => {
         })
     }
 
-    if (req.body.password && (!bcrypt.compareSync(req.body.old_password, userExist.password))) {
+    if (req.body.password && (!bcrypt.compareSync(req.body.password, userExist.password))) {
       return res.status(400)
         .send({
           success: false,
@@ -81,9 +81,10 @@ const profileUpdate = async (req, res) => {
       userExist.lastName = req.body.lastName || ''
     }
 
-    if (req.body && req.body.password) {
-      userExist.password = await bcrypt.hashSync(req.body.password, 10)
-    }
+    // if (req.body && req.body.password) {
+    //   userExist.password = await bcrypt.hash(req.body.password, 10)
+    // }
+    userExist.password = req.body.password_confirmation
     userExist.phoneNumber = req.body.phone
     const updatedUser = await userExist.save()
     res.send({
