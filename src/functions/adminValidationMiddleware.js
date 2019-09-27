@@ -84,10 +84,32 @@ const profileUpdate = (req, res, next) => {
     }
   })
 }
+const profileUpdateNew = (req, res, next) => {
+  const requestBody = { ...req.params, ...req.body }
+
+  const validationRule = {
+    firstName: 'sometimes|required',
+    lastName: 'sometimes|required',
+    phone: 'sometimes',
+  }
+
+  Validator(requestBody, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(400).send({
+        success: false,
+        message: 'Validation failed',
+        data: err
+      })
+    } else {
+      next()
+    }
+  })
+}
 
 module.exports = {
   updateAccountStatusValidation,
   profileUpdate,
   updateInventoryStatus,
-  deleteAccount
+  deleteAccount,
+  profileUpdateNew
 }

@@ -16,7 +16,7 @@ router.put('/update-inventory-status/:product', adminValidationMiddleware.update
 
 router.get('/get-users', adminController.getUsers)
 router.get('/user-stats', adminController.getUserStatistics)
-router.put('/', adminValidationMiddleware.profileUpdate,
+router.put('/', adminValidationMiddleware.profileUpdateNew,
   adminController.profileUpdate)
 
 module.exports = router

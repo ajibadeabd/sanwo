@@ -84,7 +84,7 @@ const profileUpdate = async (req, res) => {
     if (req.body && req.body.password) {
       userExist.password = await bcrypt.hashSync(req.body.password, 10)
     }
-
+    userExist.phoneNumber = req.body.phone
     const updatedUser = await userExist.save()
     res.send({
       success: true,
