@@ -53,34 +53,53 @@ const getUsers = async (req, res) => {
   }
 }
 
-const profileUpdate = (req, res) => {
-  req.Models.User.findOne({ _id: req.body.userId })
-    .exec((err, user) => {
-      if (err) {
-        throw err
-      } else {
-        if (req.body.password && (!bcrypt.compareSync(req.body.old_password, user.password))) {
-          return res.status(400)
-            .send({
-              success: false,
-              message: 'Old password is incorrect',
-              data: null
-            })
-        }
-        user.name = req.body.name || user.name
-        user.email = req.body.email || user.email
-        user.password = req.body.password || user.password
-        user.save((error) => {
-          if (error) throw error
-          return res.send({
-            success: true,
-            message: 'Updated successfully',
-            data: user,
-            token: req.headers['x-access-token']
-          })
+const profileUpdate = async (req, res) => {
+  try {
+    const userExist = await req.Models.User.findOne({ _id: req.body.userId })
+
+    if (!userExist) {
+      return res.status(400)
+        .send({
+          success: false,
+          message: 'Could not find user',
+          data: null
         })
-      }
+    }
+
+    if (req.body.password && (!bcrypt.compareSync(req.body.old_password, userExist.password))) {
+      return res.status(400)
+        .send({
+          success: false,
+          message: 'Old password is incorrect',
+          data: null
+        })
+    }
+
+    if (req.body && req.body.firstName) {
+      userExist.name = `${req.body.firstName} ${req.body.lastName}`
+      userExist.firstName = req.body.firstName || ''
+      userExist.lastName = req.body.lastName || ''
+    }
+
+    if (req.body && req.body.password) {
+      userExist.password = await bcrypt.hashSync(req.body.password, 10)
+    }
+
+    const updatedUser = await userExist.save()
+    res.send({
+      success: true,
+      message: 'Updated successfully',
+      data: updatedUser,
+      token: req.headers['x-access-token']
     })
+  } catch (error) {
+    return res.status(400)
+      .send({
+        success: false,
+        message: error.message,
+        data: null
+      })
+  }
 }
 
 const updateInventoryStatus = async (req, res) => {
