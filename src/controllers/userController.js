@@ -282,7 +282,7 @@ const passwordReset = async (req, res) => {
 
     return res.status(400)
       .send({
-        success: false,
+        success: true,
         message: 'Password reset successful.'
       })
   } catch (error) {
