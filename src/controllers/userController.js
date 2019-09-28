@@ -267,19 +267,24 @@ const passwordReset = async (req, res) => {
       }
     })
     //  if a user was found update password and reset forgotPasswordFields
-    if (user) {
-      user.password = req.body.password
-      user.resetPasswordToken = undefined
-      user.resetPasswordExpires = undefined
-      await user.save()
-    } else {
-      // if not return a proper message
+    if (!user) {
       return res.status(400)
         .send({
           success: false,
           message: 'Password reset token is invalid or has expired.'
         })
     }
+    // if not return a proper message
+    user.password = req.body.password
+    user.resetPasswordToken = undefined
+    user.resetPasswordExpires = undefined
+    await user.save()
+
+    return res.status(400)
+      .send({
+        success: false,
+        message: 'Password reset successful.'
+      })
   } catch (error) {
     return res.send({
       success: false,

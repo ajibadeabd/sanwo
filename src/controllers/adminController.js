@@ -81,12 +81,13 @@ const profileUpdate = async (req, res) => {
       userExist.lastName = req.body.lastName || ''
     }
 
-    // if (req.body && req.body.password) {
+    if (req.body && req.body.password_confirmation) {
     //   userExist.password = await bcrypt.hash(req.body.password, 10)
-    // }
-    userExist.password = req.body.password_confirmation
+      userExist.password = req.body.password_confirmation
+    }
     userExist.phoneNumber = req.body.phone
     const updatedUser = await userExist.save()
+    const userAgain = req.Models.User.findOne({ _id: req.body.userId })
     res.send({
       success: true,
       message: 'Updated successfully',
