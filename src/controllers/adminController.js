@@ -87,7 +87,6 @@ const profileUpdate = async (req, res) => {
     }
     userExist.phoneNumber = req.body.phone
     const updatedUser = await userExist.save()
-    const userAgain = req.Models.User.findOne({ _id: req.body.userId })
     res.send({
       success: true,
       message: 'Updated successfully',

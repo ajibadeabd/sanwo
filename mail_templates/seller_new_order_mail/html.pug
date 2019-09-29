@@ -1,6 +1,8 @@
 p= `Hi ${seller.lastName} ${seller.firstName}, you have a new Order on ${process.env.APP_NAME} below are the order details`
 p   Order Number <strong>##{order.orderNumber}</strong>
-p <a href="#"><strong>Login to take action</strong></a>
+p
+    a(href=`${process.env.WEB_URL}/login`)
+        strong  Login to take action
 
 h3 Purchase Details
 

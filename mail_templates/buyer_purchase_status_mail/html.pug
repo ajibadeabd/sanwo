@@ -3,6 +3,6 @@ p Your purchase status changed to <strong>#{status}</strong>
 p Details: #{purchase.product.name}<br/> Quantity: #{purchase.quantity}
     if status === 'confirmed'
       p
-        a(href=`http://paysmosmo.natterbase.com/?product=${purchase.product._id}&name=${purchase.product.name}`) Please add a review for #{purchase.product.name}
+        a(href=`${process.env.WEB_URL}/?product=${purchase.product._id}&name=${purchase.product.name}`) Please add a review for #{purchase.product.name}
 
 p <a href="#{process.env.WEB_URL}/login}"> Login to your account</a> to see more details
