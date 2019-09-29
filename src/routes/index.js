@@ -30,9 +30,9 @@ const router = express.Router()
  */
 
 router.post('/vanhack', (req, res) => {
-  let { magic, dist } = req.body
-  var cold = []
-  for (let index = 0; index < magic.length; index++) {
+  const { magic, dist } = req.body
+  const cold = []
+  for (let index = 0; index < magic.length; index += 1) {
     const current = {}
     current.magic = magic[index]
     current.dist = dist[index]

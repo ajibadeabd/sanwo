@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 const utils = require('../../utils/helper-functions')
 const helpers = require('../../utils/helpers')
 const notificationEvents = require('../../utils/notificationEvents')
@@ -277,13 +278,14 @@ const getInventoryStat = async (req, res) => {
   const productsUnapproved = await req.Models.Inventory
     .countDocuments({ ...bySeller, status: false })
 
-  let products = await req.Models.Inventory
+  const products = await req.Models.Inventory
     .find({ ...bySeller })
-  var soldItems = 0
+  let soldItems = 0
 
-  for (product of products) {
+  for (const product of products) {
+    // eslint-disable-next-line no-await-in-loop
     const solds = await req.Models.Cart.find({ product: product._id })
-    for (sold of solds) {
+    for (const sold of solds) {
       soldItems += sold.quantity
     }
   }
@@ -309,7 +311,7 @@ const getInventoryInStock = async (req, res) => {
     limit,
     resultCount
   } = await _queryInventory(req, true, true)
-  let results = await req.Models.Inventory.find(query, (error, result) => {
+  const results = await req.Models.Inventory.find(query, (error, result) => {
     if (error) throw error
     return result
   }).skip(offset).limit(limit)
@@ -333,7 +335,7 @@ const getInventoryOutStock = async (req, res) => {
     limit,
     resultCount
   } = await _queryInventory(req, true, true)
-  let results = await req.Models.Inventory.find(query, (error, result) => {
+  const results = await req.Models.Inventory.find(query, (error, result) => {
     if (error) throw error
     return result
   }).skip(offset).limit(limit)

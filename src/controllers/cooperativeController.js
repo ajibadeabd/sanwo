@@ -1,3 +1,6 @@
+/* eslint-disable no-shadow */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-restricted-syntax */
 const { queryFilters } = require('../../utils/helper-functions')
 const { constants } = require('../../utils/helpers')
 const notificationEvents = require('../../utils/notificationEvents')
@@ -56,8 +59,8 @@ const members = async (req, res) => {
   })
 }
 
-const cooperativePaymentReminder = async (req, res)=>{  
-  const {amount} = req.body;
+const cooperativePaymentReminder = async (req, res) => {
+  const { amount } = req.body
   const user = await req.Models.User.findById(req.params.memberId)
 
   // send mesaage to defaulting member.
@@ -122,26 +125,24 @@ const defaultingMembers = async (req, res) => {
     let offset = parseInt(req.query.offset, 10)
     offset = offset || 0
     limit = limit || 10
-    let corperativeIds = [];
-    let corpertiveMembers = await req.Models.User.find({ cooperative: req.authData.userId })
-    .skip(offset)
-    .limit(limit);
-    for(let member of corpertiveMembers){
-      corperativeIds.push(member._id);
+    const corperativeIds = []
+    const corpertiveMembers = await req.Models.User.find({ cooperative: req.authData.userId })
+      .skip(offset)
+      .limit(limit)
+    for (const member of corpertiveMembers) {
+      corperativeIds.push(member._id)
     }
-    let members = JSON.parse(JSON.stringify(corpertiveMembers));
-    
-    for(mem of members){
-      mem.totalMoneyOwed = 0;
-      let orders = await req.Models.Order.find({buyer: mem._id, installmentPaymentStatus: 'pending', installmentPeriod: {$ne: null}}).select({subTotal: 1});
-      for(order of orders){
-        mem.totalMoneyOwed+=order.subTotal;
+    const members = JSON.parse(JSON.stringify(corpertiveMembers))
+
+    for (const mem of members) {
+      mem.totalMoneyOwed = 0
+      const orders = await req.Models.Order.find({ buyer: mem._id, installmentPaymentStatus: 'pending', installmentPeriod: { $ne: null } }).select({ subTotal: 1 })
+      for (const order of orders) {
+        mem.totalMoneyOwed += order.subTotal
       }
-    }    
-    let result = members.filter(e=>{
-      return e.totalMoneyOwed!==0;
-    });
-    let resultCount = result.length;
+    }
+    const result = members.filter(e => e.totalMoneyOwed !== 0)
+    const resultCount = result.length
     res.send({
       success: true,
       message: 'Successfully fetching defaulting members',

@@ -31,7 +31,9 @@ const forgotPassword = async (req, res, next, isNewUser = false) => {
     const resetPasswordToken = await generateResetToken()
 
     //  update token to the user object in DB, and set expiry to 24hr
-    const user = await req.Models.User.findOneAndUpdate(query, { resetPasswordToken, resetPasswordExpires: Date.now() + 86400000 }, { new: true })
+    const user = await req.Models.User.findOneAndUpdate(query,
+      { resetPasswordToken, resetPasswordExpires: Date.now() + 86400000 },
+      { new: true })
 
     notificationEvents.emit('send_password_reset_email', { user })
     if (!isNewUser) {
@@ -362,9 +364,11 @@ const googleUrl = async (req, res) => {
   }
 }
 const googleSignup = async (req, res) => {
-  console.log(req.body.code)
   try {
-    const gUser = await google.getGoogleAccountFromCode(decodeURIComponent(req.body.code), req.query)
+    const gUser = await google.getGoogleAccountFromCode(
+      decodeURIComponent(req.body.code),
+      req.query
+    )
     try {
       let user = await req.Models.User.findOne({ email: gUser.email })
       if (user
