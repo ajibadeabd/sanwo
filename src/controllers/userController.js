@@ -282,7 +282,7 @@ const passwordReset = async (req, res) => {
     user.resetPasswordExpires = undefined
     await user.save()
 
-    return res.status(400)
+    return res.status(200)
       .send({
         success: true,
         message: 'Password reset successful.'
