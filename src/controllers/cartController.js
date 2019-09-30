@@ -522,7 +522,7 @@ const getApprovalRequests = async (req, res) => {
     .populate('seller')
     .skip(offset)
     .limit(limit)
-    .sort({ createdAt: 'desc' })
+    .sort({ createdAt: 'asc' })
   let resultCount = await req.Models.CartApproval.countDocuments(filter)
 
   // We need to make sure if our current user is a co-operative admin,
