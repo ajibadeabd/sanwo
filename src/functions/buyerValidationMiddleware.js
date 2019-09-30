@@ -8,7 +8,7 @@ const profileUpdate = (req, res, next) => {
     lastName: 'sometimes|required',
     email: 'sometimes|email|exists:User,email',
     address: 'sometimes|mongoId|exists:AddressBook,_id',
-    phoneNumber: 'sometimes|digits:11|exists:User,phoneNumber',
+    phoneNumber: 'sometimes|digits:10|exists:User,phoneNumber',
     businessAddress: 'sometimes|required',
     password: 'sometimes|password_policy|confirmed',
     old_password: 'required_with:password'
