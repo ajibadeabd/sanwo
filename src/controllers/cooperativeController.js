@@ -44,7 +44,7 @@ const update = async (req, res) => {
     }
 
     const updatedUser = await userExist.save()
-    res.send({
+    res.status(200).send({
       success: true,
       message: 'Updated successfully',
       data: updatedUser,
