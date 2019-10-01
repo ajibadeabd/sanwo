@@ -6,7 +6,6 @@ const profileUpdate = (req, res, next) => {
   const validationRule = {
     firstName: 'sometimes|required',
     lastName: 'sometimes|required',
-    email: 'sometimes|email|exists:User,email',
     phoneNumber: 'sometimes|digits:10|exists:User,phoneNumber',
     password: 'sometimes|password_policy|confirmed'
   }

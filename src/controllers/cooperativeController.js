@@ -1,32 +1,63 @@
 /* eslint-disable no-shadow */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-restricted-syntax */
+const bcrypt = require('bcrypt')
 const { queryFilters } = require('../../utils/helper-functions')
 const { constants } = require('../../utils/helpers')
 const notificationEvents = require('../../utils/notificationEvents')
 
-const update = (req, res) => {
-  req.Models.User.findOne({ _id: req.body.userId })
-    .exec((err, user) => {
-      if (err) {
-        throw err
-      } else {
-        user.firstName = req.body.firstName || user.firstName
-        user.lastName = req.body.lastName || user.lastName
-        user.email = req.body.email || user.email
-        user.phoneNumber = req.body.phoneNumber || user.phoneNumber
-        user.password = req.body.password || user.password
-        user.save((error) => {
-          if (error) throw error
-          return res.send({
-            success: true,
-            message: 'Updated successfully',
-            data: user,
-            token: req.headers['x-access-token']
-          })
+const update = async (req, res) => {
+  try {
+    const userExist = await req.Models.User.findOne({ _id: req.body.userId })
+
+    if (!userExist) {
+      return res.status(400)
+        .send({
+          success: false,
+          message: 'Could not find user',
+          data: null
         })
-      }
+    }
+
+    if (req.body.password && (!bcrypt.compareSync(req.body.password, userExist.password))) {
+      return res.status(400)
+        .send({
+          success: false,
+          message: 'Old password is incorrect',
+          data: null
+        })
+    }
+
+    if (req.body && req.body.firstName) {
+      userExist.name = `${req.body.firstName} ${req.body.lastName}`
+      userExist.firstName = req.body.firstName || ''
+      userExist.lastName = req.body.lastName || ''
+    }
+
+    if (req.body && req.body.password_confirmation) {
+    //   userExist.password = await bcrypt.hash(req.body.password, 10)
+      userExist.password = req.body.password_confirmation
+    }
+
+    if (req.body && req.body.phone) {
+      userExist.phoneNumber = req.body.phone
+    }
+
+    const updatedUser = await userExist.save()
+    res.send({
+      success: true,
+      message: 'Updated successfully',
+      data: updatedUser,
+      token: req.headers['x-access-token']
     })
+  } catch (error) {
+    return res.status(400)
+      .send({
+        success: false,
+        message: error.message,
+        data: null
+      })
+  }
 }
 
 const members = async (req, res) => {
