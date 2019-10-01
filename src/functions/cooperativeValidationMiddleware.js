@@ -7,7 +7,9 @@ const profileUpdate = (req, res, next) => {
     firstName: 'sometimes|required',
     lastName: 'sometimes|required',
     phoneNumber: 'sometimes|digits:10|exists:User,phoneNumber',
-    password: 'sometimes|password_policy|confirmed'
+    old_password: 'sometimes|password_policy',
+    password: 'sometimes|password_policy|confirmed',
+    password_confirmation: 'sometimes|password_policy'
   }
 
   Validator(requestBody, validationRule, {}, (err, status) => {
