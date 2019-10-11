@@ -1,17 +1,16 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-
-const { Schema } = mongoose
+const { Schema } = mongoose;
 
 const CartApprovalSchema = new Schema({
   cart: {
     type: Schema.ObjectId,
-    ref: 'Cart',
+    ref: "Cart",
     required: true
   },
   seller: {
     type: Schema.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true
   },
   sellerApprovalToken: String,
@@ -20,21 +19,23 @@ const CartApprovalSchema = new Schema({
   adminApprovalStatus: String,
   adminApprovalStatusChangedBy: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: "User"
   },
   adminApprovalStatusChangeDate: Date,
   adminApprovalToken: String,
+  corporateAdminApprovalStatus: String,
+  corporateAdminApprovalDate: Date,
+  corporateAdminApprovalToken: String,
   createdAt: {
     type: Date,
     default: Date.now
   }
-})
+});
 
 CartApprovalSchema.statics = {
-  valueExists (query) {
-    return this.findOne(query)
-      .then(result => result)
+  valueExists(query) {
+    return this.findOne(query).then(result => result);
   }
-}
+};
 
-module.exports = mongoose.model('CartApproval', CartApprovalSchema)
+module.exports = mongoose.model("CartApproval", CartApprovalSchema);

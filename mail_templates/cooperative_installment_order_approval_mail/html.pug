@@ -1,17 +1,14 @@
 p= `Hello ${buyer.cooperative.lastName || ','} a member of your cooperative on ${process.env.APP_NAME} just made a purchase below are the order details`
 p Customer Name <strong>#{buyer.firstName} #{buyer.lastName}</strong>
-p Order Number <strong>##{order.orderNumber}</strong></p>
+p Order Number <strong>##{order._id}</strong></p>
 h3 Order Details
 table(border=1)
     tr
         th Order Number
-        td #{order.orderNumber}
-    tr
-        th Total Product
-        td #{order.totalProduct}
+        td #{order._id}
     tr
         th Total Quantities
-        td #{order.totalQuantities}
+        td #{order.quantity}
     tr
         th Product Details
         td
@@ -23,17 +20,17 @@ table(border=1)
                     th Unit Price
                     th Unit Subtotal
                 tbody
-                  each item in cart
-                    td= item.product.name
-                    td= item.quantity
-                    td= item.unitPrice
-                    td= item.subTotal
+                    tr
+                        td #{order.product.name}
+                        td #{order.quantity}
+                        td #{order.installmentTotalRepayment/order.quantity}
+                        td #{order.installmentTotalRepayment}
 
     tr
         th Subtotal
-        td #{order.subTotal}
+        td #{order.installmentTotalRepayment}
 
 h4 Take Action
-p Your action is needed for this order APPROVE : <a href="#{process.env.WEB_URL}/order/update-approval-status/#{order.token}/#{cooperative._id}/approved"> #{process.env.WEB_URL}/order/update-approval-status/#{order.token}/#{cooperative._id}/approved</a><br/>
+p Your action is needed for this order APPROVE : <a href="#{process.env.WEB_URL}/order/update-approval-status/#{order.approvalRecord.corporateAdminApprovalToken}/#{cooperative._id}/approved"> #{process.env.WEB_URL}/order/update-approval-status/#{order.token}/#{cooperative._id}/approved</a><br/>
 <strong>Or</strong>
 p DECLINE: <a href="#{process.env.WEB_URL}/order/update-approval-status/#{order.token}/#{cooperative._id}/declined"> #{process.env.WEB_URL}/order/update-approval-status/#{order.token}/#{cooperative._id}/declined</a>

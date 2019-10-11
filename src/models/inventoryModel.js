@@ -1,8 +1,7 @@
-const autoIncrement = require('mongoose-auto-increment')
-const mongoose = require('mongoose')
+const autoIncrement = require("mongoose-auto-increment");
+const mongoose = require("mongoose");
 
-
-const { Schema } = mongoose
+const { Schema } = mongoose;
 
 const InventorySchema = new Schema({
   name: {
@@ -11,7 +10,7 @@ const InventorySchema = new Schema({
   },
   productNumber: {
     type: Number,
-    default: 1,
+    default: 1
   },
   description: {
     type: String,
@@ -19,7 +18,7 @@ const InventorySchema = new Schema({
   },
   seller: {
     type: Schema.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true
   },
   price: {
@@ -29,7 +28,7 @@ const InventorySchema = new Schema({
   },
   category: {
     type: Schema.ObjectId,
-    ref: 'Category',
+    ref: "Category",
     required: true
   },
   installmentPercentagePerMonth: [],
@@ -52,20 +51,26 @@ const InventorySchema = new Schema({
     default: Date.now
   },
   deletedAt: Date,
+  deleted: {
+    type: Boolean,
+    default: false
+  },
   deletedBy: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: "User"
   }
-})
+});
 
 InventorySchema.statics = {
-  valueExists (query) {
-    return this.findOne(query)
-      .then(result => result)
+  valueExists(query) {
+    return this.findOne(query).then(result => result);
   }
-}
-autoIncrement.initialize(mongoose.connection)
+};
+autoIncrement.initialize(mongoose.connection);
 InventorySchema.plugin(autoIncrement.plugin, {
-  model: 'Order', field: 'productNumber', startAt: 1, incrementBy: 1
-})
-module.exports = mongoose.model('Inventory', InventorySchema)
+  model: "Order",
+  field: "productNumber",
+  startAt: 1,
+  incrementBy: 1
+});
+module.exports = mongoose.model("Inventory", InventorySchema);

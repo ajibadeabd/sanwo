@@ -1,107 +1,107 @@
-const Validator = require('./../functions/Validator')
+const Validator = require("./../functions/Validator");
 
 const create = (req, res, next) => {
   const validationRule = {
-    firstName: 'string',
-    lastName: 'string',
-    phoneNumber: 'digits:11',
-    address: 'required',
-    additionalInfo: 'string',
-    state: 'required|min:3',
-    city: 'required|min:3',
-    country: 'required|min:3',
-    zip: 'required|min:3',
-  }
+    firstName: "string",
+    lastName: "string",
+    phoneNumber: "digits:10",
+    address: "required",
+    additionalInfo: "string",
+    state: "required|min:3",
+    city: "required|min:3",
+    country: "required|min:3",
+    zip: "required|min:3"
+  };
 
   Validator(req.body, validationRule, {}, (err, status) => {
     if (!status) {
-      res.status(400)
-        .send({
-          success: false,
-          message: 'Validation failed',
-          data: err
-        })
+      res.status(400).send({
+        success: false,
+        message: "Validation failed",
+        data: err
+      });
     } else {
-      next()
+      next();
     }
-  })
-}
+  });
+};
 
 const update = (req, res, next) => {
   const validationRule = {
-    id: 'required|mongoId|exists:AddressBook,_id',
-    firstName: 'string',
-    lastName: 'string',
-    phoneNumber: 'digits:11',
-    address: 'string',
-    additionalInfo: 'string',
-    state: 'min:3',
-    city: 'min:3',
-    country: 'min:3',
-    zip: 'min:3',
-  }
+    id: "required|mongoId|exists:AddressBook,_id",
+    firstName: "string",
+    lastName: "string",
+    phoneNumber: "digits:11",
+    address: "string",
+    additionalInfo: "string",
+    state: "min:3",
+    city: "min:3",
+    country: "min:3",
+    zip: "min:3"
+  };
 
-  Validator({ ...req.body, ...req.params }, validationRule, {}, (err, status) => {
-    if (!status) {
-      res.status(400)
-        .send({
+  Validator(
+    { ...req.body, ...req.params },
+    validationRule,
+    {},
+    (err, status) => {
+      if (!status) {
+        res.status(400).send({
           success: false,
-          message: 'Validation failed',
+          message: "Validation failed",
           data: err
-        })
-    } else {
-      next()
+        });
+      } else {
+        next();
+      }
     }
-  })
-}
+  );
+};
 
 const deleteAddressBook = (req, res, next) => {
-  const validationRule = { id: 'required|mongoId|exists:AddressBook,_id' }
+  const validationRule = { id: "required|mongoId|exists:AddressBook,_id" };
   Validator(req.params, validationRule, {}, (err, status) => {
     if (!status) {
-      res.status(400)
-        .send({
-          success: false,
-          message: 'Validation failed',
-          data: err
-        })
+      res.status(400).send({
+        success: false,
+        message: "Validation failed",
+        data: err
+      });
     } else {
-      next()
+      next();
     }
-  })
-}
+  });
+};
 
 const get = (req, res, next) => {
   const validationRule = {
-    id: 'mongoId|exists:AddressBook,_id',
-    firstName: 'string',
-    lastName: 'string',
-    phoneNumber: 'digits:11',
-    address: 'string',
-    additionalInfo: 'string',
-    state: 'min:3',
-    city: 'min:3',
-    country: 'min:3',
-    zip: 'min:3'
-  }
+    id: "mongoId|exists:AddressBook,_id",
+    firstName: "string",
+    lastName: "string",
+    phoneNumber: "digits:11",
+    address: "string",
+    additionalInfo: "string",
+    state: "min:3",
+    city: "min:3",
+    country: "min:3",
+    zip: "min:3"
+  };
   Validator(req.query, validationRule, {}, (err, status) => {
     if (!status) {
-      res.status(400)
-        .send({
-          success: false,
-          message: 'Validation failed',
-          data: err
-        })
+      res.status(400).send({
+        success: false,
+        message: "Validation failed",
+        data: err
+      });
     } else {
-      next()
+      next();
     }
-  })
-}
-
+  });
+};
 
 module.exports = {
   create,
   deleteAddressBook,
   update,
   get
-}
+};

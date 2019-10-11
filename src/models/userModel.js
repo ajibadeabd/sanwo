@@ -1,6 +1,6 @@
-const mongoose = require('mongoose')
-const bcrypt = require('bcrypt')
-const helpers = require('../../utils/helpers')
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const helpers = require("../../utils/helpers");
 
 /**
  * @cooperative References the cooperative a user belongs to
@@ -10,7 +10,7 @@ const helpers = require('../../utils/helpers')
  * @relatedUsers a corporate admin can create other users which he can manage. This field
  * will contain IDs of users he's created.
  */
-const { Schema } = mongoose
+const { Schema } = mongoose;
 const UserSchema = new Schema({
   name: {
     type: String,
@@ -18,7 +18,7 @@ const UserSchema = new Schema({
   },
   firstName: {
     type: String,
-    trim: true,
+    trim: true
   },
   lastName: {
     type: String,
@@ -27,38 +27,38 @@ const UserSchema = new Schema({
   email: {
     type: String,
     trim: true,
-    lowercase: true,
+    lowercase: true
   },
   phoneNumber: {
     type: String,
-    trim: true,
+    trim: true
   },
   address: {
     type: Schema.ObjectId,
-    ref: 'AddressBook',
+    ref: "AddressBook"
   },
   businessName: {
     type: String,
-    trim: true,
+    trim: true
   },
   businessRegistrationNumber: {
     type: String,
-    trim: true,
+    trim: true
   },
   businessRegistrationDocument: {
     type: String,
-    trim: true,
+    trim: true
   },
   businessAddress: {
     type: String,
-    trim: true,
+    trim: true
   },
   businessProductCategory: {
     type: String,
-    trim: true,
+    trim: true
   },
   businessSellingOnOtherWebsite: {
-    type: Boolean,
+    type: Boolean
   },
   social: {
     type: Boolean,
@@ -68,11 +68,11 @@ const UserSchema = new Schema({
     type: String,
     trim: true,
     lowercase: true,
-    required: [true, 'Please specify account type']
+    required: [true, "Please specify account type"]
   },
   cooperative: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: "User"
   },
   status: {
     type: String,
@@ -82,12 +82,19 @@ const UserSchema = new Schema({
   },
   avatar: {
     type: String,
-    default: 'avatar.png'
+    default: "avatar.png"
   },
   relatedUsers: [new Schema({ _id: Schema.ObjectId })],
   password: {
     type: String,
-    trim: true,
+    trim: true
+  },
+  corporationName: {
+    type: String
+  },
+  corporationConfirmed: {
+    type: Boolean,
+    default: false
   },
   resetPasswordToken: {
     type: String
@@ -102,21 +109,19 @@ const UserSchema = new Schema({
   deletedAt: Date,
   deletedBy: {
     type: Schema.ObjectId,
-    ref: 'User'
-  },
-})
-
+    ref: "User"
+  }
+});
 
 UserSchema.statics = {
-  valueExists (query) {
-    return this.findOne(query)
-      .then(result => result)
+  valueExists(query) {
+    return this.findOne(query).then(result => result);
   }
-}
+};
 
-UserSchema.pre('save', function (next) {
-  if (!this.isModified('password')) return next()
-  if (this.password) this.password = bcrypt.hashSync(this.password, 10)
-  next()
-})
-module.exports = mongoose.model('User', UserSchema)
+UserSchema.pre("save", function(next) {
+  if (!this.isModified("password")) return next();
+  if (this.password) this.password = bcrypt.hashSync(this.password, 10);
+  next();
+});
+module.exports = mongoose.model("User", UserSchema);
