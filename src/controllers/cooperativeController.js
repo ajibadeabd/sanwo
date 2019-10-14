@@ -122,7 +122,7 @@ const cooperativeMemberOrders = async (req, res) => {
       membersArray.push(member._id);
     });
     filter.buyer = { $in: membersArray };
-    const model = req.Models.Order.find(filter)
+    const model = req.Models.Cart.find(filter)
       .populate({
         path: "buyer",
         // select: 'cooperative',
