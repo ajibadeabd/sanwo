@@ -37,6 +37,13 @@ router.get(
   inventoryController.getAllInventories
 );
 
+router.get(
+  "/seller/:seller",
+  authMiddleware.isAuthenticated,
+  inventoryValidation.get,
+  inventoryController.getAllSellerInventories
+);
+
 // apply auth middleware
 router.use(authMiddleware.isSeller);
 // router.get('/me', inventoryController.getAllMyInventory)

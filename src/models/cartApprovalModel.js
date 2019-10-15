@@ -25,6 +25,10 @@ const CartApprovalSchema = new Schema({
   adminApprovalToken: String,
   corporateAdminApprovalStatus: String,
   corporateAdminApprovalDate: Date,
+  corporateAdminApprovalStatusChangedBy: {
+    type: Schema.ObjectId,
+    ref: "User"
+  },
   corporateAdminApprovalToken: String,
   createdAt: {
     type: Date,

@@ -106,13 +106,41 @@ const cooperativePaymentReminder = async (req, res) => {
   });
 };
 
+const approveMemberOrder = async function(req, res) {
+  const { token, cart, status } = req.params;
+
+  // toggle approval status of the corporate admin of the user's order
+  try {
+    var approval = await req.Models.CartApproval.findOne({
+      cart: cart,
+      corporateAdminApprovalToken: token
+    });
+    if (approval) {
+      approval.corporateAdminApprovalStatus = status;
+      approval.corporateAdminApprovalDate = new Date().toISOString();
+      approval.corporateAdminApprovalStatusChangedBy = req.authData.userId;
+      await approval.save();
+    }
+    return res.send({
+      success: true,
+      message: "Successfully updated cart approval."
+    });
+  } catch (error) {
+    return res.status(400).send({
+      success: false,
+      message: error.message,
+      data: null
+    });
+  }
+};
+
 const cooperativeMemberOrders = async (req, res) => {
   try {
     let limit = parseInt(req.query.limit, 10);
     let offset = parseInt(req.query.offset, 10);
     offset = offset || 0;
     limit = limit || 10;
-    const filter = queryFilters(req);
+    const filter = {};
     let members = await req.Models.User.find(
       { cooperative: req.authData.userId },
       "_id"
@@ -121,24 +149,36 @@ const cooperativeMemberOrders = async (req, res) => {
     members.forEach(member => {
       membersArray.push(member._id);
     });
-    filter.buyer = { $in: membersArray };
-    const model = req.Models.Cart.find(filter)
-      .populate({
-        path: "buyer",
-        // select: 'cooperative',
-        match: { cooperative: req.authData.userId }
-      })
-      .populate({
-        path: "purchases",
-        populate: { path: "category" }
-      })
-      .populate("buyer");
+    filter.user = { $in: membersArray };
+    filter.installmentPeriod = { $gte: 1 };
+    const model = req.Models.Cart.find(filter);
+    const select = "name firstName lastName email avatar businessName";
+
+    model.populate({
+      path: "product",
+      populate: { path: "category seller", select }
+    });
+    model.populate("user", select);
+    model.sort({ createdAt: "desc" });
+    if (req.query.orderStatus) {
+      model.populate({
+        path: "approvalRecord",
+        match: { corporateAdminApprovalStatus: req.query.orderStatus }
+      });
+    } else {
+      model.populate("approvalRecord");
+    }
+
+    // let results = await model;
     model.select("-password");
     model.skip(offset);
     model.limit(limit);
     model.sort({ createdAt: "desc" });
-    const results = await model;
-    const resultCount = await model.countDocuments(filter);
+    var results = await model;
+    var resultCount = await model.countDocuments(filter);
+    results = results.filter(e => {
+      return e.approvalRecord !== null;
+    });
 
     res.send({
       success: true,
@@ -300,5 +340,6 @@ module.exports = {
   defaultingMembers,
   memberTransactions,
   updateMemberStatus,
-  cooperativePaymentReminder
+  cooperativePaymentReminder,
+  approveMemberOrder
 };

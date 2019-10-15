@@ -80,6 +80,9 @@ const UserSchema = new Schema({
     lowercase: true,
     default: helpers.constants.ACCOUNT_STATUS.pending
   },
+  sub: {
+    type: Boolean
+  },
   avatar: {
     type: String,
     default: "avatar.png"

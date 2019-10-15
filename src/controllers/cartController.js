@@ -387,9 +387,9 @@ const requestApproval = async (req, res) => {
       adminApprovalToken: await utils.generateToken(),
       corporateAdminApprovalToken: await utils.generateToken()
     });
-    cart.approvalRecord = approvalRecord;
+    cart.approvalRecord = approvalRecord._id;
     cart.save();
-
+    cart.approvalRecord = approvalRecord;
     // 5. send email to corporative admin and admin
     notificationEvents.emit("installment_order_approval_mail", cart);
 
@@ -478,22 +478,22 @@ const updateApprovalStatus = async (req, res) => {
     // approval request has not already been approved by the seller
     if (
       (user.accountType === constants.SUPER_ADMIN ||
-        user.accountType === constants.CORPORATE_ADMIN) &&
-      approvalRecord.sellerApprovalStatus === "pending"
+        user.accountType === constants.SELLER) &&
+      approvalRecord.corporateAdminApprovalStatus === "pending"
     ) {
       responsePayload.data.errors.user = [
-        "This record is still pending approval from the seller"
+        "This record is still pending approval from the corporate admin"
       ];
       return res.status(400).send(responsePayload);
     }
 
     if (
       (user.accountType === constants.SUPER_ADMIN ||
-        user.accountType === constants.CORPORATE_ADMIN) &&
-      approvalRecord.sellerApprovalStatus === "declined"
+        user.accountType === constants.SELLER) &&
+      approvalRecord.corporateAdminApprovalStatus === "declined"
     ) {
       responsePayload.data.errors.user = [
-        "This record has already been declined by the seller"
+        "This record has already been declined by the corporate admin"
       ];
       return res.status(400).send(responsePayload);
     }
@@ -508,22 +508,28 @@ const updateApprovalStatus = async (req, res) => {
     }
 
     // 4. Update the approval status accordingly depending on if the user is an admin or seller
-    const statusKey =
-      user.accountType === constants.SELLER
-        ? "sellerApprovalStatus"
-        : "adminApprovalStatus";
+    var statusKey = "";
+    if (user.accountType === constants.SELLER) {
+      statusKey = "sellerApprovalStatus";
+      approvalRecord.sellerApprovalStatusChangeDate = Date.now();
+    }
+
+    if (user.accountType === constants.SUPER_ADMIN) {
+      statusKey = "adminApprovalStatus";
+      approvalRecord.adminApprovalStatusChangeDate = Date.now();
+      approvalRecord.adminApprovalStatusChangedBy = user._id;
+    }
+    if (user.accountType === constants.CORPORATE_ADMIN) {
+      statusKey = "corporateAdminApprovalStatus";
+      approvalRecord.corporateAdminApprovalDate = Date.now();
+      approvalRecord.corporateAdminApprovalStatusChangedBy = user._id;
+    }
 
     // Set the new status value
     approvalRecord[statusKey] = req.params.status;
 
     // Set the auth token for this record to null (based one admin or seller)
     approvalRecord[tokenKey] = null;
-    if (statusKey === "sellerApprovalStatus") {
-      approvalRecord.sellerApprovalStatusChangeDate = Date.now();
-    } else {
-      approvalRecord.adminApprovalStatusChangeDate = Date.now();
-      approvalRecord.adminApprovalStatusChangedBy = user._id;
-    }
 
     // 1. If the user is a seller and the status is decline, notify the customer and admin.
     if (
@@ -623,10 +629,12 @@ const getApprovalRequests = async (req, res) => {
   // Add status query based on current user type
   switch (user.accountType) {
     case constants.SUPER_ADMIN:
-    case constants.CORPORATE_ADMIN:
       filter.adminApprovalStatus = "pending";
+      filter.corporateAdminApprovalStatus = { $ne: "pending" };
       break;
     case constants.SELLER:
+      filter.adminApprovalStatus = { $ne: "pending" };
+      filter.corporateAdminApprovalStatus = { $ne: "pending" };
       filter.sellerApprovalStatus = "pending";
       filter.seller = req.authData.userId;
       break;

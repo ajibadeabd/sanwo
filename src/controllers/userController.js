@@ -107,11 +107,20 @@ const _createBuyer = async (req, res) => {
 };
 
 const _createSuperAdmin = (req, res, next) => {
+  let into = {};
+  if (req.body.sub) {
+    into.sub = req.body.sub ? req.body.sub : false;
+    into.phoneNumber = req.body.phoneNumber;
+    into.firstName = req.body.firstName;
+    into.lastName = req.body.lastName;
+    into.status = req.body.status;
+  }
   req.Models.User.create(
     {
       name: req.body.name,
       email: req.body.email,
-      accountType: req.body.accountType
+      accountType: req.body.accountType,
+      ...into
     },
     (err, result) => {
       if (err) {

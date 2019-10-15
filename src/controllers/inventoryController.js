@@ -179,6 +179,25 @@ const getAllInventories = async (req, res) => {
   });
 };
 
+const getAllSellerInventories = async (req, res) => {
+  const { limit, offset } = req.query;
+  const results = await req.Models.Inventory.find({ seller: req.params.seller })
+    .populate({ path: "seller" })
+    .skip(offset)
+    .limit(limit);
+  var resultCount = results.length;
+  res.send({
+    success: true,
+    message: "Successfully fetching inventories",
+    data: {
+      offset,
+      limit,
+      resultCount,
+      results
+    }
+  });
+};
+
 const deleteInventory = async (req, res) => {
   try {
     const result = await req.Models.Inventory.findOne({
@@ -400,5 +419,6 @@ module.exports = {
   getInventoryStat,
   getInventoryInStock,
   getInventoryOutStock,
-  getAllInventories
+  getAllInventories,
+  getAllSellerInventories
 };
