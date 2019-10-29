@@ -48,44 +48,49 @@ const create = (req, res) => {
 };
 
 const update = (req, res) => {
-  req.Models.Inventory.findOne(
-    { _id: req.params.inventoryId, seller: req.authData.userId },
-    (err, inventory) => {
-      if (err) throw err;
-      if (inventory) {
-        inventory.name = req.body.name || inventory.name;
-        inventory.category = req.body.category || inventory.category;
-        inventory.description = req.body.description || inventory.description;
-        inventory.price = req.body.price || inventory.price;
-        inventory.quantity = req.body.quantity || inventory.quantity;
-        inventory.images = req.body.images
-          ? inventory.images.concat(req.body.images)
-          : inventory.images;
-        inventory.meta = req.body.meta
-          ? { ...inventory.meta, ...JSON.parse(req.body.meta) }
-          : inventory.meta;
-
-        inventory.installmentPercentagePerMonth = req.body
-          .installmentPercentagePerMonth
-          ? JSON.parse(req.body.installmentPercentagePerMonth)
-          : inventory.installmentPercentagePerMonth;
-        inventory.save(error => {
-          if (error) throw error;
-          res.send({
-            success: true,
-            message: "Successfully updated",
-            data: inventory
-          });
-        });
-      } else {
-        return res.status(400).send({
-          success: false,
-          message: "Inventory Not Found",
-          data: null
+  var filter = {
+    _id: req.params.inventoryId
+  };
+  if (req.authData.accountType === "seller") {
+    filter.seller = req.authData.userId;
+  }
+  req.Models.Inventory.findOne(filter, (err, inventory) => {
+    if (err) throw err;
+    if (inventory) {
+      inventory.name = req.body.name || inventory.name;
+      inventory.category = req.body.category || inventory.category;
+      inventory.description = req.body.description || inventory.description;
+      inventory.price = req.body.price || inventory.price;
+      inventory.quantity = req.body.quantity || inventory.quantity;
+      inventory.images = req.body.images
+        ? inventory.images.concat(req.body.images)
+        : inventory.images;
+      inventory.meta = req.body.meta
+        ? { ...inventory.meta, ...JSON.parse(req.body.meta) }
+        : inventory.meta;
+      if (req.body.installmentPercentagePerMonth) {
+        inventory.installmentPercentagePerMonth = [];
+        req.body.installmentPercentagePerMonth.forEach(item => {
+          inventory.installmentPercentagePerMonth.push(Number(item));
         });
       }
+
+      inventory.save(error => {
+        if (error) throw error;
+        res.send({
+          success: true,
+          message: "Successfully updated",
+          data: inventory
+        });
+      });
+    } else {
+      return res.status(400).send({
+        success: false,
+        message: "Inventory Not Found",
+        data: null
+      });
     }
-  );
+  });
 };
 
 /**

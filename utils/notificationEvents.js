@@ -325,33 +325,57 @@ class CoreEvents extends EventEmitter {
     const buyer = await models.User.findOne({
       _id: installmentOrder.user._id
     }).populate("cooperative");
-
     const { cart } = installmentOrder;
-    if (adminRecords.length) {
-      for (let i = 0; i < adminRecords.length; i += 1) {
-        this.sendEmail(
-          "admin_installment_order_approval_mail",
-          { to: adminRecords[i].email },
-          {
-            order: installmentOrder,
-            cart,
-            buyer,
-            admin: adminRecords[i]
-          }
-        );
-      }
+
+    if (
+      installmentOrder.approvalRecord.corporateAdminApprovalStatus === "pending"
+    ) {
+      this.sendEmail(
+        "cooperative_installment_order_approval_mail",
+        { to: buyer.cooperative.email },
+        {
+          order: installmentOrder,
+          approvalToken:
+            installmentOrder.approvalRecord.corporateAdminApprovalToken,
+          cart,
+          buyer,
+          cooperative: buyer.cooperative
+        }
+      );
+      return;
     }
 
-    this.sendEmail(
-      "cooperative_installment_order_approval_mail",
-      { to: buyer.cooperative.email },
-      {
-        order: installmentOrder,
-        cart,
-        buyer,
-        cooperative: buyer.cooperative
+    if (installmentOrder.approvalRecord.adminApprovalStatus === "pending") {
+      if (adminRecords.length) {
+        for (let i = 0; i < adminRecords.length; i += 1) {
+          this.sendEmail(
+            "admin_installment_order_approval_mail",
+            { to: adminRecords[i].email },
+            {
+              order: cart,
+              cart,
+              approvalToken: installmentOrder.approvalRecord.adminApprovalToken,
+              buyer,
+              admin: adminRecords[i]
+            }
+          );
+        }
       }
-    );
+      return;
+    }
+
+    if (installmentOrder.approvalRecord.sellerApprovalStatus === "pending") {
+      this.sendEmail(
+        "seller_installment_cart_approved_mail",
+        { to: cart.product.seller.email },
+        {
+          cart,
+          product: cart.product,
+          buyer,
+          seller: cart.product.seller
+        }
+      );
+    }
   }
 
   async onInstallmentCartApprovalMail({ cart, approvalRecord }) {
@@ -627,31 +651,73 @@ class CoreEvents extends EventEmitter {
     const {
       cart,
       cart: { product, user: buyer },
-      seller
+      seller,
+      corporateAdminApprovalStatus,
+      adminApprovalStatus,
+      sellerApprovalStatus,
+      adminApprovalToken,
+      sellerApprovalToken
     } = approvalRecord;
-    // Notify seller
-    this.sendEmail(
-      "seller_installment_cart_approved_mail",
-      { to: seller.email },
-      {
-        cart,
-        product,
-        buyer,
-        seller
-      }
-    );
 
-    // Notify buyer
-    this.sendEmail(
-      "buyer_installment_cart_approved_mail",
-      { to: buyer.email },
-      {
-        cart,
-        product,
-        buyer,
-        seller
+    const adminRecords = await models.User.find({
+      accountType: "super_admin"
+    }).select("_id email");
+
+    if (adminApprovalStatus === "pending") {
+      if (adminRecords.length) {
+        for (let i = 0; i < adminRecords.length; i += 1) {
+          this.sendEmail(
+            "admin_installment_order_approval_mail",
+            { to: adminRecords[i].email },
+            {
+              order: approvalRecord,
+              cart,
+              adminApprovalToken,
+              buyer,
+              admin: adminRecords[i]
+            }
+          );
+        }
       }
-    );
+      return;
+    }
+    if (sellerApprovalStatus == "pending") {
+      return this.sendEmail(
+        "seller_installment_cart_approved_mail",
+        { to: seller.email },
+        {
+          cart,
+          product,
+          buyer,
+          seller
+        }
+      );
+    }
+    if (sellerApprovalStatus === "approved") {
+      // Notify seller
+      this.sendEmail(
+        "seller_installment_cart_approved_mail",
+        { to: seller.email },
+        {
+          cart,
+          product,
+          buyer,
+          seller
+        }
+      );
+
+      // Notify buyer
+      this.sendEmail(
+        "buyer_installment_cart_approved_mail",
+        { to: buyer.email },
+        {
+          cart,
+          product,
+          buyer,
+          seller
+        }
+      );
+    }
   }
 
   async onInstallmentCartAdminDeclined(approvalRecord) {

@@ -1,60 +1,58 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-
-const { Schema } = mongoose
+const { Schema } = mongoose;
 
 const CartSchema = new Schema({
   product: {
     type: Schema.ObjectId,
-    ref: 'Inventory',
+    ref: "Inventory",
     required: true
   },
   user: {
     type: Schema.ObjectId,
-    ref: 'User',
-    required: true,
+    ref: "User",
+    required: true
   },
   quantity: {
     type: Number,
     required: true,
-    minimum: 1,
+    minimum: 1
   },
   installmentPeriod: {
-    type: Number,
+    type: Number
   },
   installmentPercentage: {
-    type: Number,
+    type: Number
   },
   unitPrice: {
     type: Number,
-    required: true,
+    required: true
   },
   subTotal: {
     type: Number,
-    required: true,
+    required: true
   },
   installmentInterest: {
-    type: Number,
+    type: Number
   },
   installmentTotalRepayment: {
-    type: Number,
+    type: Number
   },
   approvalRecord: {
     type: Schema.ObjectId,
-    ref: 'CartApproval'
+    ref: "CartApproval"
   },
   meta: {},
   createdAt: {
     type: Date,
     default: Date.now
   }
-})
+});
 
 CartSchema.statics = {
-  valueExists (query) {
-    return this.findOne(query)
-      .then(result => result)
+  valueExists(query) {
+    return this.findOne(query).then(result => result);
   }
-}
+};
 
-module.exports = mongoose.model('Cart', CartSchema)
+module.exports = mongoose.model("Cart", CartSchema);

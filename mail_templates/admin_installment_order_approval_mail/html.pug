@@ -29,6 +29,6 @@ table(border=1)
         td #{order.installmentTotalRepayment}
 
 h4 Take Action
-p Your action is needed for this order<br/> APPROVE : <a href="#{process.env.WEB_URL}/order/update-approval-status/#{order.approvalRecord.adminApprovalToken}/#{admin._id}/approved"> #{process.env.WEB_URL}/order/update-approval-status/#{order.token}/#{admin._id}/approved</a><br/>
+p Your action is needed for this order<br/> APPROVE : <a href="#{process.env.WEB_URL}/order/update-approval-status/#{approvalToken}/#{admin._id}/approved"> #{process.env.WEB_URL}/order/update-approval-status/#{approvalToken}/#{admin._id}/approved</a><br/>
 <strong>Or</strong>
-p DECLINE: <a href="#{process.env.WEB_URL}/order/update-approval-status/#{order.token}/#{admin._id}/declined"> #{process.env.WEB_URL}/order/update-approval-status/#{order.token}/#{admin._id}/declined</a>
+p DECLINE: <a href="#{process.env.WEB_URL}/order/update-approval-status/#{approvalToken}/#{admin._id}/declined"> #{process.env.WEB_URL}/order/update-approval-status/#{approvalToken}/#{admin._id}/declined</a>

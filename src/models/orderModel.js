@@ -1,6 +1,6 @@
-const mongoose = require('mongoose')
-const autoIncrement = require('mongoose-auto-increment')
-const installmentModel = require('./installmentModel')
+const mongoose = require("mongoose");
+const autoIncrement = require("mongoose-auto-increment");
+const installmentModel = require("./installmentModel");
 
 /**
  * @Description Field description
@@ -21,15 +21,15 @@ const installmentModel = require('./installmentModel')
  * used to used in keeping track of installment payment
  * @payment Reference to payment record for a particular order which is not paid on installment
  */
-const { Schema } = mongoose
+const { Schema } = mongoose;
 const orderSchema = new Schema({
   orderNumber: {
     type: Number,
-    default: 1,
+    default: 1
   },
   buyer: {
     type: Schema.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true
   },
   address: {
@@ -41,7 +41,7 @@ const orderSchema = new Schema({
     trim: true,
     required: true
   },
-  purchases: [{ type: Schema.ObjectId, ref: 'Purchase', required: true }],
+  purchases: [{ type: Schema.ObjectId, ref: "Purchase", required: true }],
   totalProduct: {
     type: Number,
     required: true
@@ -60,28 +60,30 @@ const orderSchema = new Schema({
   },
   payment: {
     type: Schema.ObjectId,
-    ref: 'Payment',
+    ref: "Payment"
   },
   giftCard: {
     type: Schema.ObjectId,
-    ref: 'GiftCard',
+    ref: "GiftCard"
   },
   installmentPeriod: {
-    type: Number,
+    type: Number
   },
   installmentInterest: {
-    type: Number,
+    type: Number
   },
   installmentPercentage: {
-    type: Number,
+    type: Number
   },
   installmentTotalRepayment: {
-    type: Number,
+    type: Number
   },
-  installmentsRepaymentSchedule: [{
-    type: installmentModel.InstallmentSchema,
-    default: undefined
-  }],
+  installmentsRepaymentSchedule: [
+    {
+      type: installmentModel.InstallmentSchema,
+      default: undefined
+    }
+  ],
   installmentPaymentMandate: {
     status: Boolean,
     statusChangeDate: Date,
@@ -94,11 +96,11 @@ const orderSchema = new Schema({
   },
   installmentPaymentStatus: {
     type: String,
-    trim: true,
+    trim: true
   },
   approvalRecord: {
     type: Schema.ObjectId,
-    ref: 'CartApproval'
+    ref: "CartApproval"
   },
   createdAt: {
     type: Date,
@@ -108,17 +110,19 @@ const orderSchema = new Schema({
     type: Date,
     default: Date.now
   }
-})
+});
 
 orderSchema.statics = {
-  valueExists (query) {
-    return this.findOne(query)
-      .then(result => result)
+  valueExists(query) {
+    return this.findOne(query).then(result => result);
   }
-}
+};
 
-autoIncrement.initialize(mongoose.connection)
+autoIncrement.initialize(mongoose.connection);
 orderSchema.plugin(autoIncrement.plugin, {
-  model: 'Order', field: 'orderNumber', startAt: 1, incrementBy: 1
-})
-module.exports = mongoose.model('Order', orderSchema)
+  model: "Order",
+  field: "orderNumber",
+  startAt: 1,
+  incrementBy: 1
+});
+module.exports = mongoose.model("Order", orderSchema);

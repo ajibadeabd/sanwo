@@ -107,10 +107,7 @@ const create = (req, res) => {
                 cartItem.installmentPeriod = cartItem.installmentPeriod;
                 cartItem.installmentPercentage = cartItem.installmentPercentage;
                 // add interest for each quantity
-                cartItem.installmentTotalRepayment =
-                  cartItem.installmentPeriod > 0
-                    ? cartItem.installmentPercentage * cartItem.quantity
-                    : undefined;
+                cartItem.installmentTotalRepayment = cartItem.subTotal;
               }
 
               cartItem.save(error => {
@@ -135,13 +132,13 @@ const create = (req, res) => {
             user: req.body.userId,
             quantity,
             installmentPeriod: req.body.installmentPeriod || undefined,
-            installmentPercentage: req.body.installmentPercentage,
+            installmentPercentage:
+              product.installmentPercentagePerMonth[
+                req.body.installmentPeriod - 1
+              ],
             unitPrice: product.price,
             subTotal,
-            installmentTotalRepayment:
-              req.body.installmentPeriod > 0
-                ? req.body.installmentPercentage * quantity
-                : undefined,
+            installmentTotalRepayment: subTotal,
             meta: req.body.meta ? JSON.parse(req.body.meta) : {}
           },
           (err, result) => {
@@ -280,9 +277,21 @@ const getInstallment = async (req, res) => {
     model.sort({ createdAt: "desc" });
 
     if (req.query.approvalStatus) {
+      let __match = {};
+      if (req.query.approvalStatus === "declined") {
+        __match = {
+          $or: [
+            { sellerApprovalStatus: req.query.approvalStatus },
+            { adminApprovalStatus: req.query.approvalStatus },
+            { corporateAdminApprovalStatus: req.query.approvalStatus }
+          ]
+        };
+      } else {
+        __match = { sellerApprovalStatus: req.query.approvalStatus };
+      }
       model.populate({
         path: "approvalRecord",
-        match: { adminApprovalStatus: req.query.approvalStatus }
+        match: __match
       });
     } else {
       model.populate("approvalRecord");
@@ -433,11 +442,20 @@ const updateApprovalStatus = async (req, res) => {
 
     // 2. Validate the user token,check if it matches our record based
     // on if user is a seller or admin
-    const tokenKey =
-      user.accountType === constants.SELLER
-        ? "sellerApprovalToken"
-        : "adminApprovalToken";
-    const approvalRecord = await req.Models.CartApproval.findOne({
+    var tokenKey = "";
+    if (user.accountType === constants.SELLER) {
+      tokenKey = "sellerApprovalToken";
+    }
+
+    if (user.accountType === constants.SUPER_ADMIN) {
+      tokenKey = "adminApprovalToken";
+    }
+
+    if (user.accountType === constants.CORPORATE_ADMIN) {
+      tokenKey = "corporateAdminApprovalToken";
+    }
+
+    var approvalRecord = await req.Models.CartApproval.findOne({
       [tokenKey]: req.params.token
     })
       .populate({
@@ -445,6 +463,7 @@ const updateApprovalStatus = async (req, res) => {
         populate: { path: "user product" }
       })
       .populate("seller");
+
     if (!approvalRecord) {
       responsePayload.data.errors.user = [
         "Invalid token supplied, or token has been used."
@@ -466,7 +485,7 @@ const updateApprovalStatus = async (req, res) => {
     // when the user accountType is cooperative assert that our customer belongs to this cooperative
     if (
       user.accountType === constants.CORPORATE_ADMIN &&
-      user._id.toString() !== approvalRecord.cart.user.cooperative
+      user._id.toString() !== approvalRecord.cart.user.cooperative.toString()
     ) {
       responsePayload.data.errors.user = [
         "The customer doesn't belong to your cooperative"
@@ -538,6 +557,7 @@ const updateApprovalStatus = async (req, res) => {
     ) {
       // If a seller declines a request automatically decline admin status also
       approvalRecord.adminApprovalStatus = req.params.status;
+      approvalRecord.corporateAdminApprovalStatus = req.params.status;
       notificationEvents.emit(
         "seller_installment_cart_declined",
         approvalRecord
@@ -561,14 +581,24 @@ const updateApprovalStatus = async (req, res) => {
     //    * Notify the seller of new status from admin
     //    * Notify the customer that they can checkout the installment order
     if (
-      (user.accountType === constants.SUPER_ADMIN ||
-        user.accountType === constants.CORPORATE_ADMIN) &&
+      user.accountType === constants.SUPER_ADMIN &&
       req.params.status === constants.ORDER_STATUS.approved
     ) {
-      notificationEvents.emit(
-        "installment_cart_admin_approved",
-        approvalRecord
-      );
+      notificationEvents.emit("installment_order_approval_mail", {
+        approvalRecord: approvalRecord,
+        user: approvalRecord.cart.user,
+        cart: approvalRecord.cart
+      });
+    }
+    if (
+      user.accountType === constants.CORPORATE_ADMIN &&
+      req.params.status === constants.ORDER_STATUS.approved
+    ) {
+      notificationEvents.emit("installment_order_approval_mail", {
+        approvalRecord: approvalRecord,
+        user: approvalRecord.cart.user,
+        cart: approvalRecord.cart
+      });
     }
 
     // 4. If the user is an admin and the status is declined, notify the customer

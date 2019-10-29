@@ -1,43 +1,41 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-
-const { Schema } = mongoose
+const { Schema } = mongoose;
 const InstallmentSchema = new Schema({
   installmentRef: {
-    type: String,
+    type: String
   },
   installmentPercentage: {
-    type: Number,
+    type: Number
   },
   amount: {
-    type: Number,
+    type: Number
   },
   status: {
     type: String,
-    default: 'pending',
+    default: "pending"
   },
   payment: {
     type: Schema.ObjectId,
-    ref: 'Payment',
+    ref: "Payment"
   },
   dueDate: {
-    type: Date,
+    type: Date
   },
   datePaid: {
     type: Date
   },
-  meta: { },
+  meta: {},
   createdAt: {
     type: Date,
     default: Date.now
   }
-})
+});
 
 InstallmentSchema.statics = {
-  valueExists (query) {
-    return this.findOne(query)
-      .then(result => result)
+  valueExists(query) {
+    return this.findOne(query).then(result => result);
   }
-}
+};
 
-module.exports = { InstallmentSchema }
+module.exports = { InstallmentSchema };

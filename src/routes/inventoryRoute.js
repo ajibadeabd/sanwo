@@ -43,6 +43,13 @@ router.get(
   inventoryValidation.get,
   inventoryController.getAllSellerInventories
 );
+router.put(
+  "/:inventoryId",
+  authMiddleware.isAuthenticated,
+  upload.array("images"),
+  inventoryValidation.update,
+  inventoryController.update
+);
 
 // apply auth middleware
 router.use(authMiddleware.isSeller);
@@ -52,12 +59,6 @@ router.post(
   upload.array("images"),
   inventoryValidation.create,
   inventoryController.create
-);
-router.put(
-  "/:inventoryId",
-  upload.array("images"),
-  inventoryValidation.update,
-  inventoryController.update
 );
 router.delete(
   "/:inventoryId",
