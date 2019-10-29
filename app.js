@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const morgan = require("morgan");
+const cors = require("cors");
 const io = require("socket.io");
 const fs = require("fs");
 const { Socket } = require("./src/controllers/messageController");
@@ -45,7 +46,7 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
-
+app.use(cors());
 // Setup morgan dev
 app.use(morgan("dev"));
 
@@ -64,7 +65,7 @@ app.use((req, res, next) => {
 });
 
 // All route should be added to the index.js file inside the route folder
-app.use("/", route);
+app.use("/", cors(), route);
 
 // Handle the error
 app.use((err, req, res, next) => {
