@@ -223,7 +223,7 @@ const _createInstallmentRelatedRecords = async (
   const savedInstallmentOrder = await req.Models.Order.create({
     buyer: req.authData.userId, // save the current user as the buyer
     address,
-    orderNumber: generateOrder,
+    orderNumber: generateOrder(),
     totalProduct: 1,
     totalQuantities: cart.quantity,
     subTotal: cart.subTotal,
