@@ -8,7 +8,7 @@ const _validateCartCreation = async req => {
   const currentUser = await req.Models.User.findById(req.body.userId);
   const currentUserCart = await req.Models.Cart.find({ user: req.body.userId });
   const productInstallmentMaxPeriod = product.installmentPercentagePerMonth
-    ? product.installmentPercentagePerMonth.length
+    ? product.installmentPercentagePerMonth.length + 1
     : 0;
 
   /** Confirm that the product is valid for installment if a buyer sets installment. */
