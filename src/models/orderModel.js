@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const autoIncrement = require("mongoose-auto-increment");
 const installmentModel = require("./installmentModel");
 
 /**
@@ -117,11 +116,4 @@ orderSchema.statics = {
   }
 };
 
-autoIncrement.initialize(mongoose.connection);
-orderSchema.plugin(autoIncrement.plugin, {
-  model: "Order",
-  field: "orderNumber",
-  startAt: 1,
-  incrementBy: 1
-});
 module.exports = mongoose.model("Order", orderSchema);
