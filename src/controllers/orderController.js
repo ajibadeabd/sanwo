@@ -3,7 +3,11 @@ const moment = require("moment");
 const sha512 = require("crypto-js/sha512");
 const mailer = require("./../../utils/mailer");
 
-const { constants, remitaConfig } = require("../../utils/helpers");
+const {
+  constants,
+  remitaConfig,
+  generateOrder
+} = require("../../utils/helpers");
 const { queryFilters } = require("./../../utils/helper-functions");
 const notificationEvents = require("../../utils/notificationEvents");
 const remitaServices = require("../../utils/remitaServices");
@@ -219,6 +223,7 @@ const _createInstallmentRelatedRecords = async (
   const savedInstallmentOrder = await req.Models.Order.create({
     buyer: req.authData.userId, // save the current user as the buyer
     address,
+    orderNumber: generateOrder,
     totalProduct: 1,
     totalQuantities: cart.quantity,
     subTotal: cart.subTotal,

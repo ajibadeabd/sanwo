@@ -57,6 +57,22 @@ const remitaConfig = {
   merchantId: "2547916"
 };
 
+const generateOrder = async function() {
+  var token = "",
+    digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+  for (let i = 0; i < 9; i++) {
+    token += digits[Math.floor(Math.random() * 10)];
+  }
+  token = token
+    .split("")
+    .sort(function() {
+      return 0.5 - Math.random();
+    })
+    .join("");
+  return Number(token);
+};
+
 const removeFile = path => {
   fs.unlink(path, err => {
     if (err) {
@@ -68,5 +84,6 @@ const removeFile = path => {
 module.exports = {
   removeFile,
   constants,
-  remitaConfig
+  remitaConfig,
+  generateOrder
 };
