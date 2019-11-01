@@ -70,8 +70,8 @@ const _validateCartCreation = async req => {
 const create = (req, res) => {
   _validateCartCreation(req)
     .then(({ product, currentUserCart }) => {
-      const subTotal = product.price * req.body.quantity;
-      const quantity = parseInt(req.body.quantity, 10);
+      var subTotal = product.price * req.body.quantity;
+      var quantity = parseInt(req.body.quantity, 10);
 
       if (req.body.installmentPeriod && req.body.installmentPeriod > 0) {
         // If the installment period set is 1 month take the value of the first index
@@ -81,6 +81,10 @@ const create = (req, res) => {
          * */
         req.body.installmentPercentage =
           product.installmentPercentagePerMonth[req.body.installmentPeriod - 1];
+        subTotal =
+          product.installmentPercentagePerMonth[
+            req.body.installmentPeriod - 1
+          ] * quantity;
       }
       /**
        * lets's check if the product already exist in cart,
