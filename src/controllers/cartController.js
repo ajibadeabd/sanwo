@@ -80,10 +80,10 @@ const create = (req, res) => {
          * same logic applies when the installment period is greater than 1.
          * */
         req.body.installmentPercentage =
-          product.installmentPercentagePerMonth[req.body.installmentPeriod - 1];
+          product.installmentPercentagePerMonth[req.body.installmentPeriod - 2];
         subTotal =
           product.installmentPercentagePerMonth[
-            req.body.installmentPeriod - 1
+            req.body.installmentPeriod - 2
           ] * quantity;
       }
       /**
@@ -138,7 +138,7 @@ const create = (req, res) => {
             installmentPeriod: req.body.installmentPeriod || undefined,
             installmentPercentage:
               product.installmentPercentagePerMonth[
-                req.body.installmentPeriod - 1
+                req.body.installmentPeriod - 2
               ],
             unitPrice: product.price,
             subTotal,

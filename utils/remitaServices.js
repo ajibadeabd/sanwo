@@ -59,7 +59,7 @@ const _setUpMandate = async body => {
     body.merchantId = merchantId;
     body.serviceTypeId = serviceTypeId;
     body.hash = sha512(
-      `${remitaConfig.merchantId}${serviceTypeId}${body.requestId}${body.amount}${apiKey}`
+      `${merchantId}${serviceTypeId}${body.requestId}${body.amount}${apiKey}`
     ).toString();
     const options = {
       method: "POST",

@@ -34,7 +34,7 @@ const createOrdersWithoutInstallment = async (
     totalProduct: cartItemsWithoutInstallment.length,
     totalQuantities,
     subTotal,
-    orderStatus: constants.ORDER_STATUS.pending_payment
+    orderStatus: constants.ORDER_STATUS.payment_completed
   });
 
   // create purchase record for each cart item
@@ -48,7 +48,7 @@ const createOrdersWithoutInstallment = async (
       subTotal: cartItemsWithoutInstallment[x].subTotal,
       hasInstallment: false,
       meta: cartItemsWithoutInstallment[x].meta,
-      status: constants.ORDER_STATUS.pending_payment
+      status: constants.ORDER_STATUS.payment_completed
     });
     return purchaseRecord;
   });
@@ -361,7 +361,7 @@ const createInstallmentOrder = async (req, res) => {
       payerBankCode: `${order.installmentPaymentMandate.bankAccount.bankCode}`,
       payerAccount: `${order.installmentPaymentMandate.bankAccount.accountNumber}`,
       requestId: `${order.orderNumber}`,
-      amount: `${order.installmentTotalRepayment}`,
+      amount: `${order.installmentTotalRepayment / order.installmentPeriod}`,
       startDate: `${moment().format("D/MM/Y")}`,
       endDate: `${moment()
         .add(order.installmentPeriod, "months")
@@ -384,7 +384,7 @@ const createInstallmentOrder = async (req, res) => {
         );
     }
 
-    const { merchantId, apiKey, baseUrlHttp } = remitaConfig;
+    const { merchantId, apiKey, baseUrl } = remitaConfig;
     const hash = sha512(
       `${merchantId}${apiKey}${order.orderNumber}`
     ).toString();
@@ -393,7 +393,7 @@ const createInstallmentOrder = async (req, res) => {
       bankAccount,
       status: false,
       hash,
-      formUrl: `${baseUrlHttp}/ecomm/mandate/form/${merchantId}/${hash}/${mandateResponse.mandateId}/${mandateResponse.requestId}/rest.reg`,
+      formUrl: `${baseUrl}/ecomm/mandate/form/${merchantId}/${hash}/${mandateResponse.mandateId}/${mandateResponse.requestId}/rest.reg`,
       mandateId: mandateResponse.mandateId,
       requestId: mandateResponse.requestId,
       merchantId
@@ -427,6 +427,7 @@ const createInstallmentOrder = async (req, res) => {
     //   mandateFormUrl: order.installmentPaymentMandate.formUrl
     // });
   } catch (error) {
+    console.log(error);
     res
       .status(500)
       .send("Oops! An error occurred. If error persist please notify admin");

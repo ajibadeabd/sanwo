@@ -49,13 +49,12 @@ const constants = {
     reversed_payment: "reversed_payment"
   }
 };
-
 const remitaConfig = {
-  baseUrl: "https://www.remitademo.net/remita",
+  baseUrl: "https://remitademo.net/remita",
   baseUrlHttp: "http://www.remitademo.net/remita",
   serviceTypeId: "4430731",
   apiKey: "1946",
-  merchantId: "PAYSMOSMO"
+  merchantId: "2547916"
 };
 
 const removeFile = path => {
