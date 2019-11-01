@@ -24,7 +24,7 @@ const installmentModel = require("./installmentModel");
 const { Schema } = mongoose;
 const orderSchema = new Schema({
   orderNumber: {
-    type: Number,
+    type: String,
     default: 1
   },
   buyer: {
