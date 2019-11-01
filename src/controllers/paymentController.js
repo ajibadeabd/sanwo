@@ -391,7 +391,10 @@ const installmentMandateStatus = async (req, res) => {
   try {
     const select = "email firstName lastName email";
     const order = await req.Models.Order.findOne({
-      $or: [{ _id: req.params.orderId }, { orderNumber: req.params.orderId }]
+      $or: [
+        { _id: req.params.orderId },
+        { orderNumber: Number(req.params.orderId) }
+      ]
     })
       .populate("buyer")
       .populate({ path: "purchases", populate: { path: "seller", select } });
