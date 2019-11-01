@@ -374,6 +374,7 @@ const createInstallmentOrder = async (req, res) => {
       !mandateResponse.mandateId ||
       !mandateResponse.requestId
     ) {
+      console.log(mandateResponse);
       // Delete the create order and purchase record
       if (order.purchases && order.purchases[0]) order.purchases[0].delete();
       order.delete();
