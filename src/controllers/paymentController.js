@@ -390,14 +390,15 @@ const notification = async (req, res) => {
 const installmentMandateStatus = async (req, res) => {
   try {
     const select = "email firstName lastName email";
+    var order;
     if (req.params.orderId.length > 10) {
-      const order = await req.Models.Order.findOne({
+      order = await req.Models.Order.findOne({
         _id: req.params.orderId
       })
         .populate("buyer")
         .populate({ path: "purchases", populate: { path: "seller", select } });
     } else {
-      const order = await req.Models.Order.findOne({
+      order = await req.Models.Order.findOne({
         orderNumber: req.params.orderId
       })
         .populate("buyer")
