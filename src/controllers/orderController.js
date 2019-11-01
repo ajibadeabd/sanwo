@@ -218,12 +218,12 @@ const _createInstallmentRelatedRecords = async (
   bankAccount
 ) => {
   // create installment payment schedule
-
+  var orderNumber = await generateOrder();
   // save the installment order
   const savedInstallmentOrder = await req.Models.Order.create({
     buyer: req.authData.userId, // save the current user as the buyer
     address,
-    orderNumber: generateOrder(),
+    orderNumber,
     totalProduct: 1,
     totalQuantities: cart.quantity,
     subTotal: cart.subTotal,
