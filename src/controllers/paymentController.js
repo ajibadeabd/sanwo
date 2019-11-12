@@ -471,7 +471,7 @@ const installmentPaymentHistory = async (req, res) => {
 const debitNotification = async (req, res) => {
   try {
     const responseBody = req.body;
-    if (!responseBody.length)
+    if (!responseBody.notificationType)
       return res
         .status(400)
         .send({ status: false, message: "Empty request body" });
@@ -486,7 +486,7 @@ const debitNotification = async (req, res) => {
       paymentSchedule => paymentSchedule.status === "pending"
     );
 
-    res.send({ status: true, message: "OK" });
+    res.send({ status: true, message: "" });
 
     if (pendingPayments.length) {
       pendingPayments[0].status = "transaction_completed_successfully";
