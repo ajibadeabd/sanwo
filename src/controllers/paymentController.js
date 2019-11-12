@@ -163,8 +163,8 @@ const generateOrderPaymentRRR = async (req, res) => {
     // If RRR code has been generated for this order and payment is not failed return the RRR
     if (
       order.payment &&
-      (order.payment.transactionRef &&
-        order.orderStatus !== helpers.constants.ORDER_STATUS.payment_failed)
+      order.payment.transactionRef &&
+        order.orderStatus !== helpers.constants.ORDER_STATUS.payment_failed
     ) {
       order.payment.hash = sha512(
         `${remitaConfig.merchantId}${order.payment.transactionRef}${remitaConfig.apiKey}`
@@ -486,7 +486,7 @@ const debitNotification = async (req, res) => {
       paymentSchedule => paymentSchedule.status === "pending"
     );
 
-    res.send({ status: true, message: "" });
+    res.send({ status: true, message: "Payment Received" });
 
     if (pendingPayments.length) {
       pendingPayments[0].status = "transaction_completed_successfully";
