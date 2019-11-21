@@ -444,9 +444,38 @@ const createInstallmentOrder = async (req, res) => {
   }
 };
 
+const getSingleOrder = async (req, res) => {
+  try {
+    let filter = { orderNumber: req.params.orderNumber };
+
+    const select = "email firstName lastName email";
+    const query = req.Models.Order.findOne(filter);
+    query.populate("buyer", select);
+    query.populate("payment");
+    query.populate("approvalRecord");
+    query.populate({
+      path: "purchases",
+      populate: { path: "seller", select }
+    });
+
+    const results = await query;
+    res.send({
+      success: true,
+      message: "Successfully fetch order",
+      order: results
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .send("Oops! An error occurred. If error persist please notify admin");
+    req.log(error);
+  }
+};
+
 module.exports = {
   create,
   updateOrderStatus,
   getOrders,
-  createInstallmentOrder
+  createInstallmentOrder,
+  getSingleOrder
 };
