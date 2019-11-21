@@ -37,10 +37,7 @@ const createOrdersWithoutInstallment = async (
     buyer: req.body.userId,
     address,
     orderNumber,
-    paymentMethod:
-      req.body.paymentType == "cash_on_delivery"
-        ? "cash_on_delivery"
-        : "debit_card",
+    paymentMethod: req.body.paymentType,
     totalProduct: cartItemsWithoutInstallment.length,
     totalQuantities,
     subTotal,
