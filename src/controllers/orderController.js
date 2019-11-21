@@ -42,9 +42,10 @@ const createOrdersWithoutInstallment = async (
     totalProduct: cartItemsWithoutInstallment.length,
     totalQuantities,
     subTotal,
-    orderStatus: req.body.payment.cash_on_delivery
-      ? constants.ORDER_STATUS.pending_payment
-      : constants.ORDER_STATUS.payment_completed
+    orderStatus:
+      req.body.paymentType == "cash_on_delivery"
+        ? constants.ORDER_STATUS.pending_payment
+        : constants.ORDER_STATUS.payment_completed
   });
 
   // create purchase record for each cart item
