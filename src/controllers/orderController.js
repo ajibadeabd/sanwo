@@ -35,9 +35,10 @@ const createOrdersWithoutInstallment = async (
   const order = await req.Models.Order.create({
     buyer: req.body.userId,
     address,
-    paymentMethod: req.body.payment.cash_on_delivery
-      ? "cash_on_delivery"
-      : "debit_card",
+    paymentMethod:
+      req.body.paymentType == "cash_on_delivery"
+        ? "cash_on_delivery"
+        : "debit_card",
     totalProduct: cartItemsWithoutInstallment.length,
     totalQuantities,
     subTotal,
