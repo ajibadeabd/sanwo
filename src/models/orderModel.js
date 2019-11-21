@@ -60,6 +60,11 @@ const orderSchema = new Schema({
     type: Schema.ObjectId,
     ref: "Payment"
   },
+  paymentMethod: {
+    type: String,
+    enum: ["debit_card", "cash_on_delivery", "installment"],
+    default: "debit_card"
+  },
   giftCard: {
     type: Schema.ObjectId,
     ref: "GiftCard"

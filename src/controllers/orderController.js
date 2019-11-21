@@ -35,10 +35,15 @@ const createOrdersWithoutInstallment = async (
   const order = await req.Models.Order.create({
     buyer: req.body.userId,
     address,
+    paymentMethod: req.body.payment.cash_on_delivery
+      ? "cash_on_delivery"
+      : "debit_card",
     totalProduct: cartItemsWithoutInstallment.length,
     totalQuantities,
     subTotal,
-    orderStatus: constants.ORDER_STATUS.payment_completed
+    orderStatus: req.body.payment.cash_on_delivery
+      ? constants.ORDER_STATUS.pending_payment
+      : constants.ORDER_STATUS.payment_completed
   });
 
   // create purchase record for each cart item
