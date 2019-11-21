@@ -31,10 +31,12 @@ const createOrdersWithoutInstallment = async (
       }
     }
   }
+  var orderNumber = await generateOrder();
   // convert each cart item from mongoDB object to actual object
   const order = await req.Models.Order.create({
     buyer: req.body.userId,
     address,
+    orderNumber,
     paymentMethod:
       req.body.paymentType == "cash_on_delivery"
         ? "cash_on_delivery"
@@ -42,10 +44,7 @@ const createOrdersWithoutInstallment = async (
     totalProduct: cartItemsWithoutInstallment.length,
     totalQuantities,
     subTotal,
-    orderStatus:
-      req.body.paymentType == "cash_on_delivery"
-        ? constants.ORDER_STATUS.pending_payment
-        : constants.ORDER_STATUS.payment_completed
+    orderStatus: constants.ORDER_STATUS.pending_payment
   });
 
   // create purchase record for each cart item
