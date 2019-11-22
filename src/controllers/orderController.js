@@ -33,7 +33,7 @@ const createOrdersWithoutInstallment = async (
   }
   var orderNumber = await generateOrder();
   // convert each cart item from mongoDB object to actual object
-  const order = await req.Models.Order.create({
+  var order = await req.Models.Order.create({
     buyer: req.body.userId,
     address,
     orderNumber,
@@ -66,6 +66,10 @@ const createOrdersWithoutInstallment = async (
   order.purchases = purchaseIds;
   order.save(error => {
     if (error) throw new Error(error);
+  });
+  order = await req.Models.Order.findOne({ _id: order._id }).populate({
+    path: "buyer",
+    select: "firstName lastName email"
   });
   return order
     ? Promise.resolve(order)
