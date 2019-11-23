@@ -53,18 +53,18 @@ function getGooglePlusApi(auth) {
 function urlGoogle(param) {
   let ext = "";
   if (param.type === "buyer") {
-    ext = "/#/register?type=buyer";
+    ext = "/register?type=buyer";
   }
 
   if (param.type === "seller") {
-    ext = "/#/register/seller";
+    ext = "/register/seller";
   }
 
   if (param.type === "corporate_admin") {
-    ext = "/#/register?type=corporate_admin";
+    ext = "/register?type=corporate_admin";
   }
   if (param.type === "undefined") {
-    ext = "/#/login";
+    ext = "/login";
   }
   let url = "";
   url = encodeURI(process.env.LIVE_REDIRECT + ext);
