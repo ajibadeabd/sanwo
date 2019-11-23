@@ -1,5 +1,5 @@
 const { google } = require("googleapis");
-const rp = require("request-promise");
+const Request = require("request-promise");
 /*******************/
 /** CONFIGURATION **/
 /*******************/
@@ -67,7 +67,7 @@ function urlGoogle(param) {
     ext = "/login";
   }
   let url = "";
-  url = encodeURI(process.env.LIVE_REDIRECT + ext);
+  url = encodeURI(process.env.WEB_URL + ext);
   const auth = createConnection(url);
   url = getConnectionUrl(auth);
   return url;
@@ -78,12 +78,32 @@ function urlGoogle(param) {
  */
 var getGoogleAccountFromCode = async function(code, param) {
   try {
+    let ext = "";
+    if (param.type === "buyer") {
+      ext = "/register?type=buyer";
+    }
+
+    if (param.type === "seller") {
+      ext = "/register/seller";
+    }
+
+    if (param.type === "corporate_admin") {
+      ext = "/register?type=corporate_admin";
+    }
+    if (param.type === "undefined") {
+      ext = "/login";
+    }
+    let url = "";
+    url = encodeURI(process.env.WEB_URL + ext);
+    const auth = createConnection(url);
+    const data = await auth.getToken(code);
+    const tokens = data.tokens;
     const options = {
       method: "GET",
       uri:
         "https://people.googleapis.com/v1/people/me?personFields=emailAddresses,names,photos",
       headers: {
-        Authorization: "Bearer " + code
+        Authorization: "Bearer " + tokens.access_token
       }
     };
     var me = await Request(options);
@@ -101,7 +121,7 @@ var getGoogleAccountFromCode = async function(code, param) {
       username: userGoogleEmail.split("@")[0]
     };
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 };
 
