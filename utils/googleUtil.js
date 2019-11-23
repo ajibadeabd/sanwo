@@ -77,42 +77,32 @@ function urlGoogle(param) {
  * Part 2: Take the "code" parameter which Google gives us once when the user logs in, then get the user's email and id.
  */
 var getGoogleAccountFromCode = async function(code, param) {
-  let ext = "";
-  if (param.type === "buyer") {
-    ext = "?type=buyer";
+  try {
+    const options = {
+      method: "GET",
+      uri:
+        "https://people.googleapis.com/v1/people/me?personFields=emailAddresses,names,photos",
+      headers: {
+        Authorization: "Bearer " + code
+      }
+    };
+    var me = await Request(options);
+    me = JSON.parse(me);
+    const userGoogleEmail = me.emailAddresses[0].value;
+    const userFirstName = me.names[0].givenName;
+    const userLastName = me.names[0].familyName;
+    const userAvatar = me.photos[0].url;
+    const displayName = me.names[0].displayName;
+    return {
+      email: userGoogleEmail,
+      lastName: userLastName,
+      firstName: userFirstName,
+      avatar: userAvatar,
+      username: userGoogleEmail.split("@")[0]
+    };
+  } catch (error) {
+    console.log(error);
   }
-
-  if (param.type === "seller") {
-    ext = "/seller";
-  }
-
-  if (param.type === "corporate_admin") {
-    ext = "?type=corporate_admin";
-  }
-  let url = "";
-  url = encodeURI(process.env.LIVE_REDIRECT + "/register" + ext);
-  const auth = createConnection(url);
-  const data = await auth.getToken(code);
-  const tokens = data.tokens;
-  auth.setCredentials(tokens);
-  const plus = getGooglePlusApi(auth);
-  const me = await plus.people.get({ userId: "me" });
-  const userGoogleId = me.data.id;
-  const userGoogleEmail =
-    me.data.emails && me.data.emails.length && me.data.emails[0].value;
-  const userFirstName = me.data.name.givenName;
-  const userLastName = me.data.name.familyName;
-  const userAvatar = me.data.image.url;
-  const displayName = me.data.displayName;
-  return {
-    id: userGoogleId,
-    email: userGoogleEmail,
-    tokens: tokens,
-    name: userLastName + " " + userFirstName,
-    lastName: userLastName,
-    firstName: userFirstName,
-    username: userGoogleEmail.split("@")[0]
-  };
 };
 
 module.exports = {
