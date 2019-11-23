@@ -455,7 +455,7 @@ const googleSignup = async (req, res) => {
 
       // var userId = shortid.generate();
       gUser.social = true;
-      gUser.accountType = req.query.type;
+      gUser.accountType = req.query.type=='undefined'?"buyer":req.query.type;
 
       const nUser = new req.Models.User(gUser);
       try {
