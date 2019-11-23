@@ -26,6 +26,169 @@ const updateAccountStatus = async (req, res) => {
   }
 };
 
+const AddItemToHero = async (req, res) => {
+  try {
+    var app = await req.Models.App.findOne({ Type: "landing" });
+    if (!app) {
+      app = new req.Models.App({
+        Type: "landing",
+        heroes: [],
+        featuredItems: []
+      });
+    }
+    app.heroes.push({
+      imageUrl: req.body.imageUrl,
+      title: req.body.title,
+      subTitle: req.body.subTitle,
+      action: req.body.action,
+      link: req.body.link
+    });
+    await app.save();
+    app = await req.Models.App.findOne({ Type: "landing" }).populate(
+      "featuredItems.product"
+    );
+    res.send({
+      success: true,
+      message: "Successfully created item on the hero",
+      data: app
+    });
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message:
+        "Oops! an error occurred. Please retry, if error persist contact admin"
+    });
+    throw new Error(e);
+  }
+};
+
+const fetchLandingData = async (req, res) => {
+  try {
+    var app = await req.Models.App.findOne({ Type: "landing" }).populate(
+      "featuredItems.product"
+    );
+    if (!app) {
+      app = new req.Models.App({
+        Type: "landing",
+        heroes: [],
+        featuredItems: []
+      });
+      app.save();
+    }
+
+    res.send({
+      success: true,
+      message: "Successfully Items for the landing page",
+      data: app
+    });
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message:
+        "Oops! an error occurred. Please retry, if error persist contact admin"
+    });
+    throw new Error(e);
+  }
+};
+
+const RemoveItemFromHero = async (req, res) => {
+  try {
+    var app = await req.Models.App.findOne({ Type: "landing" });
+    if (!app) {
+      app = new req.Models.App({
+        Type: "landing",
+        heroes: [],
+        featuredItems: []
+      });
+    }
+    var temp = app.heroes.filter(e => {
+      return e._id !== req.params.item;
+    });
+    app.heroes = temp;
+    await app.save();
+    app = await req.Models.App.findOne({ Type: "landing" }).populate(
+      "featuredItems.product"
+    );
+    res.send({
+      success: true,
+      message: "Successfully removed item on the hero",
+      data: app
+    });
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message:
+        "Oops! an error occurred. Please retry, if error persist contact admin"
+    });
+    throw new Error(e);
+  }
+};
+
+const AddItemToFeatured = async (req, res) => {
+  try {
+    var app = await req.Models.App.findOne({ Type: "landing" });
+    if (!app) {
+      app = new req.Models.App({
+        Type: "landing",
+        heroes: [],
+        featuredItems: []
+      });
+    }
+    app.featuredItems.push({
+      product: req.body.feature
+    });
+    await app.save();
+    app = await req.Models.App.findOne({ Type: "landing" }).populate(
+      "featuredItems.product"
+    );
+    res.send({
+      success: true,
+      message: "Successfully added item to the featured list",
+      data: app
+    });
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message:
+        "Oops! an error occurred. Please retry, if error persist contact admin"
+    });
+    throw new Error(e);
+  }
+};
+
+const RemoveItemFromFeatured = async (req, res) => {
+  try {
+    var app = await req.Models.App.findOne({ Type: "landing" });
+    if (!app) {
+      app = new req.Models.App({
+        Type: "landing",
+        heroes: [],
+        featuredItems: []
+      });
+    }
+    var temp = app.featuredItems.filter(e => {
+      return e.product !== req.params.product;
+    });
+    app.featuredItems = temp;
+    await app.save();
+    app = await req.Models.App.findOne({ Type: "landing" }).populate(
+      "featuredItems.product"
+    );
+    res.send({
+      success: true,
+      message: "Successfully removed item from the featured list",
+      data: app
+    });
+  } catch (e) {
+    res.status(500).send({
+      success: false,
+      message:
+        "Oops! an error occurred. Please retry, if error persist contact admin"
+    });
+    throw new Error(e);
+  }
+};
+
 const getUsers = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit, 10) || 10;
@@ -288,5 +451,10 @@ module.exports = {
   deleteAccount,
   getPendingApprovalOrders,
   approveMemberOrder,
-  updateInventory
+  updateInventory,
+  AddItemToFeatured,
+  AddItemToHero,
+  RemoveItemFromFeatured,
+  RemoveItemFromHero,
+  fetchLandingData
 };

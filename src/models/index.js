@@ -1,26 +1,27 @@
-const Sample = require('./sampleModel')
-const Inventory = require('./inventoryModel')
-const Order = require('./orderModel')
-const Gift = require('./giftCardModel')
-const User = require('./userModel')
-const Message = require('./messageModel')
-const Category = require('./categoryModel')
-const WishList = require('./wishListModel')
-const Cart = require('./cartModel')
-const CartApproval = require('./cartApprovalModel')
-const Payment = require('./paymentModel')
-const AddressBook = require('./addressBookModel')
-const Purchase = require('./purchaseModel')
-const BankAccount = require('./bankAccountModel')
-const Wallet = require('./walletModel')
-const Rating = require('./ratingModel')
-
+const Sample = require("./sampleModel");
+const Inventory = require("./inventoryModel");
+const Order = require("./orderModel");
+const Gift = require("./giftCardModel");
+const User = require("./userModel");
+const Message = require("./messageModel");
+const Category = require("./categoryModel");
+const WishList = require("./wishListModel");
+const Cart = require("./cartModel");
+const CartApproval = require("./cartApprovalModel");
+const Payment = require("./paymentModel");
+const AddressBook = require("./addressBookModel");
+const Purchase = require("./purchaseModel");
+const BankAccount = require("./bankAccountModel");
+const Wallet = require("./walletModel");
+const Rating = require("./ratingModel");
+const App = require("./appSettings");
 
 module.exports = {
   Sample,
   Inventory,
   Order,
   Gift,
+  App,
   User,
   Message,
   Category,
@@ -33,4 +34,4 @@ module.exports = {
   Wallet,
   Rating,
   CartApproval
-}
+};

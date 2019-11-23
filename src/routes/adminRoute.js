@@ -4,6 +4,28 @@ const router = express.Router();
 const adminController = require("../controllers/adminController");
 const adminValidationMiddleware = require("../functions/adminValidationMiddleware");
 
+router.post(
+  "/add-to-hero",
+  adminValidationMiddleware.addToHero,
+  adminController.AddItemToHero
+);
+router.post(
+  "/add-to-featured-list",
+  adminValidationMiddleware.addToFeatured,
+  adminController.AddItemToFeatured
+);
+
+router.delete(
+  "/remove-from-hero/:item",
+  adminValidationMiddleware.removeHero,
+  adminController.RemoveItemFromHero
+);
+router.delete(
+  "/remove-from-featured-list/:product",
+  adminValidationMiddleware.removeFeature,
+  adminController.RemoveItemFromFeatured
+);
+
 router.put(
   "/update-account-status/:userId",
   adminValidationMiddleware.updateAccountStatusValidation,

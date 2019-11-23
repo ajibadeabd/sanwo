@@ -20,6 +20,7 @@ const paymentRoute = require("./paymentRoute");
 const bankAccountRoute = require("./bankAccountRoute");
 const walletRoute = require("./walletRoute");
 const ratingRoute = require("./ratingRoute");
+const adminController = require("../controllers/adminController");
 
 const router = express.Router();
 // All your parent route link should be in this file
@@ -40,6 +41,7 @@ router.use(
 );
 router.use("/inventory", inventoryRoute);
 router.use("/order", orderRoute);
+router.get("/app", adminController.fetchLandingData);
 router.use("/categories", categoryRoute);
 router.use("/purchase", purchaseRoute);
 router.use("/wish-list", authMiddleware.isAuthenticated, wishListRoute);
