@@ -27,9 +27,7 @@ const addToHero = (req, res, next) => {
   const validationRule = {
     imageUrl: "required",
     title: "required",
-    subTitle: "required",
-    action: "required",
-    link: "required"
+    subTitle: "required"
   };
 
   Validator(requestBody, validationRule, {}, (err, status) => {

@@ -28,10 +28,10 @@ const updateAccountStatus = async (req, res) => {
 
 const AddItemToHero = async (req, res) => {
   try {
-    var app = await req.Models.App.findOne({ Type: "landing" });
+    var app = await req.Models.App.findOne({ page: "landing" });
     if (!app) {
       app = new req.Models.App({
-        Type: "landing",
+        page: "landing",
         heroes: [],
         featuredItems: []
       });
@@ -44,7 +44,7 @@ const AddItemToHero = async (req, res) => {
       link: req.body.link
     });
     await app.save();
-    app = await req.Models.App.findOne({ Type: "landing" }).populate(
+    app = await req.Models.App.findOne({ page: "landing" }).populate(
       "featuredItems.product"
     );
     res.send({
@@ -64,12 +64,12 @@ const AddItemToHero = async (req, res) => {
 
 const fetchLandingData = async (req, res) => {
   try {
-    var app = await req.Models.App.findOne({ Type: "landing" }).populate(
+    var app = await req.Models.App.findOne({ page: "landing" }).populate(
       "featuredItems.product"
     );
     if (!app) {
       app = new req.Models.App({
-        Type: "landing",
+        page: "landing",
         heroes: [],
         featuredItems: []
       });
@@ -93,20 +93,20 @@ const fetchLandingData = async (req, res) => {
 
 const RemoveItemFromHero = async (req, res) => {
   try {
-    var app = await req.Models.App.findOne({ Type: "landing" });
+    var app = await req.Models.App.findOne({ page: "landing" });
     if (!app) {
       app = new req.Models.App({
-        Type: "landing",
+        page: "landing",
         heroes: [],
         featuredItems: []
       });
     }
     var temp = app.heroes.filter(e => {
-      return e._id !== req.params.item;
+      return e._id.toString() !== req.params.item;
     });
     app.heroes = temp;
     await app.save();
-    app = await req.Models.App.findOne({ Type: "landing" }).populate(
+    app = await req.Models.App.findOne({ page: "landing" }).populate(
       "featuredItems.product"
     );
     res.send({
@@ -126,10 +126,10 @@ const RemoveItemFromHero = async (req, res) => {
 
 const AddItemToFeatured = async (req, res) => {
   try {
-    var app = await req.Models.App.findOne({ Type: "landing" });
+    var app = await req.Models.App.findOne({ page: "landing" });
     if (!app) {
       app = new req.Models.App({
-        Type: "landing",
+        page: "landing",
         heroes: [],
         featuredItems: []
       });
@@ -138,7 +138,7 @@ const AddItemToFeatured = async (req, res) => {
       product: req.body.feature
     });
     await app.save();
-    app = await req.Models.App.findOne({ Type: "landing" }).populate(
+    app = await req.Models.App.findOne({ page: "landing" }).populate(
       "featuredItems.product"
     );
     res.send({
@@ -158,10 +158,10 @@ const AddItemToFeatured = async (req, res) => {
 
 const RemoveItemFromFeatured = async (req, res) => {
   try {
-    var app = await req.Models.App.findOne({ Type: "landing" });
+    var app = await req.Models.App.findOne({ page: "landing" });
     if (!app) {
       app = new req.Models.App({
-        Type: "landing",
+        page: "landing",
         heroes: [],
         featuredItems: []
       });
@@ -171,7 +171,7 @@ const RemoveItemFromFeatured = async (req, res) => {
     });
     app.featuredItems = temp;
     await app.save();
-    app = await req.Models.App.findOne({ Type: "landing" }).populate(
+    app = await req.Models.App.findOne({ page: "landing" }).populate(
       "featuredItems.product"
     );
     res.send({
@@ -294,22 +294,22 @@ const updateInventoryStatus = async (req, res) => {
 const getUserStatistics = async (req, res) => {
   const filter = { deletedAt: undefined };
   const sellers = await req.Models.User.countDocuments({
-    accountType: constants.SELLER,
+    accountpage: constants.SELLER,
     ...filter
   });
 
   const buyers = await req.Models.User.countDocuments({
-    accountType: constants.BUYER,
+    accountpage: constants.BUYER,
     ...filter
   });
 
   const cooperatives = await req.Models.User.countDocuments({
-    accountType: constants.CORPORATE_ADMIN,
+    accountpage: constants.CORPORATE_ADMIN,
     ...filter
   });
 
   const administrators = await req.Models.User.countDocuments({
-    accountType: constants.SUPER_ADMIN,
+    accountpage: constants.SUPER_ADMIN,
     ...filter
   });
 
